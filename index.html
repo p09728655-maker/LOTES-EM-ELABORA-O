@@ -1,305 +1,342 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lotes em Elaboração — PCP</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Esteira de Elaboração — PPCP Patrimar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0f172a; --bg2:#1e293b; --card:#ffffff; --line:#e2e8f0;
-    --txt:#0f172a; --muted:#64748b; --brand:#2563eb; --brand2:#1d4ed8;
-    --ok:#16a34a; --warn:#d97706; --late:#dc2626; --done:#0891b2;
-    --shadow:0 1px 3px rgba(15,23,42,.08),0 1px 2px rgba(15,23,42,.04);
+    --bg:#14171b; --panel:#1e232a; --panel2:#242a32; --line:#333b45;
+    --ink:#e8ecf2; --mut:#7d8794; --mut2:#5b636e;
+    --amber:#f5a623; --amber-dim:#7a5a1c; --green:#45c08a; --green-dim:#245140;
+    --steel:#5b8bb0; --wood:#c9962e; --red:#e8543b;
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:#f1f5f9;color:var(--txt);line-height:1.45;-webkit-font-smoothing:antialiased}
-  header{background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 100%);color:#fff;
-    padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
-  header h1{font-size:20px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
-  header .sub{font-size:12px;color:#94a3b8;margin-top:2px}
-  .badge{background:rgba(37,99,235,.2);border:1px solid rgba(96,165,250,.4);color:#bfdbfe;
-    padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600}
-  .wrap{max-width:1200px;margin:0 auto;padding:24px}
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
-  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
-  .kpi .n{font-size:28px;font-weight:800;line-height:1}
-  .kpi .l{font-size:12px;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:.4px;font-weight:600}
-  .kpi.total .n{color:var(--brand)} .kpi.elab .n{color:var(--warn)}
-  .kpi.late .n{color:var(--late)} .kpi.done .n{color:var(--done)}
-  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
-  .toolbar input[type=search]{flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--line);
-    border-radius:10px;font-size:14px;background:#fff}
-  .toolbar select{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff}
-  button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;font-size:14px;font-weight:600;
-    padding:10px 16px;transition:.15s}
-  .btn-primary{background:var(--brand);color:#fff} .btn-primary:hover{background:var(--brand2)}
-  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--txt)} .btn-ghost:hover{background:#f8fafc}
-  .btn-sm{padding:6px 10px;font-size:12px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
-  table{width:100%;border-collapse:collapse;font-size:14px}
-  thead th{background:#f8fafc;text-align:left;padding:12px 14px;font-size:11px;text-transform:uppercase;
-    letter-spacing:.5px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--line);white-space:nowrap}
-  tbody td{padding:12px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
-  tbody tr:hover{background:#f8fafc}
-  tbody tr:last-child td{border-bottom:none}
-  .tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
-  .st-fila{background:#e0e7ff;color:#3730a3}
-  .st-elab{background:#fef3c7;color:#92400e}
-  .st-parado{background:#fee2e2;color:#991b1b}
-  .st-concl{background:#cffafe;color:#155e75}
-  .prog{background:#f1f5f9;border-radius:999px;height:8px;width:100px;overflow:hidden;display:inline-block;vertical-align:middle}
-  .prog > i{display:block;height:100%;background:var(--brand);border-radius:999px}
-  .prog.late > i{background:var(--late)}
-  .late-flag{color:var(--late);font-weight:700;font-size:11px;margin-left:6px}
-  .mono{font-variant-numeric:tabular-nums;font-weight:600}
-  .empty{padding:48px 24px;text-align:center;color:var(--muted)}
-  .empty svg{opacity:.35;margin-bottom:8px}
-  .row-actions{display:flex;gap:6px}
-  .icon-btn{background:none;border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12px;color:var(--muted)}
-  .icon-btn:hover{background:#f1f5f9;color:var(--txt)}
-  .icon-btn.del:hover{background:#fef2f2;color:var(--late);border-color:#fecaca}
-  /* Modal */
-  .overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:flex-start;
-    justify-content:center;padding:32px 16px;z-index:50;overflow-y:auto}
-  .overlay.open{display:flex}
-  .modal{background:#fff;border-radius:16px;width:100%;max-width:560px;box-shadow:0 20px 40px rgba(15,23,42,.3)}
-  .modal h2{padding:20px 24px;font-size:17px;border-bottom:1px solid var(--line)}
-  .form{padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .form .full{grid-column:1/-1}
-  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
-  .field input,.field select,.field textarea{width:100%;padding:9px 12px;border:1px solid var(--line);
-    border-radius:9px;font-size:14px;font-family:inherit;background:#fff}
-  .field textarea{resize:vertical;min-height:60px}
-  .modal-foot{padding:16px 24px;display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--line)}
-  footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
-  @media(max-width:640px){
-    .form{grid-template-columns:1fr}
-    thead{display:none}
-    tbody td{display:block;padding:8px 14px;border:none}
-    tbody tr{display:block;border-bottom:1px solid var(--line);padding:8px 0}
-    tbody td::before{content:attr(data-l);display:block;font-size:10px;text-transform:uppercase;
-      letter-spacing:.5px;color:var(--muted);font-weight:700;margin-bottom:2px}
-  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg); color:var(--ink); font-family:"Inter",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; padding:22px 22px 60px;}
+  header.top{display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px;
+    border-bottom:2px solid var(--wood); padding-bottom:14px;}
+  .brand{display:flex; flex-direction:column; gap:2px}
+  .brand .eyebrow{font-family:"IBM Plex Mono"; font-size:11px; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--mut)}
+  .brand h1{font-family:"Oswald"; font-weight:600; font-size:30px; letter-spacing:.02em; margin:0; line-height:1}
+  .brand h1 span{color:var(--amber)}
+  .headmeta{margin-left:auto; display:flex; gap:26px; align-items:flex-end}
+  .kpi{display:flex; flex-direction:column; align-items:flex-end; line-height:1}
+  .kpi b{font-family:"Oswald"; font-size:26px; font-weight:600}
+  .kpi small{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut); margin-top:5px}
+
+  .controls{display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:16px 0 8px;
+    padding:12px 14px; background:var(--panel); border:1px solid var(--line); border-radius:10px}
+  .controls .grp{display:flex; align-items:center; gap:8px}
+  .controls label{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--mut)}
+  input[type=date]{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:7px; padding:7px 10px; font-family:"IBM Plex Mono"; font-size:13px; color-scheme:dark}
+  button.b{background:var(--panel2); color:var(--ink); border:1px solid var(--line); border-radius:7px;
+    padding:8px 12px; font-family:"Oswald"; font-size:14px; letter-spacing:.04em; cursor:pointer; transition:.14s}
+  button.b:hover{border-color:var(--amber); color:var(--amber)}
+  .refnote{margin-left:auto; font-size:12px; color:var(--mut)}
+  .refnote b{color:var(--ink); font-family:"IBM Plex Mono"}
+
+  .status{display:flex; align-items:center; gap:8px; font-size:12px; margin:0 2px 18px; color:var(--mut)}
+  .status .led{width:9px; height:9px; border-radius:50%; background:var(--mut2); flex:none}
+  .status.ok .led{background:var(--green)} .status.warn .led{background:var(--amber)} .status.err .led{background:var(--red)}
+  .status a{color:var(--steel)}
+  .status button.mini{margin-left:6px; background:none; border:1px solid var(--line); color:var(--mut);
+    border-radius:6px; padding:3px 9px; font-size:11px; cursor:pointer; font-family:"IBM Plex Mono"}
+
+  .board{display:grid; grid-template-columns:repeat(5,1fr); gap:14px}
+  .station{background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    display:flex; flex-direction:column; min-height:120px; overflow:hidden}
+  .st-head{padding:11px 13px 10px; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
+  .st-head .fase{font-family:"IBM Plex Mono"; font-size:10px; letter-spacing:.16em; color:var(--mut); text-transform:uppercase}
+  .st-head .nm{font-family:"Oswald"; font-weight:600; font-size:17px; letter-spacing:.03em;
+    display:flex; align-items:center; gap:8px; margin-top:2px}
+  .st-head .nm .cnt{margin-left:auto; font-size:12px; color:var(--bg); background:var(--mut);
+    font-family:"IBM Plex Mono"; font-weight:600; min-width:22px; text-align:center; border-radius:20px; padding:1px 7px}
+  .station.hot .nm .cnt{background:var(--amber)}
+  .st-body{padding:11px; display:flex; flex-direction:column; gap:11px; flex:1}
+  .empty{color:var(--mut2); font-size:12px; font-style:italic; display:flex; align-items:center;
+    justify-content:center; flex:1; min-height:60px; border:1px dashed var(--line); border-radius:8px}
+
+  .card{background:var(--panel2); border:1px solid var(--line); border-left:4px solid var(--mut);
+    border-radius:9px; padding:11px 12px; cursor:pointer; transition:.15s}
+  .card:hover{border-color:var(--steel); transform:translateY(-1px)}
+  .card.today{border-left-color:var(--amber); box-shadow:0 0 0 1px var(--amber-dim) inset}
+  .c-top{display:flex; align-items:baseline; gap:8px}
+  .c-lote{font-family:"IBM Plex Mono"; font-weight:600; font-size:19px}
+  .cor{margin-left:auto; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+    padding:2px 7px; border-radius:20px; border:1px solid var(--line); color:var(--mut)}
+  .c-sub{display:flex; gap:14px; margin-top:5px; font-size:12px; color:var(--mut)}
+  .c-sub b{color:var(--ink); font-family:"IBM Plex Mono"}
+  .c-status{margin-top:9px; font-size:11.5px; display:flex; align-items:center; gap:6px;
+    padding-top:8px; border-top:1px solid var(--line)}
+  .dot{width:7px; height:7px; border-radius:50%; flex:none}
+  .s-today{color:var(--amber)} .s-today .dot{background:var(--amber)}
+  .s-next{color:var(--mut)} .s-next .dot{background:var(--steel)}
+  .tl{display:flex; margin-top:10px; justify-content:space-between}
+  .tl .step{display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; position:relative}
+  .tl .step:not(:last-child)::after{content:""; position:absolute; top:5px; left:calc(50% + 7px);
+    right:calc(-50% + 7px); height:2px; background:var(--line)}
+  .tl .step.past::after{background:var(--green-dim)}
+  .tl .bead{width:11px; height:11px; border-radius:50%; background:var(--panel); border:2px solid var(--line); z-index:1}
+  .tl .step.past .bead{background:var(--green); border-color:var(--green)}
+  .tl .step.cur .bead{background:var(--amber); border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-dim)}
+  .tl .lbl{font-family:"IBM Plex Mono"; font-size:8px; color:var(--mut2); letter-spacing:.05em}
+  .tl .dt{font-family:"IBM Plex Mono"; font-size:8.5px; color:var(--mut)}
+  .tl .step.cur .lbl,.tl .step.cur .dt{color:var(--amber)}
+  .items{margin-top:11px; padding-top:9px; border-top:1px solid var(--line); display:none}
+  .card.open .items{display:block}
+  .items table{width:100%; border-collapse:collapse; font-size:11px}
+  .items td{padding:3px 4px; color:var(--mut); vertical-align:top}
+  .items td.q{font-family:"IBM Plex Mono"; color:var(--ink); text-align:right; white-space:nowrap; width:42px}
+  .items td.cd{font-family:"IBM Plex Mono"; color:var(--mut2); white-space:nowrap; width:82px}
+
+  .lanes{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px}
+  .lane{background:var(--panel); border:1px dashed var(--line); border-radius:12px; padding:11px 13px}
+  .lane h3{font-family:"Oswald"; font-weight:500; font-size:14px; letter-spacing:.05em; margin:0 0 9px;
+    color:var(--mut); text-transform:uppercase; display:flex; align-items:center; gap:8px}
+  .lane h3 .cnt{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:var(--ink)}
+  .lane .row{display:flex; align-items:center; gap:10px; padding:7px 0; font-size:12.5px; color:var(--mut)}
+  .lane .row b{font-family:"IBM Plex Mono"; color:var(--ink); font-size:14px}
+  .lane .row .tag{margin-left:auto; font-family:"IBM Plex Mono"; font-size:11px}
+  .lane.done h3{color:var(--green)} .lane.wait h3{color:var(--steel)}
+  .foot{margin-top:26px; font-size:11.5px; color:var(--mut2); line-height:1.6; max-width:760px}
+  .foot code{font-family:"IBM Plex Mono"; color:var(--mut); background:var(--panel); padding:1px 5px; border-radius:4px}
+  @media(max-width:900px){ .board{grid-template-columns:1fr} .headmeta{width:100%; justify-content:flex-start; margin-left:0} .lanes{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
-<header>
-  <div>
-    <h1>📦 Lotes em Elaboração</h1>
-    <div class="sub">Controle de Produção — PCP</div>
+
+<header class="top">
+  <div class="brand">
+    <div class="eyebrow">PPCP 2026 · Patrimar</div>
+    <h1>Esteira de <span>Elaboração</span></h1>
   </div>
-  <span class="badge" id="hoje"></span>
+  <div class="headmeta">
+    <div class="kpi"><b id="kLotes">–</b><small>lotes ativos</small></div>
+    <div class="kpi"><b id="kPecas">–</b><small>peças em elaboração</small></div>
+    <div class="kpi"><b id="kHoje">–</b><small>movimentam hoje</small></div>
+  </div>
 </header>
 
-<div class="wrap">
-  <div class="kpis">
-    <div class="kpi total"><div class="n" id="kTotal">0</div><div class="l">Total de lotes</div></div>
-    <div class="kpi elab"><div class="n" id="kElab">0</div><div class="l">Em elaboração</div></div>
-    <div class="kpi late"><div class="n" id="kLate">0</div><div class="l">Atrasados</div></div>
-    <div class="kpi done"><div class="n" id="kDone">0</div><div class="l">Concluídos</div></div>
+<div class="controls">
+  <div class="grp"><label for="ref">Data de referência</label><input type="date" id="ref"></div>
+  <div class="grp">
+    <button class="b" id="prev">◀ dia</button>
+    <button class="b" id="next">dia ▶</button>
+    <button class="b" id="hoje">Hoje</button>
   </div>
-
-  <div class="toolbar">
-    <input type="search" id="busca" placeholder="Buscar por lote, produto ou setor…">
-    <select id="fStatus">
-      <option value="">Todos os status</option>
-      <option value="Na fila">Na fila</option>
-      <option value="Em elaboração">Em elaboração</option>
-      <option value="Parado">Parado</option>
-      <option value="Concluído">Concluído</option>
-    </select>
-    <button class="btn-primary" id="btnNovo">+ Novo lote</button>
-    <button class="btn-ghost" id="btnExport">Exportar</button>
-    <button class="btn-ghost" id="btnImport">Importar</button>
-    <input type="file" id="fileImport" accept="application/json" hidden>
-  </div>
-
-  <div class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>Lote</th><th>Produto</th><th>Qtd</th><th>Setor</th>
-          <th>Início</th><th>Prazo</th><th>Progresso</th><th>Status</th><th></th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-    <div class="empty" id="empty" hidden>
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>
-      <div>Nenhum lote cadastrado ainda.</div>
-      <div style="font-size:12px;margin-top:4px">Clique em “+ Novo lote” para começar.</div>
-    </div>
-  </div>
+  <div class="refnote">Ref.: <b id="refTxt">–</b></div>
 </div>
 
-<footer>PCP — Lotes em Elaboração · dados salvos neste navegador</footer>
+<div class="status" id="status"><span class="led"></span><span id="statusTxt">Carregando…</span>
+  <button class="mini" id="reload">recarregar</button></div>
 
-<!-- Modal -->
-<div class="overlay" id="overlay">
-  <div class="modal">
-    <h2 id="modalTitle">Novo lote</h2>
-    <form class="form" id="form">
-      <input type="hidden" id="fId">
-      <div class="field"><label>Nº do lote *</label><input id="fLote" required placeholder="Ex: L-2045"></div>
-      <div class="field"><label>Quantidade</label><input id="fQtd" type="number" min="0" placeholder="0"></div>
-      <div class="field full"><label>Produto *</label><input id="fProduto" required placeholder="Ex: Guarda-roupa 6 portas"></div>
-      <div class="field"><label>Setor atual</label><input id="fSetor" placeholder="Ex: Corte / Montagem / Embalagem"></div>
-      <div class="field">
-        <label>Status</label>
-        <select id="fStatusForm">
-          <option>Na fila</option><option>Em elaboração</option><option>Parado</option><option>Concluído</option>
-        </select>
-      </div>
-      <div class="field"><label>Data de início</label><input id="fInicio" type="date"></div>
-      <div class="field"><label>Prazo de entrega</label><input id="fPrazo" type="date"></div>
-      <div class="field full"><label>Progresso (%)</label><input id="fProg" type="range" min="0" max="100" step="5" value="0" oninput="pOut.textContent=this.value+'%'"><span id="pOut" class="mono">0%</span></div>
-      <div class="field full"><label>Observações</label><textarea id="fObs" placeholder="Pendências, notas do PCP…"></textarea></div>
-    </form>
-    <div class="modal-foot">
-      <button class="btn-ghost" id="btnCancel">Cancelar</button>
-      <button class="btn-primary" id="btnSave">Salvar</button>
-    </div>
-  </div>
+<div class="board" id="board"></div>
+
+<div class="lanes">
+  <div class="lane wait"><h3>Programados <span class="cnt" id="waitCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram</span></h3><div id="waitList"></div></div>
+  <div class="lane done"><h3>Concluídos <span class="cnt" id="doneCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· após embalagem</span></h3><div id="doneList"></div></div>
+</div>
+
+<div class="foot">
+  Lê ao vivo a aba de elaboração no Google Sheets e posiciona cada lote pela <b>data prevista</b> de cada etapa
+  (corte → furar → colar/PU → UV → embalagem). Clique num card para ver os itens (quando houver).
+  Use ◀/▶ pra simular os próximos dias.<br>
+  Fonte: <code id="srcUrl"></code>
 </div>
 
 <script>
-const KEY='lotes_elaboracao_v1';
-const $=s=>document.querySelector(s);
-let lotes=[];
+/* ================== CONFIGURAÇÃO ================== */
+const SHEET_ID = "1Xdqw6lGR9dDvc65MaBqdZirMbfE4-uOAGDGX9TKKihQ";
+const GID = "0";                       // aba (gid). gid=0 = primeira aba
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
-function load(){ try{lotes=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){lotes=[]} }
-function save(){ localStorage.setItem(KEY,JSON.stringify(lotes)) }
+const ETAPAS = [
+  {key:"corte", nome:"Corte",          fase:"Fase 50",    abrev:"C"},
+  {key:"furar", nome:"Furadeira",      fase:"Fase 55",    abrev:"F"},
+  {key:"cola",  nome:"Coladeira / PU", fase:"Fase 55-60", abrev:"L"},
+  {key:"uv",    nome:"Linha UV",       fase:"Fase 75-76", abrev:"U"},
+  {key:"emb",   nome:"Embalagem",      fase:"Fase 80",    abrev:"E"},
+];
 
-function hoje(){ return new Date().toISOString().slice(0,10) }
-function fmtData(d){ if(!d) return '—'; const [y,m,dd]=d.split('-'); return `${dd}/${m}/${y}` }
-function isLate(l){ return l.prazo && l.status!=='Concluído' && l.prazo < hoje() }
+/* Dados de exemplo (usados se a planilha ainda estiver vazia / sem acesso) */
+const DEMO = [{"lote": "138/26", "cor": "PRETO", "corte": "2026-07-24", "furar": "2026-07-27", "cola": "2026-07-28", "uv": "2026-07-29", "emb": "2026-07-30", "itens": [{"cod": "114.011.001", "desc": "PENTEADEIRA CAMARIM ELOA BRANCO", "qtd": 180}, {"cod": "114.011.006", "desc": "PENTEADEIRA CAMARIM ELOA OFF WHITE", "qtd": 80}, {"cod": "114.011.117", "desc": "PENTEADEIRA CAMARIM ELOA CINAMOMO/OFF WHITE", "qtd": 40}, {"cod": "105.038.118", "desc": "RACK URBAN 1.8 OFF WHITE/CINAMOMO", "qtd": 150}, {"cod": "114013006", "desc": "PENTEADEIRA CAMARIM 1PT 2GAV DIAMANTE OFF WHITE", "qtd": 30}, {"cod": "114.013.021", "desc": "PENTEADEIRA CAMARIM 1PT 2GAV DIAMANTE BRANCO AC", "qtd": 370}], "qtd": 850}, {"lote": "137/26", "cor": "AZUL", "corte": "2026-07-23", "furar": "2026-07-24", "cola": "2026-07-27", "uv": "2026-07-28", "emb": "2026-07-29", "itens": [{"cod": "114.010.001", "desc": "PENTEADEIRA CAMARIM MEL BRANCO", "qtd": 180}, {"cod": "114.010.006", "desc": "PENTEADEIRA CAMARIM MEL OFF WHITE", "qtd": 160}, {"cod": "114.010.117", "desc": "PENTEADEIRA CAMARIM MEL CINAMOMO/OFF WHIHTE", "qtd": 60}, {"cod": "108.008.001", "desc": "MESA COMPUTADOR MILLION BRANCO", "qtd": 35}, {"cod": "108.008.116", "desc": "MESA COMPUTADOR MILLION CINAMOMO", "qtd": 190}, {"cod": "108.008.118", "desc": "MESA COMPUTADOR MILLION OFF WHHITE/CINAMOMO", "qtd": 60}, {"cod": "108.008.120", "desc": "MESA COMPUTADOR MILLION PRETO ACETINADO/CINAMOMO", "qtd": 55}, {"cod": "108.008.121", "desc": "MESA COMPUTADOR MILLION BRANCO/CINAMOMO", "qtd": 160}, {"cod": "109.046.006", "desc": "MESA CENTRO LUNA 670 OFF WHITE", "qtd": 170}, {"cod": "109.046.021", "desc": "MESA CENTRO LUNA 670 BRANCO ACETINADO", "qtd": 15}, {"cod": "109.046.073", "desc": "MESA CENTRO LUNA 670 CUMARU", "qtd": 65}, {"cod": "109.047.006", "desc": "MESA CENTRO LUNA 590 OFF WHITE", "qtd": 75}, {"cod": "109.047.073", "desc": "MESA CENTRO LUNA 590 CUMARU", "qtd": 25}, {"cod": "110.041.006", "desc": "MESA APOIO LUNA 530 OFF WHITE", "qtd": 90}, {"cod": "110.041.073", "desc": "MESA APOIO LUNA 530 CUMARU", "qtd": 10}, {"cod": "110.042.006", "desc": "MESA LATERAL LUNA 440 OFF WHITE", "qtd": 125}, {"cod": "110.042.073", "desc": "MESA LATERAL LUNA 440 CUMARU", "qtd": 55}, {"cod": "110.042.111", "desc": "MESA LATERAL LUNA 440 ALECRIM", "qtd": 20}], "qtd": 1550}, {"lote": "136/26", "cor": "AMARELO", "corte": "2026-07-22", "furar": "2026-07-23", "cola": "2026-07-24", "uv": "2026-07-27", "emb": "2026-07-28", "itens": [{"cod": "114.003.001", "desc": "PENTEADEIRA PRINCESA BRANCO", "qtd": 225}, {"cod": "114.003.002", "desc": "PENTEADEIRA PRINCESA ROSA", "qtd": 225}, {"cod": "113.006.116", "desc": "CRISTALEIRA ORION CINAMOMO", "qtd": 50}, {"cod": "113.006.118", "desc": "CRISTALEIRA ORION OFF WHITE/CINAMOMO", "qtd": 100}, {"cod": "106.066.116", "desc": "PAINEL ON 1.8 CINAMOMO", "qtd": 150}], "qtd": 750}, {"lote": "135/26", "cor": "VERMELHO", "corte": "2026-07-21", "furar": "2026-07-22", "cola": "2026-07-23", "uv": "2026-07-24", "emb": "2026-07-27", "itens": [{"cod": "109.044.001", "desc": "MESA CENTRO SLIM BRANCO", "qtd": 15}, {"cod": "109.044.006", "desc": "MESA CENTRO SLIM OFF WHITE", "qtd": 225}, {"cod": "109.044.070", "desc": "MESA CENTRO SLIM PRETO ACETINADO", "qtd": 20}, {"cod": "109.044.116", "desc": "MESA CENTRO SLIM CINAMOMO", "qtd": 190}, {"cod": "102.004.001", "desc": "SAPATEIRA SPAZIO BRANCO", "qtd": 10}, {"cod": "102.004.116", "desc": "SAPATEIRA SPAZIO CINAMOMO", "qtd": 120}, {"cod": "102.004.117", "desc": "SAPATEIRA SPAZIO CINAMOMO/OFF WHITE", "qtd": 220}, {"cod": "106.062.117", "desc": "HOME ANGEL 1.8 CINAMOMO/OFF WHITE", "qtd": 35}, {"cod": "106.062.118", "desc": "HOME ANGEL 1.8 OFF WHITE/CINAMOMO", "qtd": 115}, {"cod": "106.057.117", "desc": "HOME RIPADO ANTARES 1.4 CINAMOMO/OFF WHITE", "qtd": 100}], "qtd": 1050}, {"lote": "134/26", "cor": "BRANCO", "corte": "2026-07-20", "furar": "2026-07-21", "cola": "2026-07-22", "uv": "2026-07-23", "emb": "2026-07-24", "itens": [{"cod": "501.141.007", "desc": "VOL 1/1 BUFFET 4 PT PRISM CINAMOMO", "qtd": 250}, {"cod": "501.141.008", "desc": "VOL 1/1 BUFFET 4 PT PRISM OFF WHITE/CINAMOMO", "qtd": 375}, {"cod": "501.141.009", "desc": "VOL 1/1 BUFFET 4 PT PRISM BRANCO AC/CINAMOMO", "qtd": 25}, {"cod": "501.118.001", "desc": "VOL 1/1 ESCRIVANINHA TAURUS OFF WHITE", "qtd": 250}, {"cod": "501.118.002", "desc": "VOL 1/1 ESCRIVANINHA TAURUS BRANCO AC", "qtd": 50}, {"cod": "501.118.005", "desc": "VOL 1/1 ESCRIVANINHA TAURUS CINAMOMO", "qtd": 200}, {"cod": "501.115.001", "desc": "VOL 1/1 MESA COMP SPACE BRANCO", "qtd": 10}, {"cod": "501.115.002", "desc": "VOL 1/1 MESA COMP SPACE CINAMOMO", "qtd": 130}, {"cod": "501.115.004", "desc": "VOL 1/1 MESA COMP SPACE OFF WHITE/CINAMOMO", "qtd": 180}, {"cod": "501.115.003", "desc": "VOL 1/1 MESA COMP SPACE BRANCO/CINAMOMO", "qtd": 80}], "qtd": 1550}];
 
-const stClass={'Na fila':'st-fila','Em elaboração':'st-elab','Parado':'st-parado','Concluído':'st-concl'};
+let LOTES = [];
+
+/* ---------- datas ---------- */
+function pd(s){
+  if(!s) return null;
+  s=String(s).trim();
+  let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);      // YYYY-MM-DD
+  if(m) return new Date(+m[1],+m[2]-1,+m[3]);
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);      // DD/MM/YYYY
+  if(m){ let y=+m[3]; if(y<100)y+=2000; return new Date(y,+m[2]-1,+m[1]); }
+  const d=new Date(s); return isNaN(d)?null:d;
+}
+const fmt = d => d? String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0") : "–";
+const diasEntre = (a,b)=> Math.round((b-a)/86400000);
+const isoOf = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+
+/* ---------- CSV ---------- */
+function parseCSV(txt){
+  const rows=[]; let row=[],f="",q=false;
+  for(let i=0;i<txt.length;i++){ const c=txt[i];
+    if(q){ if(c=='"'){ if(txt[i+1]=='"'){f+='"';i++;} else q=false;} else f+=c; }
+    else{ if(c=='"')q=true; else if(c==','){row.push(f);f="";}
+      else if(c=='\n'){row.push(f);rows.push(row);row=[];f="";}
+      else if(c!='\r')f+=c; }
+  }
+  if(f!==""||row.length){row.push(f);rows.push(row);}
+  return rows.filter(r=>r.some(x=>String(x).trim()!==""));
+}
+function norm(s){return String(s||"").trim().toLowerCase().replace(/[^a-z0-9]/g,"");}
+const ALIASES={
+  lote:["lote","nlote","numlote","n"], cor:["cor","corgps"],
+  corte:["corte","datacorte"], furar:["furar","datafurar","furadeira"],
+  cola:["cola","colar","coladeira","datacola","datacolapintpu","colapu"],
+  uv:["uv","pintuv","linhauv","datauv"], emb:["emb","embalagem","dataprevemb","dataemb","previsaoemb"],
+  cod:["cod","codigo","cdigo","sku"], desc:["desc","descricao","descrio","descricaocor","produto","item"],
+  qtd:["qtd","qtde","quantidade","qtditem"]
+};
+function mapHeader(hrow){
+  const idx={}; hrow.forEach((h,i)=>{ const n=norm(h);
+    for(const key in ALIASES){ if(ALIASES[key].includes(n) && idx[key]===undefined) idx[key]=i; } });
+  return idx;
+}
+const val=(row,i)=> i===undefined?"":(row[i]||"").trim();
+const num=x=> parseFloat(String(x||"0").replace(/\./g,"").replace(",","."))||0;
+
+// Formato uma-linha-por-produto: datas preenchidas só na 1ª linha de cada lote (fill-forward)
+function rowsToLotes(rows){
+  if(!rows.length) return [];
+  const idx=mapHeader(rows[0]);
+  if(idx.lote===undefined || idx.corte===undefined) return [];
+  const out=[]; let cur=null;
+  for(let r=1;r<rows.length;r++){ const row=rows[r];
+    const lote=val(row,idx.lote);
+    if(lote){ cur={ lote, cor:val(row,idx.cor),
+      corte:val(row,idx.corte), furar:val(row,idx.furar), cola:val(row,idx.cola),
+      uv:val(row,idx.uv), emb:val(row,idx.emb), itens:[], qtd:0 };
+      out.push(cur); }
+    if(!cur) continue;
+    const cod=val(row,idx.cod), desc=val(row,idx.desc), q=num(val(row,idx.qtd));
+    if(desc || cod || q){ cur.itens.push({cod,desc,qtd:q}); cur.qtd+=q; }
+  }
+  return out;
+}
+
+/* ---------- carregar ---------- */
+function setStatus(kind,txt){ const el=document.getElementById("status");
+  el.className="status "+kind; document.getElementById("statusTxt").innerHTML=txt; }
+
+async function carregar(){
+  setStatus("","Lendo planilha…");
+  document.getElementById("srcUrl").textContent = CSV_URL;
+  try{
+    const res=await fetch(CSV_URL,{cache:"no-store"});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const txt=await res.text();
+    if(/<html/i.test(txt)) throw new Error("sem-acesso");
+    const lotes=rowsToLotes(parseCSV(txt));
+    if(lotes.length){ LOTES=lotes;
+      setStatus("ok",`Planilha lida — <b>${lotes.length}</b> lotes · atualizado ${new Date().toLocaleTimeString("pt-BR")}`);
+    } else { LOTES=DEMO;
+      setStatus("warn","Planilha vazia ou cabeçalho não reconhecido — mostrando dados de exemplo. Cole as linhas com o cabeçalho indicado.");
+    }
+  }catch(e){ LOTES=DEMO;
+    if(String(e.message).includes("sem-acesso"))
+      setStatus("err","Sem acesso à planilha — deixe o compartilhamento como “qualquer pessoa com o link: leitor”. Mostrando dados de exemplo.");
+    else setStatus("warn","Não consegui ler agora (preview local bloqueia acesso externo). No servidor/Vercel funciona. Mostrando dados de exemplo.");
+  }
+  render();
+}
+
+/* ---------- render ---------- */
+function estagioAtual(l, ref){ let idx=-1;
+  for(let i=0;i<ETAPAS.length;i++){ const d=pd(l[ETAPAS[i].key]); if(d && d<=ref) idx=i; } return idx; }
 
 function render(){
-  const q=$('#busca').value.trim().toLowerCase();
-  const fs=$('#fStatus').value;
-  let list=lotes.filter(l=>{
-    const hit=!q || [l.lote,l.produto,l.setor].join(' ').toLowerCase().includes(q);
-    const st=!fs || l.status===fs;
-    return hit&&st;
+  const ref=pd(document.getElementById("ref").value);
+  document.getElementById("refTxt").textContent=fmt(ref)+"/"+ref.getFullYear();
+  const buckets=ETAPAS.map(()=>[]), wait=[], done=[];
+  LOTES.forEach(l=>{
+    const idx=estagioAtual(l,ref);
+    const emb=pd(l.emb), corte=pd(l.corte);
+    if(idx<0){ wait.push({l,dias:corte?diasEntre(ref,corte):null}); return; }
+    if(idx===4 && emb && ref>emb){ done.push({l,dias:diasEntre(emb,ref)}); return; }
+    buckets[idx].push({l,idx});
   });
-  // ordena: atrasados > em elaboração > fila > parado > concluído
-  const ord={'Em elaboração':0,'Na fila':1,'Parado':2,'Concluído':3};
-  list.sort((a,b)=>(isLate(b)-isLate(a)) || (ord[a.status]-ord[b.status]) || (a.prazo||'').localeCompare(b.prazo||''));
+  const ativos=buckets.reduce((s,b)=>s+b.length,0);
+  const pecas=buckets.flat().reduce((s,x)=>s+(x.l.qtd||0),0);
+  let mov=0; buckets.forEach((b,i)=>b.forEach(x=>{const d=pd(x.l[ETAPAS[i].key]); if(d&&+d===+ref)mov++;}));
+  document.getElementById("kLotes").textContent=ativos;
+  document.getElementById("kPecas").textContent=pecas.toLocaleString("pt-BR");
+  document.getElementById("kHoje").textContent=mov;
 
-  const tb=$('#tbody'); tb.innerHTML='';
-  $('#empty').hidden=list.length>0;
-  for(const l of list){
-    const late=isLate(l);
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td data-l="Lote"><span class="mono">${esc(l.lote)}</span></td>
-      <td data-l="Produto">${esc(l.produto)}</td>
-      <td data-l="Qtd" class="mono">${l.qtd??'—'}</td>
-      <td data-l="Setor">${esc(l.setor||'—')}</td>
-      <td data-l="Início">${fmtData(l.inicio)}</td>
-      <td data-l="Prazo">${fmtData(l.prazo)}${late?'<span class="late-flag">ATRASADO</span>':''}</td>
-      <td data-l="Progresso"><span class="prog ${late?'late':''}"><i style="width:${l.prog||0}%"></i></span> <span class="mono">${l.prog||0}%</span></td>
-      <td data-l="Status"><span class="tag ${stClass[l.status]||''}">${esc(l.status)}</span></td>
-      <td data-l=""><div class="row-actions">
-        <button class="icon-btn" data-edit="${l.id}">✎</button>
-        <button class="icon-btn del" data-del="${l.id}">🗑</button>
-      </div></td>`;
-    tb.appendChild(tr);
-  }
-  // KPIs
-  $('#kTotal').textContent=lotes.length;
-  $('#kElab').textContent=lotes.filter(l=>l.status==='Em elaboração').length;
-  $('#kLate').textContent=lotes.filter(isLate).length;
-  $('#kDone').textContent=lotes.filter(l=>l.status==='Concluído').length;
+  const board=document.getElementById("board"); board.innerHTML="";
+  ETAPAS.forEach((et,i)=>{
+    const hot=buckets[i].some(x=>{const d=pd(x.l[et.key]); return d&&+d===+ref;});
+    const st=document.createElement("div"); st.className="station"+(hot?" hot":"");
+    st.innerHTML=`<div class="st-head"><div class="fase">${et.fase}</div>
+      <div class="nm">${et.nome}<span class="cnt">${buckets[i].length}</span></div></div>
+      <div class="st-body"></div>`;
+    board.appendChild(st);
+    const body=st.querySelector(".st-body");
+    if(!buckets[i].length){ body.innerHTML=`<div class="empty">livre</div>`; return; }
+    buckets[i].forEach(x=>body.appendChild(cardEl(x.l,x.idx,ref)));
+  });
+
+  const wl=document.getElementById("waitList"),dl=document.getElementById("doneList");
+  document.getElementById("waitCnt").textContent=wait.length;
+  document.getElementById("doneCnt").textContent=done.length;
+  wl.innerHTML=wait.length?wait.sort((a,b)=>(a.dias??99)-(b.dias??99)).map(w=>
+    `<div class="row"><b>${w.l.lote}</b> ${(w.l.cor||"")}<span class="tag" style="color:var(--steel)">${w.dias!=null?"entra em "+w.dias+"d · "+fmt(pd(w.l.corte)):""}</span></div>`).join("")
+    :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
+  dl.innerHTML=done.length?done.sort((a,b)=>a.dias-b.dias).map(w=>
+    `<div class="row"><b>${w.l.lote}</b> ${(w.l.cor||"")}<span class="tag" style="color:var(--green)">emb. ${fmt(pd(w.l.emb))}</span></div>`).join("")
+    :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
 }
 
-function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
-function uid(){ return 'l'+Math.random().toString(36).slice(2,9)+Date.now().toString(36) }
-
-// Modal
-function openModal(l){
-  $('#modalTitle').textContent=l?'Editar lote':'Novo lote';
-  $('#fId').value=l?.id||'';
-  $('#fLote').value=l?.lote||'';
-  $('#fProduto').value=l?.produto||'';
-  $('#fQtd').value=l?.qtd??'';
-  $('#fSetor').value=l?.setor||'';
-  $('#fStatusForm').value=l?.status||'Na fila';
-  $('#fInicio').value=l?.inicio||hoje();
-  $('#fPrazo').value=l?.prazo||'';
-  $('#fProg').value=l?.prog||0; $('#pOut').textContent=(l?.prog||0)+'%';
-  $('#fObs').value=l?.obs||'';
-  $('#overlay').classList.add('open');
-  $('#fLote').focus();
-}
-function closeModal(){ $('#overlay').classList.remove('open') }
-
-function saveForm(){
-  const lote=$('#fLote').value.trim(), produto=$('#fProduto').value.trim();
-  if(!lote||!produto){ alert('Informe o nº do lote e o produto.'); return }
-  const id=$('#fId').value;
-  const data={
-    id:id||uid(), lote, produto,
-    qtd:$('#fQtd').value===''?null:Number($('#fQtd').value),
-    setor:$('#fSetor').value.trim(),
-    status:$('#fStatusForm').value,
-    inicio:$('#fInicio').value, prazo:$('#fPrazo').value,
-    prog:$('#fStatusForm').value==='Concluído'?100:Number($('#fProg').value),
-    obs:$('#fObs').value.trim()
-  };
-  if(id){ const i=lotes.findIndex(x=>x.id===id); lotes[i]=data; }
-  else lotes.unshift(data);
-  save(); render(); closeModal();
+function cardEl(l,idx,ref){
+  const et=ETAPAS[idx], hoje=(()=>{const d=pd(l[et.key]);return d&&+d===+ref;})();
+  const prox=idx<4?ETAPAS[idx+1]:null;
+  const c=document.createElement("div"); c.className="card"+(hoje?" today":"");
+  let stat;
+  if(hoje&&prox){ const d=diasEntre(ref,pd(l[prox.key]));
+    stat=`<div class="c-status s-today"><span class="dot"></span>Chegou hoje · vai p/ ${prox.nome} em ${d}d</div>`; }
+  else if(hoje&&!prox){ stat=`<div class="c-status s-today"><span class="dot"></span>Embalando hoje</div>`; }
+  else if(prox){ const d=diasEntre(ref,pd(l[prox.key]));
+    stat=`<div class="c-status s-next"><span class="dot"></span>No setor · próx. ${prox.nome} em ${d}d (${fmt(pd(l[prox.key]))})</div>`; }
+  else { stat=`<div class="c-status s-next"><span class="dot"></span>Em embalagem</div>`; }
+  const tl=ETAPAS.map((e,i)=>{ const cls=i<idx?"past":(i===idx?"cur":"");
+    return `<div class="step ${cls}"><span class="bead"></span><span class="lbl">${e.abrev}</span><span class="dt">${fmt(pd(l[e.key]))}</span></div>`; }).join("");
+  const itensHtml=(l.itens&&l.itens.length)?`<div class="items"><table>${l.itens.map(it=>
+    `<tr><td class="cd">${it.cod||""}</td><td>${it.desc}</td><td class="q">${it.qtd}</td></tr>`).join("")}</table></div>`:"";
+  c.innerHTML=`<div class="c-top"><span class="c-lote">${l.lote}</span>${l.cor?`<span class="cor">${l.cor}</span>`:""}</div>
+    <div class="c-sub"><span>Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b></span>${l.itens?`<span><b>${l.itens.length}</b> itens</span>`:""}</div>
+    ${stat}<div class="tl">${tl}</div>${itensHtml}`;
+  if(itensHtml) c.addEventListener("click",()=>c.classList.toggle("open"));
+  return c;
 }
 
-// Eventos
-$('#btnNovo').onclick=()=>openModal();
-$('#btnCancel').onclick=closeModal;
-$('#btnSave').onclick=saveForm;
-$('#overlay').onclick=e=>{ if(e.target.id==='overlay') closeModal() };
-$('#busca').oninput=render;
-$('#fStatus').onchange=render;
-$('#tbody').onclick=e=>{
-  const ed=e.target.closest('[data-edit]'); const dl=e.target.closest('[data-del]');
-  if(ed) openModal(lotes.find(l=>l.id===ed.dataset.edit));
-  if(dl){ const l=lotes.find(x=>x.id===dl.dataset.del);
-    if(confirm(`Excluir o lote ${l.lote}?`)){ lotes=lotes.filter(x=>x.id!==l.id); save(); render(); } }
-};
-document.onkeydown=e=>{ if(e.key==='Escape') closeModal() };
-
-// Export / Import
-$('#btnExport').onclick=()=>{
-  const blob=new Blob([JSON.stringify(lotes,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download='lotes-elaboracao.json'; a.click();
-};
-$('#btnImport').onclick=()=>$('#fileImport').click();
-$('#fileImport').onchange=e=>{
-  const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=()=>{ try{ const d=JSON.parse(r.result);
-    if(Array.isArray(d)){ lotes=d; save(); render(); } else alert('Arquivo inválido.'); }
-    catch(err){ alert('Não foi possível ler o arquivo.'); } };
-  r.readAsText(f); e.target.value='';
-};
-
-// Seed de exemplo na primeira abertura
-function seed(){
-  if(localStorage.getItem(KEY)!==null) return;
-  lotes=[
-    {id:uid(),lote:'L-2041',produto:'Guarda-roupa 6 portas Branco',qtd:120,setor:'Montagem',status:'Em elaboração',inicio:'2026-07-20',prazo:'2026-07-28',prog:60,obs:''},
-    {id:uid(),lote:'L-2042',produto:'Cômoda 4 gavetas Carvalho',qtd:80,setor:'Corte',status:'Na fila',inicio:'2026-07-24',prazo:'2026-08-02',prog:0,obs:''},
-    {id:uid(),lote:'L-2039',produto:'Painel TV 1,80m Off-white',qtd:200,setor:'Embalagem',status:'Parado',inicio:'2026-07-15',prazo:'2026-07-22',prog:75,obs:'Aguardando ferragem'},
-    {id:uid(),lote:'L-2035',produto:'Mesa de jantar 6 lugares',qtd:45,setor:'—',status:'Concluído',inicio:'2026-07-10',prazo:'2026-07-19',prog:100,obs:''}
-  ];
-  save();
-}
-
-$('#hoje').textContent='Hoje: '+fmtData(hoje());
-seed(); load(); render();
+/* ---------- controles ---------- */
+const refInput=document.getElementById("ref");
+refInput.value=isoOf(new Date());
+const shift=n=>{const d=pd(refInput.value);d.setDate(d.getDate()+n);refInput.value=isoOf(d);render();};
+document.getElementById("prev").onclick=()=>shift(-1);
+document.getElementById("next").onclick=()=>shift(1);
+document.getElementById("hoje").onclick=()=>{refInput.value=isoOf(new Date());render();};
+document.getElementById("reload").onclick=carregar;
+refInput.addEventListener("change",render);
+carregar();
+setInterval(carregar, 5*60*1000); // recarrega a cada 5 min
 </script>
 </body>
 </html>
