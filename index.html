@@ -153,8 +153,8 @@
 
 <script>
 /* ================== CONFIGURAÇÃO ================== */
-const SHEET_ID = "1Xdqw6lGR9dDvc65MaBqdZirMbfE4-uOAGDGX9TKKihQ";
-const GID = "0";                       // aba (gid). gid=0 = primeira aba
+const SHEET_ID = "1W9bK_IoWknk8eKFbSWCMxILAQcaXuWD2gG7B0jcwFzg";
+const GID = "1540822534";               // aba de programação (Lote/Data/.../STATUS)
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
 const ETAPAS = [
@@ -164,6 +164,12 @@ const ETAPAS = [
   {key:"uv",    nome:"Linha UV",       fase:"Fase 75-76", abrev:"U"},
   {key:"emb",   nome:"Embalagem",      fase:"Fase 80",    abrev:"E"},
 ];
+
+/* A planilha traz APENAS a data da embalagem (coluna "Data").
+   As datas das etapas anteriores são estimadas voltando N dias úteis
+   a partir da embalagem (1 dia útil por etapa). Ajuste aqui se o
+   lead-time real de cada etapa for diferente. */
+const LEAD = { uv:1, cola:2, furar:3, corte:4 }; // dias úteis antes da embalagem
 
 /* Dados de exemplo (usados se a planilha ainda estiver vazia / sem acesso) */
 const DEMO = [{"lote": "138/26", "cor": "PRETO", "corte": "2026-07-24", "furar": "2026-07-27", "cola": "2026-07-28", "uv": "2026-07-29", "emb": "2026-07-30", "itens": [{"cod": "114.011.001", "desc": "PENTEADEIRA CAMARIM ELOA BRANCO", "qtd": 180}, {"cod": "114.011.006", "desc": "PENTEADEIRA CAMARIM ELOA OFF WHITE", "qtd": 80}, {"cod": "114.011.117", "desc": "PENTEADEIRA CAMARIM ELOA CINAMOMO/OFF WHITE", "qtd": 40}, {"cod": "105.038.118", "desc": "RACK URBAN 1.8 OFF WHITE/CINAMOMO", "qtd": 150}, {"cod": "114013006", "desc": "PENTEADEIRA CAMARIM 1PT 2GAV DIAMANTE OFF WHITE", "qtd": 30}, {"cod": "114.013.021", "desc": "PENTEADEIRA CAMARIM 1PT 2GAV DIAMANTE BRANCO AC", "qtd": 370}], "qtd": 850}, {"lote": "137/26", "cor": "AZUL", "corte": "2026-07-23", "furar": "2026-07-24", "cola": "2026-07-27", "uv": "2026-07-28", "emb": "2026-07-29", "itens": [{"cod": "114.010.001", "desc": "PENTEADEIRA CAMARIM MEL BRANCO", "qtd": 180}, {"cod": "114.010.006", "desc": "PENTEADEIRA CAMARIM MEL OFF WHITE", "qtd": 160}, {"cod": "114.010.117", "desc": "PENTEADEIRA CAMARIM MEL CINAMOMO/OFF WHIHTE", "qtd": 60}, {"cod": "108.008.001", "desc": "MESA COMPUTADOR MILLION BRANCO", "qtd": 35}, {"cod": "108.008.116", "desc": "MESA COMPUTADOR MILLION CINAMOMO", "qtd": 190}, {"cod": "108.008.118", "desc": "MESA COMPUTADOR MILLION OFF WHHITE/CINAMOMO", "qtd": 60}, {"cod": "108.008.120", "desc": "MESA COMPUTADOR MILLION PRETO ACETINADO/CINAMOMO", "qtd": 55}, {"cod": "108.008.121", "desc": "MESA COMPUTADOR MILLION BRANCO/CINAMOMO", "qtd": 160}, {"cod": "109.046.006", "desc": "MESA CENTRO LUNA 670 OFF WHITE", "qtd": 170}, {"cod": "109.046.021", "desc": "MESA CENTRO LUNA 670 BRANCO ACETINADO", "qtd": 15}, {"cod": "109.046.073", "desc": "MESA CENTRO LUNA 670 CUMARU", "qtd": 65}, {"cod": "109.047.006", "desc": "MESA CENTRO LUNA 590 OFF WHITE", "qtd": 75}, {"cod": "109.047.073", "desc": "MESA CENTRO LUNA 590 CUMARU", "qtd": 25}, {"cod": "110.041.006", "desc": "MESA APOIO LUNA 530 OFF WHITE", "qtd": 90}, {"cod": "110.041.073", "desc": "MESA APOIO LUNA 530 CUMARU", "qtd": 10}, {"cod": "110.042.006", "desc": "MESA LATERAL LUNA 440 OFF WHITE", "qtd": 125}, {"cod": "110.042.073", "desc": "MESA LATERAL LUNA 440 CUMARU", "qtd": 55}, {"cod": "110.042.111", "desc": "MESA LATERAL LUNA 440 ALECRIM", "qtd": 20}], "qtd": 1550}, {"lote": "136/26", "cor": "AMARELO", "corte": "2026-07-22", "furar": "2026-07-23", "cola": "2026-07-24", "uv": "2026-07-27", "emb": "2026-07-28", "itens": [{"cod": "114.003.001", "desc": "PENTEADEIRA PRINCESA BRANCO", "qtd": 225}, {"cod": "114.003.002", "desc": "PENTEADEIRA PRINCESA ROSA", "qtd": 225}, {"cod": "113.006.116", "desc": "CRISTALEIRA ORION CINAMOMO", "qtd": 50}, {"cod": "113.006.118", "desc": "CRISTALEIRA ORION OFF WHITE/CINAMOMO", "qtd": 100}, {"cod": "106.066.116", "desc": "PAINEL ON 1.8 CINAMOMO", "qtd": 150}], "qtd": 750}, {"lote": "135/26", "cor": "VERMELHO", "corte": "2026-07-21", "furar": "2026-07-22", "cola": "2026-07-23", "uv": "2026-07-24", "emb": "2026-07-27", "itens": [{"cod": "109.044.001", "desc": "MESA CENTRO SLIM BRANCO", "qtd": 15}, {"cod": "109.044.006", "desc": "MESA CENTRO SLIM OFF WHITE", "qtd": 225}, {"cod": "109.044.070", "desc": "MESA CENTRO SLIM PRETO ACETINADO", "qtd": 20}, {"cod": "109.044.116", "desc": "MESA CENTRO SLIM CINAMOMO", "qtd": 190}, {"cod": "102.004.001", "desc": "SAPATEIRA SPAZIO BRANCO", "qtd": 10}, {"cod": "102.004.116", "desc": "SAPATEIRA SPAZIO CINAMOMO", "qtd": 120}, {"cod": "102.004.117", "desc": "SAPATEIRA SPAZIO CINAMOMO/OFF WHITE", "qtd": 220}, {"cod": "106.062.117", "desc": "HOME ANGEL 1.8 CINAMOMO/OFF WHITE", "qtd": 35}, {"cod": "106.062.118", "desc": "HOME ANGEL 1.8 OFF WHITE/CINAMOMO", "qtd": 115}, {"cod": "106.057.117", "desc": "HOME RIPADO ANTARES 1.4 CINAMOMO/OFF WHITE", "qtd": 100}], "qtd": 1050}, {"lote": "134/26", "cor": "BRANCO", "corte": "2026-07-20", "furar": "2026-07-21", "cola": "2026-07-22", "uv": "2026-07-23", "emb": "2026-07-24", "itens": [{"cod": "501.141.007", "desc": "VOL 1/1 BUFFET 4 PT PRISM CINAMOMO", "qtd": 250}, {"cod": "501.141.008", "desc": "VOL 1/1 BUFFET 4 PT PRISM OFF WHITE/CINAMOMO", "qtd": 375}, {"cod": "501.141.009", "desc": "VOL 1/1 BUFFET 4 PT PRISM BRANCO AC/CINAMOMO", "qtd": 25}, {"cod": "501.118.001", "desc": "VOL 1/1 ESCRIVANINHA TAURUS OFF WHITE", "qtd": 250}, {"cod": "501.118.002", "desc": "VOL 1/1 ESCRIVANINHA TAURUS BRANCO AC", "qtd": 50}, {"cod": "501.118.005", "desc": "VOL 1/1 ESCRIVANINHA TAURUS CINAMOMO", "qtd": 200}, {"cod": "501.115.001", "desc": "VOL 1/1 MESA COMP SPACE BRANCO", "qtd": 10}, {"cod": "501.115.002", "desc": "VOL 1/1 MESA COMP SPACE CINAMOMO", "qtd": 130}, {"cod": "501.115.004", "desc": "VOL 1/1 MESA COMP SPACE OFF WHITE/CINAMOMO", "qtd": 180}, {"cod": "501.115.003", "desc": "VOL 1/1 MESA COMP SPACE BRANCO/CINAMOMO", "qtd": 80}], "qtd": 1550}];
@@ -178,11 +184,19 @@ function pd(s){
   if(m) return new Date(+m[1],+m[2]-1,+m[3]);
   m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);      // DD/MM/YYYY
   if(m){ let y=+m[3]; if(y<100)y+=2000; return new Date(y,+m[2]-1,+m[1]); }
+  m=s.match(/^(\d{1,2})\/(\d{1,2})$/);                // DD/MM (sem ano) → ano atual
+  if(m) return new Date(new Date().getFullYear(),+m[2]-1,+m[1]);
+  m=s.match(/^Date\((\d+),(\d+),(\d+)/);              // Date(y,m,d) do gviz
+  if(m) return new Date(+m[1],+m[2],+m[3]);
   const d=new Date(s); return isNaN(d)?null:d;
 }
 const fmt = d => d? String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0") : "–";
 const diasEntre = (a,b)=> Math.round((b-a)/86400000);
 const isoOf = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+// subtrai N dias úteis (pula sábado/domingo)
+function subWorkdays(d,n){ const r=new Date(d); let left=n;
+  while(left>0){ r.setDate(r.getDate()-1); const wd=r.getDay(); if(wd!==0&&wd!==6) left--; }
+  return r; }
 
 /* ---------- CSV ---------- */
 function parseCSV(txt){
@@ -201,9 +215,13 @@ const ALIASES={
   lote:["lote","nlote","numlote","n"], cor:["cor","corgps"],
   corte:["corte","datacorte"], furar:["furar","datafurar","furadeira"],
   cola:["cola","colar","coladeira","datacola","datacolapintpu","colapu"],
-  uv:["uv","pintuv","linhauv","datauv"], emb:["emb","embalagem","dataprevemb","dataemb","previsaoemb"],
+  uv:["uv","pintuv","linhauv","datauv"],
+  // nesta planilha só existe a data da embalagem, na coluna "Data"
+  emb:["emb","embalagem","dataprevemb","dataemb","previsaoemb","data"],
   cod:["cod","codigo","cdigo","sku"], desc:["desc","descricao","descrio","descricaocor","produto","item"],
-  qtd:["qtd","qtde","quantidade","qtditem"]
+  qtd:["qtd","qtde","quantidade","qtditem","qtdcx","qtcx","caixas"],
+  prod:["produzido","prod","feito"], saldo:["saldo","falta"],
+  perc:["percentual","percent","perc","pct"], status:["status","situacao"]
 };
 function mapHeader(hrow){
   const idx={}; hrow.forEach((h,i)=>{ const n=norm(h);
@@ -213,21 +231,36 @@ function mapHeader(hrow){
 const val=(row,i)=> i===undefined?"":(row[i]||"").trim();
 const num=x=> parseFloat(String(x||"0").replace(/\./g,"").replace(",","."))||0;
 
-// Formato uma-linha-por-produto: datas preenchidas só na 1ª linha de cada lote (fill-forward)
+// Uma linha por produto; várias linhas do mesmo lote são agrupadas.
+// A planilha traz só a data da embalagem (coluna "Data"); as demais
+// etapas são derivadas voltando dias úteis (ver LEAD). Se a planilha já
+// tiver as colunas corte/furar/cola/uv, elas são respeitadas.
 function rowsToLotes(rows){
   if(!rows.length) return [];
   const idx=mapHeader(rows[0]);
-  if(idx.lote===undefined || idx.corte===undefined) return [];
+  if(idx.lote===undefined || (idx.emb===undefined && idx.corte===undefined)) return [];
   const out=[]; let cur=null;
   for(let r=1;r<rows.length;r++){ const row=rows[r];
     const lote=val(row,idx.lote);
-    if(lote){ cur={ lote, cor:val(row,idx.cor),
-      corte:val(row,idx.corte), furar:val(row,idx.furar), cola:val(row,idx.cola),
-      uv:val(row,idx.uv), emb:val(row,idx.emb), itens:[], qtd:0 };
-      out.push(cur); }
+    if(lote && (!cur || cur.lote!==lote)){
+      cur={ lote, cor:val(row,idx.cor),
+        corte:val(row,idx.corte), furar:val(row,idx.furar), cola:val(row,idx.cola),
+        uv:val(row,idx.uv), emb:val(row,idx.emb), itens:[], qtd:0, prod:0 };
+      // se não vieram as datas das etapas, deriva a partir da embalagem
+      const embD=pd(cur.emb);
+      if(embD && !pd(cur.corte)){
+        cur.emb  =isoOf(embD);
+        cur.uv   =isoOf(subWorkdays(embD,LEAD.uv));
+        cur.cola =isoOf(subWorkdays(embD,LEAD.cola));
+        cur.furar=isoOf(subWorkdays(embD,LEAD.furar));
+        cur.corte=isoOf(subWorkdays(embD,LEAD.corte));
+      }
+      out.push(cur);
+    }
     if(!cur) continue;
     const cod=val(row,idx.cod), desc=val(row,idx.desc), q=num(val(row,idx.qtd));
-    if(desc || cod || q){ cur.itens.push({cod,desc,qtd:q}); cur.qtd+=q; }
+    const prod=num(val(row,idx.prod)), perc=num(val(row,idx.perc)), status=val(row,idx.status);
+    if(desc || cod || q){ cur.itens.push({cod,desc,qtd:q,prod,perc,status}); cur.qtd+=q; cur.prod+=prod; }
   }
   return out;
 }
@@ -319,8 +352,10 @@ function cardEl(l,idx,ref){
     return `<div class="step ${cls}"><span class="bead"></span><span class="lbl">${e.abrev}</span><span class="dt">${fmt(pd(l[e.key]))}</span></div>`; }).join("");
   const itensHtml=(l.itens&&l.itens.length)?`<div class="items"><table>${l.itens.map(it=>
     `<tr><td class="cd">${it.cod||""}</td><td>${it.desc}</td><td class="q">${it.qtd}</td></tr>`).join("")}</table></div>`:"";
+  const pct=l.qtd?Math.round((l.prod||0)/l.qtd*100):0;
+  const prog=(l.prod>0)?`<span>Prod <b>${(l.prod||0).toLocaleString("pt-BR")}</b> · ${pct}%</span>`:"";
   c.innerHTML=`<div class="c-top"><span class="c-lote">${l.lote}</span>${l.cor?`<span class="cor">${l.cor}</span>`:""}</div>
-    <div class="c-sub"><span>Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b></span>${l.itens?`<span><b>${l.itens.length}</b> itens</span>`:""}</div>
+    <div class="c-sub"><span>Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b></span>${prog}${l.itens?`<span><b>${l.itens.length}</b> itens</span>`:""}</div>
     ${stat}<div class="tl">${tl}</div>${itensHtml}`;
   if(itensHtml) c.addEventListener("click",()=>c.classList.toggle("open"));
   return c;
