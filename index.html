@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Esteira de Elaboração — PPCP Patrimar</title>
 <!-- PWA / app instalável -->
-<meta name="theme-color" content="#14171b">
+<meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -18,10 +18,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#14171b; --panel:#1e232a; --panel2:#242a32; --line:#333b45;
-    --ink:#e8ecf2; --mut:#7d8794; --mut2:#5b636e;
-    --amber:#f5a623; --amber-dim:#7a5a1c; --green:#45c08a; --green-dim:#245140;
-    --steel:#5b8bb0; --wood:#c9962e; --red:#e8543b;
+    /* paleta no padrão do RitmoProd (Embalagem): preto, laranja, verde/vermelho */
+    --bg:#000000; --panel:#111316; --panel2:#17191d; --line:#2b2f36;
+    --ink:#f2f4f7; --mut:#8a929c; --mut2:#5b636e;
+    --amber:#ff5a1f; --amber-dim:#5a2410; --green:#3fd15f; --green-dim:#184f2b;
+    --steel:#5b8bb0; --wood:#ff5a1f; --red:#ff3b30;
   }
   *{box-sizing:border-box} html,body{margin:0}
   body{background:var(--bg); color:var(--ink); font-family:"Inter",system-ui,sans-serif;
@@ -152,10 +153,10 @@
   .tv-it .d{color:var(--ink); flex:1; white-space:normal; word-break:break-word}
   .tv-it .q{font-family:"IBM Plex Mono"; color:var(--amber); margin-left:auto; white-space:nowrap; font-weight:600}
   /* logomarca */
-  .logobar{display:flex; justify-content:center; padding:4px 0 16px}
-  .logo{height:62px; width:auto; background:#fff; padding:8px 18px; border-radius:10px; display:block}
-  .tv-logobar{display:flex; justify-content:center; padding:1vh 0 1.4vh}
-  .tv-logo{height:7vh; width:auto; background:#fff; padding:.8vh 1.8vw; border-radius:.8vw}
+  .logobar{display:flex; justify-content:center; padding:6px 0 16px}
+  .logo{height:72px; width:auto; display:block}
+  .tv-logobar{display:flex; justify-content:center; padding:1vh 0 1.6vh}
+  .tv-logo{height:9vh; width:auto}
   .tv-empty{grid-column:1/-1; display:flex; align-items:center; justify-content:center;
     color:var(--mut2); font-size:2.2vw; font-style:italic; height:64vh}
   .tv-foot{border-top:1px solid var(--line); margin-top:1.6vh; padding-top:1.1vh;
@@ -165,7 +166,7 @@
 </head>
 <body>
 
-<div class="logobar"><img class="logo" src="Logotipo Patrimar.jpg" alt="Patrimar Móveis"></div>
+<div class="logobar"><img class="logo" src="logo-patrimar.png" alt="Patrimar Móveis"></div>
 <header class="top">
   <div class="brand">
     <div class="eyebrow">PPCP 2026 · Patrimar</div>
@@ -460,7 +461,7 @@ function renderTV(buckets, ref){
   const cards=(pages[TV_PAGE]||[]).map(cardOf).join("");
   const pgTxt = pages.length>1 ? `Página ${TV_PAGE+1}/${pages.length} · ${et.nome}` : `lotes do dia · ${et.nome}`;
   document.getElementById("tv").innerHTML=`
-    <div class="tv-logobar"><img class="tv-logo" src="Logotipo Patrimar.jpg" alt="Patrimar"></div>
+    <div class="tv-logobar"><img class="tv-logo" src="logo-patrimar.png" alt="Patrimar"></div>
     <div class="tv-head">
       <div><div class="tv-fase">${et.fase}</div><div class="tv-nm">${et.nome}</div></div>
       <div class="tv-clock" id="tvClock"></div>
