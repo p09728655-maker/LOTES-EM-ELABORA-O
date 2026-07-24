@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lotes em Elaboração — PCP</title>
+<style>
+  :root{
+    --bg:#0f172a; --bg2:#1e293b; --card:#ffffff; --line:#e2e8f0;
+    --txt:#0f172a; --muted:#64748b; --brand:#2563eb; --brand2:#1d4ed8;
+    --ok:#16a34a; --warn:#d97706; --late:#dc2626; --done:#0891b2;
+    --shadow:0 1px 3px rgba(15,23,42,.08),0 1px 2px rgba(15,23,42,.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#f1f5f9;color:var(--txt);line-height:1.45;-webkit-font-smoothing:antialiased}
+  header{background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 100%);color:#fff;
+    padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  header h1{font-size:20px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+  header .sub{font-size:12px;color:#94a3b8;margin-top:2px}
+  .badge{background:rgba(37,99,235,.2);border:1px solid rgba(96,165,250,.4);color:#bfdbfe;
+    padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600}
+  .wrap{max-width:1200px;margin:0 auto;padding:24px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+  .kpi .n{font-size:28px;font-weight:800;line-height:1}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+  .kpi.total .n{color:var(--brand)} .kpi.elab .n{color:var(--warn)}
+  .kpi.late .n{color:var(--late)} .kpi.done .n{color:var(--done)}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .toolbar input[type=search]{flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--line);
+    border-radius:10px;font-size:14px;background:#fff}
+  .toolbar select{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff}
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;font-size:14px;font-weight:600;
+    padding:10px 16px;transition:.15s}
+  .btn-primary{background:var(--brand);color:#fff} .btn-primary:hover{background:var(--brand2)}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--txt)} .btn-ghost:hover{background:#f8fafc}
+  .btn-sm{padding:6px 10px;font-size:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead th{background:#f8fafc;text-align:left;padding:12px 14px;font-size:11px;text-transform:uppercase;
+    letter-spacing:.5px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody td{padding:12px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  tbody tr:hover{background:#f8fafc}
+  tbody tr:last-child td{border-bottom:none}
+  .tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+  .st-fila{background:#e0e7ff;color:#3730a3}
+  .st-elab{background:#fef3c7;color:#92400e}
+  .st-parado{background:#fee2e2;color:#991b1b}
+  .st-concl{background:#cffafe;color:#155e75}
+  .prog{background:#f1f5f9;border-radius:999px;height:8px;width:100px;overflow:hidden;display:inline-block;vertical-align:middle}
+  .prog > i{display:block;height:100%;background:var(--brand);border-radius:999px}
+  .prog.late > i{background:var(--late)}
+  .late-flag{color:var(--late);font-weight:700;font-size:11px;margin-left:6px}
+  .mono{font-variant-numeric:tabular-nums;font-weight:600}
+  .empty{padding:48px 24px;text-align:center;color:var(--muted)}
+  .empty svg{opacity:.35;margin-bottom:8px}
+  .row-actions{display:flex;gap:6px}
+  .icon-btn{background:none;border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12px;color:var(--muted)}
+  .icon-btn:hover{background:#f1f5f9;color:var(--txt)}
+  .icon-btn.del:hover{background:#fef2f2;color:var(--late);border-color:#fecaca}
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:flex-start;
+    justify-content:center;padding:32px 16px;z-index:50;overflow-y:auto}
+  .overlay.open{display:flex}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:560px;box-shadow:0 20px 40px rgba(15,23,42,.3)}
+  .modal h2{padding:20px 24px;font-size:17px;border-bottom:1px solid var(--line)}
+  .form{padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .form .full{grid-column:1/-1}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;padding:9px 12px;border:1px solid var(--line);
+    border-radius:9px;font-size:14px;font-family:inherit;background:#fff}
+  .field textarea{resize:vertical;min-height:60px}
+  .modal-foot{padding:16px 24px;display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--line)}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
+  @media(max-width:640px){
+    .form{grid-template-columns:1fr}
+    thead{display:none}
+    tbody td{display:block;padding:8px 14px;border:none}
+    tbody tr{display:block;border-bottom:1px solid var(--line);padding:8px 0}
+    tbody td::before{content:attr(data-l);display:block;font-size:10px;text-transform:uppercase;
+      letter-spacing:.5px;color:var(--muted);font-weight:700;margin-bottom:2px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📦 Lotes em Elaboração</h1>
+    <div class="sub">Controle de Produção — PCP</div>
+  </div>
+  <span class="badge" id="hoje"></span>
+</header>
+
+<div class="wrap">
+  <div class="kpis">
+    <div class="kpi total"><div class="n" id="kTotal">0</div><div class="l">Total de lotes</div></div>
+    <div class="kpi elab"><div class="n" id="kElab">0</div><div class="l">Em elaboração</div></div>
+    <div class="kpi late"><div class="n" id="kLate">0</div><div class="l">Atrasados</div></div>
+    <div class="kpi done"><div class="n" id="kDone">0</div><div class="l">Concluídos</div></div>
+  </div>
+
+  <div class="toolbar">
+    <input type="search" id="busca" placeholder="Buscar por lote, produto ou setor…">
+    <select id="fStatus">
+      <option value="">Todos os status</option>
+      <option value="Na fila">Na fila</option>
+      <option value="Em elaboração">Em elaboração</option>
+      <option value="Parado">Parado</option>
+      <option value="Concluído">Concluído</option>
+    </select>
+    <button class="btn-primary" id="btnNovo">+ Novo lote</button>
+    <button class="btn-ghost" id="btnExport">Exportar</button>
+    <button class="btn-ghost" id="btnImport">Importar</button>
+    <input type="file" id="fileImport" accept="application/json" hidden>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Lote</th><th>Produto</th><th>Qtd</th><th>Setor</th>
+          <th>Início</th><th>Prazo</th><th>Progresso</th><th>Status</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden>
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>
+      <div>Nenhum lote cadastrado ainda.</div>
+      <div style="font-size:12px;margin-top:4px">Clique em “+ Novo lote” para começar.</div>
+    </div>
+  </div>
+</div>
+
+<footer>PCP — Lotes em Elaboração · dados salvos neste navegador</footer>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">Novo lote</h2>
+    <form class="form" id="form">
+      <input type="hidden" id="fId">
+      <div class="field"><label>Nº do lote *</label><input id="fLote" required placeholder="Ex: L-2045"></div>
+      <div class="field"><label>Quantidade</label><input id="fQtd" type="number" min="0" placeholder="0"></div>
+      <div class="field full"><label>Produto *</label><input id="fProduto" required placeholder="Ex: Guarda-roupa 6 portas"></div>
+      <div class="field"><label>Setor atual</label><input id="fSetor" placeholder="Ex: Corte / Montagem / Embalagem"></div>
+      <div class="field">
+        <label>Status</label>
+        <select id="fStatusForm">
+          <option>Na fila</option><option>Em elaboração</option><option>Parado</option><option>Concluído</option>
+        </select>
+      </div>
+      <div class="field"><label>Data de início</label><input id="fInicio" type="date"></div>
+      <div class="field"><label>Prazo de entrega</label><input id="fPrazo" type="date"></div>
+      <div class="field full"><label>Progresso (%)</label><input id="fProg" type="range" min="0" max="100" step="5" value="0" oninput="pOut.textContent=this.value+'%'"><span id="pOut" class="mono">0%</span></div>
+      <div class="field full"><label>Observações</label><textarea id="fObs" placeholder="Pendências, notas do PCP…"></textarea></div>
+    </form>
+    <div class="modal-foot">
+      <button class="btn-ghost" id="btnCancel">Cancelar</button>
+      <button class="btn-primary" id="btnSave">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY='lotes_elaboracao_v1';
+const $=s=>document.querySelector(s);
+let lotes=[];
+
+function load(){ try{lotes=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){lotes=[]} }
+function save(){ localStorage.setItem(KEY,JSON.stringify(lotes)) }
+
+function hoje(){ return new Date().toISOString().slice(0,10) }
+function fmtData(d){ if(!d) return '—'; const [y,m,dd]=d.split('-'); return `${dd}/${m}/${y}` }
+function isLate(l){ return l.prazo && l.status!=='Concluído' && l.prazo < hoje() }
+
+const stClass={'Na fila':'st-fila','Em elaboração':'st-elab','Parado':'st-parado','Concluído':'st-concl'};
+
+function render(){
+  const q=$('#busca').value.trim().toLowerCase();
+  const fs=$('#fStatus').value;
+  let list=lotes.filter(l=>{
+    const hit=!q || [l.lote,l.produto,l.setor].join(' ').toLowerCase().includes(q);
+    const st=!fs || l.status===fs;
+    return hit&&st;
+  });
+  // ordena: atrasados > em elaboração > fila > parado > concluído
+  const ord={'Em elaboração':0,'Na fila':1,'Parado':2,'Concluído':3};
+  list.sort((a,b)=>(isLate(b)-isLate(a)) || (ord[a.status]-ord[b.status]) || (a.prazo||'').localeCompare(b.prazo||''));
+
+  const tb=$('#tbody'); tb.innerHTML='';
+  $('#empty').hidden=list.length>0;
+  for(const l of list){
+    const late=isLate(l);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td data-l="Lote"><span class="mono">${esc(l.lote)}</span></td>
+      <td data-l="Produto">${esc(l.produto)}</td>
+      <td data-l="Qtd" class="mono">${l.qtd??'—'}</td>
+      <td data-l="Setor">${esc(l.setor||'—')}</td>
+      <td data-l="Início">${fmtData(l.inicio)}</td>
+      <td data-l="Prazo">${fmtData(l.prazo)}${late?'<span class="late-flag">ATRASADO</span>':''}</td>
+      <td data-l="Progresso"><span class="prog ${late?'late':''}"><i style="width:${l.prog||0}%"></i></span> <span class="mono">${l.prog||0}%</span></td>
+      <td data-l="Status"><span class="tag ${stClass[l.status]||''}">${esc(l.status)}</span></td>
+      <td data-l=""><div class="row-actions">
+        <button class="icon-btn" data-edit="${l.id}">✎</button>
+        <button class="icon-btn del" data-del="${l.id}">🗑</button>
+      </div></td>`;
+    tb.appendChild(tr);
+  }
+  // KPIs
+  $('#kTotal').textContent=lotes.length;
+  $('#kElab').textContent=lotes.filter(l=>l.status==='Em elaboração').length;
+  $('#kLate').textContent=lotes.filter(isLate).length;
+  $('#kDone').textContent=lotes.filter(l=>l.status==='Concluído').length;
+}
+
+function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+function uid(){ return 'l'+Math.random().toString(36).slice(2,9)+Date.now().toString(36) }
+
+// Modal
+function openModal(l){
+  $('#modalTitle').textContent=l?'Editar lote':'Novo lote';
+  $('#fId').value=l?.id||'';
+  $('#fLote').value=l?.lote||'';
+  $('#fProduto').value=l?.produto||'';
+  $('#fQtd').value=l?.qtd??'';
+  $('#fSetor').value=l?.setor||'';
+  $('#fStatusForm').value=l?.status||'Na fila';
+  $('#fInicio').value=l?.inicio||hoje();
+  $('#fPrazo').value=l?.prazo||'';
+  $('#fProg').value=l?.prog||0; $('#pOut').textContent=(l?.prog||0)+'%';
+  $('#fObs').value=l?.obs||'';
+  $('#overlay').classList.add('open');
+  $('#fLote').focus();
+}
+function closeModal(){ $('#overlay').classList.remove('open') }
+
+function saveForm(){
+  const lote=$('#fLote').value.trim(), produto=$('#fProduto').value.trim();
+  if(!lote||!produto){ alert('Informe o nº do lote e o produto.'); return }
+  const id=$('#fId').value;
+  const data={
+    id:id||uid(), lote, produto,
+    qtd:$('#fQtd').value===''?null:Number($('#fQtd').value),
+    setor:$('#fSetor').value.trim(),
+    status:$('#fStatusForm').value,
+    inicio:$('#fInicio').value, prazo:$('#fPrazo').value,
+    prog:$('#fStatusForm').value==='Concluído'?100:Number($('#fProg').value),
+    obs:$('#fObs').value.trim()
+  };
+  if(id){ const i=lotes.findIndex(x=>x.id===id); lotes[i]=data; }
+  else lotes.unshift(data);
+  save(); render(); closeModal();
+}
+
+// Eventos
+$('#btnNovo').onclick=()=>openModal();
+$('#btnCancel').onclick=closeModal;
+$('#btnSave').onclick=saveForm;
+$('#overlay').onclick=e=>{ if(e.target.id==='overlay') closeModal() };
+$('#busca').oninput=render;
+$('#fStatus').onchange=render;
+$('#tbody').onclick=e=>{
+  const ed=e.target.closest('[data-edit]'); const dl=e.target.closest('[data-del]');
+  if(ed) openModal(lotes.find(l=>l.id===ed.dataset.edit));
+  if(dl){ const l=lotes.find(x=>x.id===dl.dataset.del);
+    if(confirm(`Excluir o lote ${l.lote}?`)){ lotes=lotes.filter(x=>x.id!==l.id); save(); render(); } }
+};
+document.onkeydown=e=>{ if(e.key==='Escape') closeModal() };
+
+// Export / Import
+$('#btnExport').onclick=()=>{
+  const blob=new Blob([JSON.stringify(lotes,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='lotes-elaboracao.json'; a.click();
+};
+$('#btnImport').onclick=()=>$('#fileImport').click();
+$('#fileImport').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result);
+    if(Array.isArray(d)){ lotes=d; save(); render(); } else alert('Arquivo inválido.'); }
+    catch(err){ alert('Não foi possível ler o arquivo.'); } };
+  r.readAsText(f); e.target.value='';
+};
+
+// Seed de exemplo na primeira abertura
+function seed(){
+  if(localStorage.getItem(KEY)!==null) return;
+  lotes=[
+    {id:uid(),lote:'L-2041',produto:'Guarda-roupa 6 portas Branco',qtd:120,setor:'Montagem',status:'Em elaboração',inicio:'2026-07-20',prazo:'2026-07-28',prog:60,obs:''},
+    {id:uid(),lote:'L-2042',produto:'Cômoda 4 gavetas Carvalho',qtd:80,setor:'Corte',status:'Na fila',inicio:'2026-07-24',prazo:'2026-08-02',prog:0,obs:''},
+    {id:uid(),lote:'L-2039',produto:'Painel TV 1,80m Off-white',qtd:200,setor:'Embalagem',status:'Parado',inicio:'2026-07-15',prazo:'2026-07-22',prog:75,obs:'Aguardando ferragem'},
+    {id:uid(),lote:'L-2035',produto:'Mesa de jantar 6 lugares',qtd:45,setor:'—',status:'Concluído',inicio:'2026-07-10',prazo:'2026-07-19',prog:100,obs:''}
+  ];
+  save();
+}
+
+$('#hoje').textContent='Hoje: '+fmtData(hoje());
+seed(); load(); render();
+</script>
+</body>
+</html>
