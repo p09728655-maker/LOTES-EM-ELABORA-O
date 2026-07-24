@@ -125,8 +125,8 @@
   #tv{display:none}
   body.tv{padding:0; overflow:hidden}
   body.tv header.top, body.tv .controls, body.tv .status, body.tv .lanes, body.tv .foot, body.tv #board, body.tv .logobar{display:none}
-  body.tv #tv{display:flex; flex-direction:column; height:100vh; padding:2.4vh 2.6vw}
-  .tv-head{display:flex; align-items:center; gap:2vw; border-bottom:.4vh solid var(--wood); padding-bottom:1.8vh}
+  body.tv #tv{display:flex; flex-direction:column; height:100vh; padding:1vh 2.4vw 1.4vh}
+  .tv-head{display:flex; align-items:center; gap:2vw; border-bottom:.4vh solid var(--wood); padding-bottom:1.1vh}
   .tv-head .tv-fase{font-family:"IBM Plex Mono"; font-size:1.5vw; letter-spacing:.2em; color:var(--mut); text-transform:uppercase}
   .tv-head .tv-nm{font-family:"Oswald"; font-weight:700; font-size:4.8vw; line-height:1; letter-spacing:.01em; margin-top:.4vh}
   .tv-clock{margin-left:auto; font-family:"IBM Plex Mono"; font-size:2vw; color:var(--mut)}
@@ -148,15 +148,15 @@
   .tv-card .s .dot{width:1vw; height:1vw; border-radius:50%; background:var(--steel); flex:none}
   .tv-card.today .s .dot{background:var(--amber)}
   .tv-items{margin-top:.9vh; border-top:1px solid var(--line); padding-top:1vh; columns:26vw; column-gap:2vw}
-  .tv-it{display:flex; gap:.8vw; font-size:1.5vw; line-height:1.3; align-items:baseline; break-inside:avoid; margin-bottom:.7vh}
+  .tv-it{display:flex; gap:.8vw; font-size:1.45vw; line-height:1.22; align-items:baseline; break-inside:avoid; margin-bottom:.45vh}
   .tv-it .cd{font-family:"IBM Plex Mono"; color:var(--mut2); font-size:1.05vw; white-space:nowrap; min-width:6.5vw}
   .tv-it .d{color:var(--ink); flex:1; white-space:normal; word-break:break-word}
   .tv-it .q{font-family:"IBM Plex Mono"; color:var(--amber); margin-left:auto; white-space:nowrap; font-weight:600}
   /* logomarca */
   .logobar{display:flex; justify-content:center; padding:0 0 6px}
   .logo{height:50px; width:auto; display:block}
-  .tv-logobar{display:flex; justify-content:center; padding:1vh 0 1.6vh}
-  .tv-logo{height:9vh; width:auto}
+  .tv-logobar{display:flex; justify-content:center; padding:0 0 .6vh}
+  .tv-logo{height:5.6vh; width:auto}
   .tv-empty{grid-column:1/-1; display:flex; align-items:center; justify-content:center;
     color:var(--mut2); font-size:2.2vw; font-style:italic; height:64vh}
   .tv-foot{border-top:1px solid var(--line); margin-top:1.6vh; padding-top:1.1vh;
@@ -439,7 +439,7 @@ function renderTV(buckets, ref){
   // paginação: agrupa até 4 lotes OU ~30 itens por página (pra não estourar a TV)
   const pages=[]; let cur=[], its=0;
   for(const x of list){ const n=Math.max(1,(x.l.itens||[]).length);
-    if(cur.length && (cur.length>=3 || its+n>20)){ pages.push(cur); cur=[]; its=0; }
+    if(cur.length && (cur.length>=2 || its+n>22)){ pages.push(cur); cur=[]; its=0; }
     cur.push(x); its+=n; }
   if(cur.length) pages.push(cur);
   TV_PAGES = pages.length;
