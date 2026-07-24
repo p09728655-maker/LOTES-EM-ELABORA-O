@@ -146,10 +146,10 @@
   .tv-card.today .s{color:var(--amber)}
   .tv-card .s .dot{width:1vw; height:1vw; border-radius:50%; background:var(--steel); flex:none}
   .tv-card.today .s .dot{background:var(--amber)}
-  .tv-items{margin-top:.9vh; border-top:1px solid var(--line); padding-top:1vh; columns:16vw; column-gap:2vw}
-  .tv-it{display:flex; gap:.8vw; font-size:1.15vw; line-height:1.4; align-items:baseline; break-inside:avoid}
-  .tv-it .cd{font-family:"IBM Plex Mono"; color:var(--mut2); font-size:.95vw; white-space:nowrap; min-width:6vw}
-  .tv-it .d{color:var(--ink); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .tv-items{margin-top:.9vh; border-top:1px solid var(--line); padding-top:1vh; columns:26vw; column-gap:2vw}
+  .tv-it{display:flex; gap:.8vw; font-size:1.5vw; line-height:1.3; align-items:baseline; break-inside:avoid; margin-bottom:.7vh}
+  .tv-it .cd{font-family:"IBM Plex Mono"; color:var(--mut2); font-size:1.05vw; white-space:nowrap; min-width:6.5vw}
+  .tv-it .d{color:var(--ink); flex:1; white-space:normal; word-break:break-word}
   .tv-it .q{font-family:"IBM Plex Mono"; color:var(--amber); margin-left:auto; white-space:nowrap; font-weight:600}
   /* logomarca */
   .logo{height:38px; width:auto; background:#fff; padding:5px 10px; border-radius:8px; display:block; flex:none}
@@ -266,6 +266,10 @@ function pd(s){
 }
 const fmt = d => d? String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0") : "–";
 const diasEntre = (a,b)=> Math.round((b-a)/86400000);
+// dias ÚTEIS entre duas datas (não conta sábado/domingo)
+function wdBetween(a,b){ if(!a||!b) return 0; const d=new Date(a); let n=0; const dir=b>=a?1:-1;
+  while(+d!==+b){ d.setDate(d.getDate()+dir); const w=d.getDay(); if(w!==0&&w!==6) n+=dir; }
+  return n; }
 const isoOf = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 // subtrai N dias úteis (pula sábado/domingo)
 function subWorkdays(d,n){ const r=new Date(d); let left=n;
@@ -384,7 +388,7 @@ function render(){
   LOTES.forEach(l=>{
     const idx=estagioAtual(l,ref);
     const emb=pd(l.emb), corte=pd(l.corte);
-    if(idx<0){ wait.push({l,dias:corte?diasEntre(ref,corte):null}); return; }
+    if(idx<0){ wait.push({l,dias:corte?wdBetween(ref,corte):null}); return; }
     if(idx===4 && emb && ref>emb){ done.push({l,dias:diasEntre(emb,ref)}); return; }
     buckets[idx].push({l,idx});
   });
@@ -432,7 +436,7 @@ function renderTV(buckets, ref){
   // paginação: agrupa até 4 lotes OU ~30 itens por página (pra não estourar a TV)
   const pages=[]; let cur=[], its=0;
   for(const x of list){ const n=Math.max(1,(x.l.itens||[]).length);
-    if(cur.length && (cur.length>=4 || its+n>30)){ pages.push(cur); cur=[]; its=0; }
+    if(cur.length && (cur.length>=3 || its+n>20)){ pages.push(cur); cur=[]; its=0; }
     cur.push(x); its+=n; }
   if(cur.length) pages.push(cur);
   TV_PAGES = pages.length;
@@ -440,8 +444,8 @@ function renderTV(buckets, ref){
   const cardOf = x => { const l=x.l, d=pd(l[et.key]), hoje=d&&+d===+ref;
     let st;
     if(i===4){ st=hoje?"Embalando hoje":"Em embalagem"; }
-    else if(hoje){ const dd=diasEntre(ref,pd(l[prox.key])); st=`Chegou hoje · vai p/ ${prox.nome} em ${dd}d`; }
-    else { const dd=diasEntre(ref,pd(l[prox.key])); st=`No setor · próx. ${prox.nome} em ${dd}d (${fmt(pd(l[prox.key]))})`; }
+    else if(hoje){ const dd=wdBetween(ref,pd(l[prox.key])); st=`Chegou hoje · vai p/ ${prox.nome} em ${dd}d`; }
+    else { const dd=wdBetween(ref,pd(l[prox.key])); st=`No setor · próx. ${prox.nome} em ${dd}d (${fmt(pd(l[prox.key]))})`; }
     const pct=l.qtd?Math.round((l.prod||0)/l.qtd*100):0;
     const itens=(l.itens&&l.itens.length)?`<div class="tv-items">${l.itens.map(it=>
       `<div class="tv-it"><span class="cd">${it.cod||""}</span><span class="d">${it.desc||""}</span><span class="q">${(it.qtd||0).toLocaleString("pt-BR")}</span></div>`).join("")}</div>`:"";
@@ -470,10 +474,10 @@ function cardEl(l,idx,ref){
   const prox=idx<4?ETAPAS[idx+1]:null;
   const c=document.createElement("div"); c.className="card"+(hoje?" today":"");
   let stat;
-  if(hoje&&prox){ const d=diasEntre(ref,pd(l[prox.key]));
+  if(hoje&&prox){ const d=wdBetween(ref,pd(l[prox.key]));
     stat=`<div class="c-status s-today"><span class="dot"></span>Chegou hoje · vai p/ ${prox.nome} em ${d}d</div>`; }
   else if(hoje&&!prox){ stat=`<div class="c-status s-today"><span class="dot"></span>Embalando hoje</div>`; }
-  else if(prox){ const d=diasEntre(ref,pd(l[prox.key]));
+  else if(prox){ const d=wdBetween(ref,pd(l[prox.key]));
     stat=`<div class="c-status s-next"><span class="dot"></span>No setor · próx. ${prox.nome} em ${d}d (${fmt(pd(l[prox.key]))})</div>`; }
   else { stat=`<div class="c-status s-next"><span class="dot"></span>Em embalagem</div>`; }
   const tl=ETAPAS.map((e,i)=>{ const cls=i<idx?"past":(i===idx?"cur":"");
