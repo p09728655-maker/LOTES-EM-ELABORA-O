@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Esteira de Elaboração — PPCP Patrimar</title>
+<title>Lotes em Elaboração — PPCP Patrimar</title>
 <!-- PWA / app instalável -->
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.webmanifest">
@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Esteira">
+<meta name="apple-mobile-web-app-title" content="Elaboração">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,9 +26,9 @@
   }
   *{box-sizing:border-box} html,body{margin:0}
   body{background:var(--bg); color:var(--ink); font-family:"Inter",system-ui,sans-serif;
-    -webkit-font-smoothing:antialiased; padding:22px 22px 60px;}
+    -webkit-font-smoothing:antialiased; padding:10px 22px 40px;}
   header.top{display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px;
-    border-bottom:2px solid var(--wood); padding-bottom:14px;}
+    border-bottom:2px solid var(--wood); padding-bottom:9px;}
   .brand{display:flex; flex-direction:column; gap:2px}
   .brand .eyebrow{font-family:"IBM Plex Mono"; font-size:11px; letter-spacing:.22em;
     text-transform:uppercase; color:var(--mut)}
@@ -39,8 +39,8 @@
   .kpi b{font-family:"Oswald"; font-size:26px; font-weight:600}
   .kpi small{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut); margin-top:5px}
 
-  .controls{display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:16px 0 8px;
-    padding:12px 14px; background:var(--panel); border:1px solid var(--line); border-radius:10px}
+  .controls{display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:10px 0 6px;
+    padding:8px 12px; background:var(--panel); border:1px solid var(--line); border-radius:10px}
   .controls .grp{display:flex; align-items:center; gap:8px}
   .controls label{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--mut)}
   input[type=date]{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
@@ -51,7 +51,7 @@
   .refnote{margin-left:auto; font-size:12px; color:var(--mut)}
   .refnote b{color:var(--ink); font-family:"IBM Plex Mono"}
 
-  .status{display:flex; align-items:center; gap:8px; font-size:12px; margin:0 2px 18px; color:var(--mut)}
+  .status{display:flex; align-items:center; gap:8px; font-size:12px; margin:0 2px 10px; color:var(--mut)}
   .status .led{width:9px; height:9px; border-radius:50%; background:var(--mut2); flex:none}
   .status.ok .led{background:var(--green)} .status.warn .led{background:var(--amber)} .status.err .led{background:var(--red)}
   .status a{color:var(--steel)}
@@ -153,8 +153,8 @@
   .tv-it .d{color:var(--ink); flex:1; white-space:normal; word-break:break-word}
   .tv-it .q{font-family:"IBM Plex Mono"; color:var(--amber); margin-left:auto; white-space:nowrap; font-weight:600}
   /* logomarca */
-  .logobar{display:flex; justify-content:center; padding:6px 0 16px}
-  .logo{height:72px; width:auto; display:block}
+  .logobar{display:flex; justify-content:center; padding:0 0 6px}
+  .logo{height:50px; width:auto; display:block}
   .tv-logobar{display:flex; justify-content:center; padding:1vh 0 1.6vh}
   .tv-logo{height:9vh; width:auto}
   .tv-empty{grid-column:1/-1; display:flex; align-items:center; justify-content:center;
@@ -170,7 +170,7 @@
 <header class="top">
   <div class="brand">
     <div class="eyebrow">PPCP 2026 · Patrimar</div>
-    <h1>Esteira de <span>Elaboração</span></h1>
+    <h1>Lotes em <span>Elaboração</span></h1>
   </div>
   <div class="headmeta">
     <div class="kpi"><b id="kLotes">–</b><small>lotes ativos</small></div>
@@ -468,7 +468,7 @@ function renderTV(buckets, ref){
       <div class="tv-cnt"><b>${list.length}</b><small>lotes hoje</small></div>
     </div>
     <div class="tv-grid">${list.length?cards:`<div class="tv-empty">Nenhum lote entrou hoje neste setor</div>`}</div>
-    <div class="tv-foot"><span>PPCP · Patrimar · Esteira de Elaboração</span><span>${pgTxt}</span><span>${fmt(ref)}/${ref.getFullYear()}</span></div>`;
+    <div class="tv-foot"><span>PPCP · Patrimar · Lotes em Elaboração</span><span>${pgTxt}</span><span>${fmt(ref)}/${ref.getFullYear()}</span></div>`;
   tvClock();
 }
 

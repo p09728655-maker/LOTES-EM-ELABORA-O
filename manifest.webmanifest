@@ -1,6 +1,6 @@
 {
-  "name": "Esteira de Elaboração — PPCP Patrimar",
-  "short_name": "Esteira",
+  "name": "Lotes em Elaboração — PPCP Patrimar",
+  "short_name": "Elaboração",
   "description": "Painel ao vivo dos lotes em elaboração (PPCP Patrimar).",
   "lang": "pt-BR",
   "start_url": "./index.html",
