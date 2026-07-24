@@ -216,9 +216,10 @@ const ALIASES={
   corte:["corte","datacorte"], furar:["furar","datafurar","furadeira"],
   cola:["cola","colar","coladeira","datacola","datacolapintpu","colapu"],
   uv:["uv","pintuv","linhauv","datauv"],
-  // nesta planilha só existe a data da embalagem, na coluna "Data"
+  // "data" cobre abas que só têm a data da embalagem; "dataprevemb" é o
+  // cabeçalho da planilha de programação (DATA PREV EMB).
   emb:["emb","embalagem","dataprevemb","dataemb","previsaoemb","data"],
-  cod:["cod","codigo","cdigo","sku"], desc:["desc","descricao","descrio","descricaocor","produto","item"],
+  cod:["cod","codigo","cdigo","sku"], desc:["desc","descricao","descrio","descricaocor","descriocor","produto","item"],
   qtd:["qtd","qtde","quantidade","qtditem","qtdcx","qtcx","caixas"],
   prod:["produzido","prod","feito"], saldo:["saldo","falta"],
   perc:["percentual","percent","perc","pct"], status:["status","situacao"]
@@ -232,15 +233,19 @@ const val=(row,i)=> i===undefined?"":(row[i]||"").trim();
 const num=x=> parseFloat(String(x||"0").replace(/\./g,"").replace(",","."))||0;
 
 // Uma linha por produto; várias linhas do mesmo lote são agrupadas.
-// A planilha traz só a data da embalagem (coluna "Data"); as demais
-// etapas são derivadas voltando dias úteis (ver LEAD). Se a planilha já
-// tiver as colunas corte/furar/cola/uv, elas são respeitadas.
+// Se a planilha já tiver as colunas corte/furar/cola/uv, elas são usadas.
+// Se só tiver a data da embalagem, as demais etapas são derivadas (ver LEAD).
+// Tolera planilha "de humano": ignora linhas de título de seção acima do
+// cabeçalho, títulos no meio (fases) e linhas de subtotal (só números).
 function rowsToLotes(rows){
   if(!rows.length) return [];
-  const idx=mapHeader(rows[0]);
-  if(idx.lote===undefined || (idx.emb===undefined && idx.corte===undefined)) return [];
+  // acha a linha de cabeçalho (pode não ser a 1ª: há títulos/mesclagens acima)
+  let h=-1, idx={};
+  for(let i=0;i<Math.min(rows.length,20);i++){ const c=mapHeader(rows[i]);
+    if(c.lote!==undefined && (c.corte!==undefined || c.emb!==undefined)){ h=i; idx=c; break; } }
+  if(h<0) return [];
   const out=[]; let cur=null;
-  for(let r=1;r<rows.length;r++){ const row=rows[r];
+  for(let r=h+1;r<rows.length;r++){ const row=rows[r];
     const lote=val(row,idx.lote);
     if(lote && (!cur || cur.lote!==lote)){
       cur={ lote, cor:val(row,idx.cor),
@@ -260,7 +265,9 @@ function rowsToLotes(rows){
     if(!cur) continue;
     const cod=val(row,idx.cod), desc=val(row,idx.desc), q=num(val(row,idx.qtd));
     const prod=num(val(row,idx.prod)), perc=num(val(row,idx.perc)), status=val(row,idx.status);
-    if(desc || cod || q){ cur.itens.push({cod,desc,qtd:q,prod,perc,status}); cur.qtd+=q; cur.prod+=prod; }
+    // só produto de verdade (tem código, ou descrição com quantidade);
+    // pula subtotais (só números) e linhas de assistência/observação
+    if(cod || (desc && q>0)){ cur.itens.push({cod,desc,qtd:q,prod,perc,status}); cur.qtd+=q; cur.prod+=prod; }
   }
   return out;
 }
