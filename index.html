@@ -132,8 +132,8 @@
   .tv-cnt{text-align:right; margin-left:2vw}
   .tv-cnt b{font-family:"Oswald"; font-size:5vw; font-weight:700; line-height:.9; color:var(--amber)}
   .tv-cnt small{display:block; font-size:1.05vw; letter-spacing:.16em; text-transform:uppercase; color:var(--mut); margin-top:.4vh}
-  .tv-grid{flex:1; display:grid; gap:1.4vw; margin-top:2.2vh; align-content:start;
-    grid-template-columns:repeat(auto-fill,minmax(21vw,1fr)); overflow:hidden}
+  .tv-grid{flex:1; display:grid; gap:1.2vw; margin-top:2vh; align-content:start;
+    grid-template-columns:repeat(auto-fit,minmax(42vw,1fr)); overflow:hidden}
   .tv-card{background:var(--panel2); border:1px solid var(--line); border-left:.55vw solid var(--mut2);
     border-radius:1vw; padding:1.8vh 1.5vw; display:flex; flex-direction:column; gap:1.1vh}
   .tv-card.today{border-left-color:var(--amber); box-shadow:0 0 0 .2vw var(--amber-dim) inset}
@@ -146,6 +146,14 @@
   .tv-card.today .s{color:var(--amber)}
   .tv-card .s .dot{width:1vw; height:1vw; border-radius:50%; background:var(--steel); flex:none}
   .tv-card.today .s .dot{background:var(--amber)}
+  .tv-items{margin-top:.9vh; border-top:1px solid var(--line); padding-top:1vh; columns:16vw; column-gap:2vw}
+  .tv-it{display:flex; gap:.8vw; font-size:1.15vw; line-height:1.4; align-items:baseline; break-inside:avoid}
+  .tv-it .cd{font-family:"IBM Plex Mono"; color:var(--mut2); font-size:.95vw; white-space:nowrap; min-width:6vw}
+  .tv-it .d{color:var(--ink); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .tv-it .q{font-family:"IBM Plex Mono"; color:var(--amber); margin-left:auto; white-space:nowrap; font-weight:600}
+  /* logomarca */
+  .logo{height:38px; width:auto; background:#fff; padding:5px 10px; border-radius:8px; display:block; flex:none}
+  .tv-logo{height:4.6vh; width:auto; background:#fff; padding:.5vh 1vw; border-radius:.7vw; margin-left:1.6vw; flex:none}
   .tv-empty{grid-column:1/-1; display:flex; align-items:center; justify-content:center;
     color:var(--mut2); font-size:2.2vw; font-style:italic; height:64vh}
   .tv-foot{border-top:1px solid var(--line); margin-top:1.6vh; padding-top:1.1vh;
@@ -156,6 +164,7 @@
 <body>
 
 <header class="top">
+  <img class="logo" src="Logotipo Patrimar.jpg" alt="Patrimar Móveis">
   <div class="brand">
     <div class="eyebrow">PPCP 2026 · Patrimar</div>
     <h1>Esteira de <span>Elaboração</span></h1>
@@ -415,27 +424,33 @@ function tvClock(){ const c=document.getElementById("tvClock");
   if(c) c.textContent=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }
 function renderTV(buckets, ref){
   const i=ETAPAS.findIndex(e=>e.key===TVKEY); if(i<0) return;
-  const et=ETAPAS[i], prox=i<4?ETAPAS[i+1]:null, list=buckets[i]||[];
-  const chegaram=list.filter(x=>{const d=pd(x.l[et.key]); return d&&+d===+ref;}).length;
+  const et=ETAPAS[i], prox=i<4?ETAPAS[i+1]:null;
+  // só os lotes DO DIA neste setor (data da etapa = hoje)
+  const list=(buckets[i]||[]).filter(x=>{const d=pd(x.l[et.key]); return d&&+d===+ref;});
+  const chegaram=list.length;
   const cards=list.map(x=>{ const l=x.l, d=pd(l[et.key]), hoje=d&&+d===+ref;
     let st;
     if(i===4){ st=hoje?"Embalando hoje":"Em embalagem"; }
     else if(hoje){ const dd=diasEntre(ref,pd(l[prox.key])); st=`Chegou hoje · vai p/ ${prox.nome} em ${dd}d`; }
     else { const dd=diasEntre(ref,pd(l[prox.key])); st=`No setor · próx. ${prox.nome} em ${dd}d (${fmt(pd(l[prox.key]))})`; }
     const pct=l.qtd?Math.round((l.prod||0)/l.qtd*100):0;
+    const itens=(l.itens&&l.itens.length)?`<div class="tv-items">${l.itens.map(it=>
+      `<div class="tv-it"><span class="cd">${it.cod||""}</span><span class="d">${it.desc||""}</span><span class="q">${(it.qtd||0).toLocaleString("pt-BR")}</span></div>`).join("")}</div>`:"";
     return `<div class="tv-card${hoje?" today":""}">
       <div class="l"><b>${l.lote}</b>${l.cor?`<span class="cor">${l.cor}</span>`:""}</div>
       <div class="m">Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b>${l.itens?` · <b>${l.itens.length}</b> itens`:""}${l.prod>0?` · ${pct}%`:""}</div>
       <div class="s"><span class="dot"></span>${st}</div>
+      ${itens}
     </div>`; }).join("");
   document.getElementById("tv").innerHTML=`
     <div class="tv-head">
       <div><div class="tv-fase">${et.fase}</div><div class="tv-nm">${et.nome}</div></div>
       <div class="tv-clock" id="tvClock"></div>
-      <div class="tv-cnt"><b>${list.length}</b><small>lotes no setor</small></div>
+      <div class="tv-cnt"><b>${list.length}</b><small>lotes hoje</small></div>
+      <img class="tv-logo" src="Logotipo Patrimar.jpg" alt="Patrimar">
     </div>
-    <div class="tv-grid">${list.length?cards:`<div class="tv-empty">Nenhum lote neste setor agora</div>`}</div>
-    <div class="tv-foot"><span>PPCP · Patrimar · Esteira de Elaboração</span><span>${chegaram} chegaram hoje</span><span>${fmt(ref)}/${ref.getFullYear()}</span></div>`;
+    <div class="tv-grid">${list.length?cards:`<div class="tv-empty">Nenhum lote entrou hoje neste setor</div>`}</div>
+    <div class="tv-foot"><span>PPCP · Patrimar · Esteira de Elaboração</span><span>lotes do dia · ${et.nome}</span><span>${fmt(ref)}/${ref.getFullYear()}</span></div>`;
   tvClock();
 }
 
