@@ -117,6 +117,40 @@
   .foot{margin-top:26px; font-size:11.5px; color:var(--mut2); line-height:1.6; max-width:760px}
   .foot code{font-family:"IBM Plex Mono"; color:var(--mut); background:var(--panel); padding:1px 5px; border-radius:4px}
   @media(max-width:900px){ .board{grid-template-columns:1fr} .headmeta{width:100%; justify-content:flex-start; margin-left:0} .lanes{grid-template-columns:1fr} }
+
+  /* ===================== MODO TV (um setor por tela) ===================== */
+  .tvlinks{margin-top:8px}
+  .tvlinks a{color:var(--steel); text-decoration:none} .tvlinks a:hover{color:var(--amber)}
+  #tv{display:none}
+  body.tv{padding:0; overflow:hidden}
+  body.tv header.top, body.tv .controls, body.tv .status, body.tv .lanes, body.tv .foot, body.tv #board{display:none}
+  body.tv #tv{display:flex; flex-direction:column; height:100vh; padding:2.4vh 2.6vw}
+  .tv-head{display:flex; align-items:center; gap:2vw; border-bottom:.4vh solid var(--wood); padding-bottom:1.8vh}
+  .tv-head .tv-fase{font-family:"IBM Plex Mono"; font-size:1.5vw; letter-spacing:.2em; color:var(--mut); text-transform:uppercase}
+  .tv-head .tv-nm{font-family:"Oswald"; font-weight:700; font-size:4.8vw; line-height:1; letter-spacing:.01em; margin-top:.4vh}
+  .tv-clock{margin-left:auto; font-family:"IBM Plex Mono"; font-size:2vw; color:var(--mut)}
+  .tv-cnt{text-align:right; margin-left:2vw}
+  .tv-cnt b{font-family:"Oswald"; font-size:5vw; font-weight:700; line-height:.9; color:var(--amber)}
+  .tv-cnt small{display:block; font-size:1.05vw; letter-spacing:.16em; text-transform:uppercase; color:var(--mut); margin-top:.4vh}
+  .tv-grid{flex:1; display:grid; gap:1.4vw; margin-top:2.2vh; align-content:start;
+    grid-template-columns:repeat(auto-fill,minmax(21vw,1fr)); overflow:hidden}
+  .tv-card{background:var(--panel2); border:1px solid var(--line); border-left:.55vw solid var(--mut2);
+    border-radius:1vw; padding:1.8vh 1.5vw; display:flex; flex-direction:column; gap:1.1vh}
+  .tv-card.today{border-left-color:var(--amber); box-shadow:0 0 0 .2vw var(--amber-dim) inset}
+  .tv-card .l{display:flex; align-items:baseline; gap:1vw}
+  .tv-card .l b{font-family:"IBM Plex Mono"; font-weight:600; font-size:3.6vw; line-height:1}
+  .tv-card .l .cor{margin-left:auto; font-size:1vw; letter-spacing:.1em; text-transform:uppercase; color:var(--mut);
+    border:1px solid var(--line); border-radius:20px; padding:.35vh .9vw}
+  .tv-card .m{font-family:"IBM Plex Mono"; font-size:1.5vw; color:var(--mut)} .tv-card .m b{color:var(--ink)}
+  .tv-card .s{font-size:1.5vw; display:flex; align-items:center; gap:.7vw; color:var(--steel); margin-top:.3vh}
+  .tv-card.today .s{color:var(--amber)}
+  .tv-card .s .dot{width:1vw; height:1vw; border-radius:50%; background:var(--steel); flex:none}
+  .tv-card.today .s .dot{background:var(--amber)}
+  .tv-empty{grid-column:1/-1; display:flex; align-items:center; justify-content:center;
+    color:var(--mut2); font-size:2.2vw; font-style:italic; height:64vh}
+  .tv-foot{border-top:1px solid var(--line); margin-top:1.6vh; padding-top:1.1vh;
+    font-family:"IBM Plex Mono"; font-size:1vw; color:var(--mut2); display:flex; gap:2.4vw}
+  .tv-foot span:last-child{margin-left:auto}
 </style>
 </head>
 <body>
@@ -148,6 +182,8 @@
 
 <div class="board" id="board"></div>
 
+<div id="tv"></div>
+
 <div class="lanes">
   <div class="lane wait"><h3>Programados <span class="cnt" id="waitCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram</span></h3><div id="waitList"></div></div>
   <div class="lane done"><h3>Concluídos <span class="cnt" id="doneCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· após embalagem</span></h3><div id="doneList"></div></div>
@@ -158,6 +194,13 @@
   (corte → furar → colar/PU → UV → embalagem). Clique num card para ver os itens (quando houver).
   Use ◀/▶ pra simular os próximos dias.<br>
   Fonte: <code id="srcUrl"></code>
+  <div class="tvlinks"><b style="color:var(--mut)">Modo TV</b> (um setor por tela, para pendurar):
+    <a href="?setor=corte">Corte</a> ·
+    <a href="?setor=furar">Furadeira</a> ·
+    <a href="?setor=cola">Coladeira/PU</a> ·
+    <a href="?setor=uv">Linha UV</a> ·
+    <a href="?setor=emb">Embalagem</a>
+  </div>
 </div>
 
 <script>
@@ -180,6 +223,16 @@ const ETAPAS = [
    ficam nos dias imediatamente anteriores à embalagem. Ajuste aqui se o
    lead-time real de cada etapa for diferente. */
 const LEAD = { uv:1, cola:2, furar:3, corte:5 }; // dias úteis antes da embalagem
+
+/* ---------- Modo TV: um setor por tela (?setor=corte|furar|cola|uv|emb) ----------
+   Ex.: lotes-em-elaboracao.vercel.app/?setor=furar  → só a Furadeira, tela cheia. */
+const TV_ALIAS = { corte:"corte", furar:"furar", furadeira:"furar",
+  cola:"cola", colar:"cola", coladeira:"cola", pu:"cola",
+  uv:"uv", linhauv:"uv", pintuv:"uv", emb:"emb", embalagem:"emb" };
+const _tvp = new URLSearchParams(location.search);
+const _tvv = (_tvp.get("setor") || _tvp.get("tv") || "").toLowerCase().replace(/[^a-z]/g,"");
+const TVKEY = TV_ALIAS[_tvv] || null;
+if(TVKEY) document.body.classList.add("tv");
 
 /* Dados de exemplo (usados se a planilha ainda estiver vazia / sem acesso) */
 const DEMO = [{"lote": "138/26", "cor": "PRETO", "corte": "2026-07-24", "furar": "2026-07-27", "cola": "2026-07-28", "uv": "2026-07-29", "emb": "2026-07-30", "itens": [{"cod": "114.011.001", "desc": "PENTEADEIRA CAMARIM ELOA BRANCO", "qtd": 180}, {"cod": "114.011.006", "desc": "PENTEADEIRA CAMARIM ELOA OFF WHITE", "qtd": 80}, {"cod": "114.011.117", "desc": "PENTEADEIRA CAMARIM ELOA CINAMOMO/OFF WHITE", "qtd": 40}, {"cod": "105.038.118", "desc": "RACK URBAN 1.8 OFF WHITE/CINAMOMO", "qtd": 150}, {"cod": "114013006", "desc": "PENTEADEIRA CAMARIM 1PT 2GAV DIAMANTE OFF WHITE", "qtd": 30}, {"cod": "114.013.021", "desc": "PENTEADEIRA CAMARIM 1PT 2GAV DIAMANTE BRANCO AC", "qtd": 370}], "qtd": 850}, {"lote": "137/26", "cor": "AZUL", "corte": "2026-07-23", "furar": "2026-07-24", "cola": "2026-07-27", "uv": "2026-07-28", "emb": "2026-07-29", "itens": [{"cod": "114.010.001", "desc": "PENTEADEIRA CAMARIM MEL BRANCO", "qtd": 180}, {"cod": "114.010.006", "desc": "PENTEADEIRA CAMARIM MEL OFF WHITE", "qtd": 160}, {"cod": "114.010.117", "desc": "PENTEADEIRA CAMARIM MEL CINAMOMO/OFF WHIHTE", "qtd": 60}, {"cod": "108.008.001", "desc": "MESA COMPUTADOR MILLION BRANCO", "qtd": 35}, {"cod": "108.008.116", "desc": "MESA COMPUTADOR MILLION CINAMOMO", "qtd": 190}, {"cod": "108.008.118", "desc": "MESA COMPUTADOR MILLION OFF WHHITE/CINAMOMO", "qtd": 60}, {"cod": "108.008.120", "desc": "MESA COMPUTADOR MILLION PRETO ACETINADO/CINAMOMO", "qtd": 55}, {"cod": "108.008.121", "desc": "MESA COMPUTADOR MILLION BRANCO/CINAMOMO", "qtd": 160}, {"cod": "109.046.006", "desc": "MESA CENTRO LUNA 670 OFF WHITE", "qtd": 170}, {"cod": "109.046.021", "desc": "MESA CENTRO LUNA 670 BRANCO ACETINADO", "qtd": 15}, {"cod": "109.046.073", "desc": "MESA CENTRO LUNA 670 CUMARU", "qtd": 65}, {"cod": "109.047.006", "desc": "MESA CENTRO LUNA 590 OFF WHITE", "qtd": 75}, {"cod": "109.047.073", "desc": "MESA CENTRO LUNA 590 CUMARU", "qtd": 25}, {"cod": "110.041.006", "desc": "MESA APOIO LUNA 530 OFF WHITE", "qtd": 90}, {"cod": "110.041.073", "desc": "MESA APOIO LUNA 530 CUMARU", "qtd": 10}, {"cod": "110.042.006", "desc": "MESA LATERAL LUNA 440 OFF WHITE", "qtd": 125}, {"cod": "110.042.073", "desc": "MESA LATERAL LUNA 440 CUMARU", "qtd": 55}, {"cod": "110.042.111", "desc": "MESA LATERAL LUNA 440 ALECRIM", "qtd": 20}], "qtd": 1550}, {"lote": "136/26", "cor": "AMARELO", "corte": "2026-07-22", "furar": "2026-07-23", "cola": "2026-07-24", "uv": "2026-07-27", "emb": "2026-07-28", "itens": [{"cod": "114.003.001", "desc": "PENTEADEIRA PRINCESA BRANCO", "qtd": 225}, {"cod": "114.003.002", "desc": "PENTEADEIRA PRINCESA ROSA", "qtd": 225}, {"cod": "113.006.116", "desc": "CRISTALEIRA ORION CINAMOMO", "qtd": 50}, {"cod": "113.006.118", "desc": "CRISTALEIRA ORION OFF WHITE/CINAMOMO", "qtd": 100}, {"cod": "106.066.116", "desc": "PAINEL ON 1.8 CINAMOMO", "qtd": 150}], "qtd": 750}, {"lote": "135/26", "cor": "VERMELHO", "corte": "2026-07-21", "furar": "2026-07-22", "cola": "2026-07-23", "uv": "2026-07-24", "emb": "2026-07-27", "itens": [{"cod": "109.044.001", "desc": "MESA CENTRO SLIM BRANCO", "qtd": 15}, {"cod": "109.044.006", "desc": "MESA CENTRO SLIM OFF WHITE", "qtd": 225}, {"cod": "109.044.070", "desc": "MESA CENTRO SLIM PRETO ACETINADO", "qtd": 20}, {"cod": "109.044.116", "desc": "MESA CENTRO SLIM CINAMOMO", "qtd": 190}, {"cod": "102.004.001", "desc": "SAPATEIRA SPAZIO BRANCO", "qtd": 10}, {"cod": "102.004.116", "desc": "SAPATEIRA SPAZIO CINAMOMO", "qtd": 120}, {"cod": "102.004.117", "desc": "SAPATEIRA SPAZIO CINAMOMO/OFF WHITE", "qtd": 220}, {"cod": "106.062.117", "desc": "HOME ANGEL 1.8 CINAMOMO/OFF WHITE", "qtd": 35}, {"cod": "106.062.118", "desc": "HOME ANGEL 1.8 OFF WHITE/CINAMOMO", "qtd": 115}, {"cod": "106.057.117", "desc": "HOME RIPADO ANTARES 1.4 CINAMOMO/OFF WHITE", "qtd": 100}], "qtd": 1050}, {"lote": "134/26", "cor": "BRANCO", "corte": "2026-07-20", "furar": "2026-07-21", "cola": "2026-07-22", "uv": "2026-07-23", "emb": "2026-07-24", "itens": [{"cod": "501.141.007", "desc": "VOL 1/1 BUFFET 4 PT PRISM CINAMOMO", "qtd": 250}, {"cod": "501.141.008", "desc": "VOL 1/1 BUFFET 4 PT PRISM OFF WHITE/CINAMOMO", "qtd": 375}, {"cod": "501.141.009", "desc": "VOL 1/1 BUFFET 4 PT PRISM BRANCO AC/CINAMOMO", "qtd": 25}, {"cod": "501.118.001", "desc": "VOL 1/1 ESCRIVANINHA TAURUS OFF WHITE", "qtd": 250}, {"cod": "501.118.002", "desc": "VOL 1/1 ESCRIVANINHA TAURUS BRANCO AC", "qtd": 50}, {"cod": "501.118.005", "desc": "VOL 1/1 ESCRIVANINHA TAURUS CINAMOMO", "qtd": 200}, {"cod": "501.115.001", "desc": "VOL 1/1 MESA COMP SPACE BRANCO", "qtd": 10}, {"cod": "501.115.002", "desc": "VOL 1/1 MESA COMP SPACE CINAMOMO", "qtd": 130}, {"cod": "501.115.004", "desc": "VOL 1/1 MESA COMP SPACE OFF WHITE/CINAMOMO", "qtd": 180}, {"cod": "501.115.003", "desc": "VOL 1/1 MESA COMP SPACE BRANCO/CINAMOMO", "qtd": 80}], "qtd": 1550}];
@@ -313,6 +366,7 @@ function estagioAtual(l, ref){ let idx=-1;
   for(let i=0;i<ETAPAS.length;i++){ const d=pd(l[ETAPAS[i].key]); if(d && d<=ref) idx=i; } return idx; }
 
 function render(){
+  if(TVKEY) document.getElementById("ref").value=isoOf(new Date()); // TV: sempre o dia de hoje
   const ref=pd(document.getElementById("ref").value);
   document.getElementById("refTxt").textContent=fmt(ref)+"/"+ref.getFullYear();
   const buckets=ETAPAS.map(()=>[]), wait=[], done=[];
@@ -352,6 +406,37 @@ function render(){
   dl.innerHTML=done.length?done.sort((a,b)=>a.dias-b.dias).map(w=>
     `<div class="row"><b>${w.l.lote}</b> ${(w.l.cor||"")}<span class="tag" style="color:var(--green)">emb. ${fmt(pd(w.l.emb))}</span></div>`).join("")
     :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
+
+  if(TVKEY) renderTV(buckets, ref);
+}
+
+/* ---------- modo TV: renderiza só o setor escolhido, em tela cheia ---------- */
+function tvClock(){ const c=document.getElementById("tvClock");
+  if(c) c.textContent=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }
+function renderTV(buckets, ref){
+  const i=ETAPAS.findIndex(e=>e.key===TVKEY); if(i<0) return;
+  const et=ETAPAS[i], prox=i<4?ETAPAS[i+1]:null, list=buckets[i]||[];
+  const chegaram=list.filter(x=>{const d=pd(x.l[et.key]); return d&&+d===+ref;}).length;
+  const cards=list.map(x=>{ const l=x.l, d=pd(l[et.key]), hoje=d&&+d===+ref;
+    let st;
+    if(i===4){ st=hoje?"Embalando hoje":"Em embalagem"; }
+    else if(hoje){ const dd=diasEntre(ref,pd(l[prox.key])); st=`Chegou hoje · vai p/ ${prox.nome} em ${dd}d`; }
+    else { const dd=diasEntre(ref,pd(l[prox.key])); st=`No setor · próx. ${prox.nome} em ${dd}d (${fmt(pd(l[prox.key]))})`; }
+    const pct=l.qtd?Math.round((l.prod||0)/l.qtd*100):0;
+    return `<div class="tv-card${hoje?" today":""}">
+      <div class="l"><b>${l.lote}</b>${l.cor?`<span class="cor">${l.cor}</span>`:""}</div>
+      <div class="m">Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b>${l.itens?` · <b>${l.itens.length}</b> itens`:""}${l.prod>0?` · ${pct}%`:""}</div>
+      <div class="s"><span class="dot"></span>${st}</div>
+    </div>`; }).join("");
+  document.getElementById("tv").innerHTML=`
+    <div class="tv-head">
+      <div><div class="tv-fase">${et.fase}</div><div class="tv-nm">${et.nome}</div></div>
+      <div class="tv-clock" id="tvClock"></div>
+      <div class="tv-cnt"><b>${list.length}</b><small>lotes no setor</small></div>
+    </div>
+    <div class="tv-grid">${list.length?cards:`<div class="tv-empty">Nenhum lote neste setor agora</div>`}</div>
+    <div class="tv-foot"><span>PPCP · Patrimar · Esteira de Elaboração</span><span>${chegaram} chegaram hoje</span><span>${fmt(ref)}/${ref.getFullYear()}</span></div>`;
+  tvClock();
 }
 
 function cardEl(l,idx,ref){
@@ -389,6 +474,7 @@ document.getElementById("reload").onclick=carregar;
 refInput.addEventListener("change",render);
 carregar();
 setInterval(carregar, 5*60*1000); // recarrega a cada 5 min
+if(TVKEY) setInterval(tvClock, 30000); // relógio do modo TV
 
 /* PWA: registra o service worker (permite instalar e abrir offline) */
 if("serviceWorker" in navigator){
