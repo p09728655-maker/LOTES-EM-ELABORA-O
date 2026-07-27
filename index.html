@@ -433,7 +433,9 @@ function parseCSV(txt){
 }
 function norm(s){return String(s||"").trim().toLowerCase().replace(/[^a-z0-9]/g,"");}
 const ALIASES={
-  lote:["lote","nlote","numlote","n"], cor:["cor","corgps"],
+  lote:["lote","nlote","numlote","n"],
+  // aceita COR, COR GPS, COR DO GPS, GPS…
+  cor:["cor","corgps","cordogps","gps","corlote","cordolote"],
   corte:["corte","datacorte"], furar:["furar","datafurar","furadeira"],
   cola:["cola","colar","coladeira","datacola","datacolapintpu","colapu"],
   uv:["uv","pintuv","linhauv","datauv"],
@@ -448,6 +450,9 @@ const ALIASES={
 function mapHeader(hrow){
   const idx={}; hrow.forEach((h,i)=>{ const n=norm(h);
     for(const key in ALIASES){ if(ALIASES[key].includes(n) && idx[key]===undefined) idx[key]=i; } });
+  // rede de segurança para a cor: qualquer cabeçalho com "gps" ou começando em "cor"
+  if(idx.cor===undefined) hrow.forEach((h,i)=>{ const n=norm(h);
+    if(idx.cor===undefined && n && (n.includes("gps") || (n.startsWith("cor") && !n.includes("descri")))) idx.cor=i; });
   return idx;
 }
 const val=(row,i)=> i===undefined?"":(row[i]||"").trim();
@@ -484,6 +489,7 @@ function rowsToLotes(rows){
       out.push(cur);
     }
     if(!cur) continue;
+    if(!cur.cor) cur.cor=val(row,idx.cor);   // cor pode estar em qualquer linha do lote
     const cod=val(row,idx.cod), desc=val(row,idx.desc), q=num(val(row,idx.qtd));
     const prod=num(val(row,idx.prod)), perc=num(val(row,idx.perc)), status=val(row,idx.status);
     // volumes pendentes: usa a coluna SALDO/FALTA quando existe; senão, Qtd − PRODUZIDO

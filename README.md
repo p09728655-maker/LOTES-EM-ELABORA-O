@@ -74,7 +74,8 @@ No topo do `<script>` em `index.html`:
 - `LEAD` — dias úteis que cada etapa fica antes da embalagem (padrão 1 por etapa).
 
 A planilha precisa estar compartilhada como **“qualquer pessoa com o link: leitor”**.
-Cabeçalhos reconhecidos (aceita variações): `Lote`, `Data` (= dia da embalagem), `Codigo`, `Descricao`, `Qtd_cx`, `PRODUZIDO`, `PERCENTUAL`, `STATUS`. Uma linha por produto; várias linhas do mesmo lote são agrupadas.
+Cabeçalhos reconhecidos (aceita variações): `Lote`, `Data` (= dia da embalagem), `Codigo`, `Descricao`, `Qtd_cx`, `PRODUZIDO`, `SALDO`, `PERCENTUAL`, `STATUS`, `COR GPS`. Uma linha por produto; várias linhas do mesmo lote são agrupadas.
+A cor aceita `COR`, `COR GPS`, `COR DO GPS` ou qualquer cabeçalho com "gps", e pode estar em qualquer linha do lote — a primeira preenchida vale para o lote todo.
 Se a planilha já tiver colunas próprias de `corte`/`furar`/`cola`/`uv`, elas são respeitadas (a estimativa só entra quando não existem).
 
 ## Publicar
