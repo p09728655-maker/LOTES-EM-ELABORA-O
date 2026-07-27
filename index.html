@@ -80,6 +80,8 @@
   .card.today{border-left-color:var(--amber); box-shadow:0 0 0 1px var(--amber-dim) inset}
   .c-top{display:flex; align-items:baseline; gap:8px}
   .c-lote{font-family:"IBM Plex Mono"; font-weight:600; font-size:19px}
+  .c-int{font-family:"IBM Plex Mono"; font-size:12px; color:var(--mut); letter-spacing:.02em}
+  .lane .row .int{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2)}
   .cor{margin-left:auto; font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
     padding:3px 9px; border-radius:20px; border:1px solid var(--line); color:var(--mut); white-space:nowrap}
   .c-sub{display:flex; gap:14px; margin-top:5px; font-size:12px; color:var(--mut)}
@@ -129,10 +131,11 @@
   .lane.late h3 .tot{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:var(--red)}
   /* grade de colunas fixas: lote · cor · nº · rótulo · de N/% · atraso */
   .lane.late .row{display:grid; align-items:center; gap:0 10px; padding:6px 0;
-    grid-template-columns:58px 104px 64px 96px 1fr auto;
+    grid-template-columns:58px 62px 104px 64px 96px 1fr auto;
     border-bottom:1px solid rgba(255,59,48,.16)}
   .lane.late .row:last-child{border-bottom:none}
   .lane.late .row .lt{font-family:"IBM Plex Mono"; font-size:13.5px; color:var(--ink)}
+  .lane.late .row .cel-int{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2)}
   .lane.late .row .cel-cor{display:flex}
   .lane.late .row .cor{margin-left:0}
   .lane.late .row .pend{font-family:"IBM Plex Mono"; color:var(--red); font-weight:600;
@@ -171,6 +174,7 @@
   .tv-card.today{border-left-color:var(--amber); box-shadow:0 0 0 .2vw var(--amber-dim) inset}
   .tv-card .l{display:flex; align-items:baseline; gap:1vw}
   .tv-card .l b{font-family:"IBM Plex Mono"; font-weight:600; font-size:3.6vw; line-height:1}
+  .tv-card .l .int{font-family:"IBM Plex Mono"; font-size:1.5vw; color:var(--mut)}
   .tv-card .l .cor{margin-left:auto; font-size:1.35vw; font-weight:700; letter-spacing:.1em;
     text-transform:uppercase; color:var(--mut); border:.15vw solid var(--line);
     border-radius:20px; padding:.5vh 1.2vw; white-space:nowrap}
@@ -289,6 +293,7 @@
     .pv-tab td{padding:2.5pt 4pt; border-bottom:.4pt solid #e2e2e2; vertical-align:top}
     .pv-tab tr{page-break-inside:avoid; break-inside:avoid}
     .pv-tab .lt{font-family:"IBM Plex Mono"; font-weight:600; font-size:11pt; white-space:nowrap}
+    .pv-tab .lt .int{display:block; font-size:7.5pt; font-weight:400; color:#777}
     .pv-tab .cel-cor{font-size:8pt; color:#333; white-space:nowrap}
     .pv-tab .pchip{display:inline-block; width:7pt; height:7pt; border-radius:50%; margin-right:3pt;
       vertical-align:-.5pt; border:.4pt solid #999;
@@ -616,6 +621,8 @@ const ALIASES={
   lote:["lote","nlote","numlote","n"],
   // aceita COR, COR GPS, COR DO GPS, GPS…
   cor:["cor","corgps","cordogps","gps","corlote","cordolote"],
+  // lote interno da fábrica (135/26), ao lado do número da OP
+  interno:["loteinterno","interno","loteint","numerointerno","loteinternopcp"],
   corte:["corte","datacorte"], furar:["furar","datafurar","furadeira"],
   cola:["cola","colar","coladeira","datacola","datacolapintpu","colapu"],
   uv:["uv","pintuv","linhauv","datauv"],
@@ -656,6 +663,7 @@ function rowsToLotes(rows){
     if(lote && (!cur || cur.lote!==lote)){
       cur={ lote, cor:val(row,idx.cor),
         corte:val(row,idx.corte), furar:val(row,idx.furar), cola:val(row,idx.cola),
+        interno:val(row,idx.interno),
         uv:val(row,idx.uv), emb:val(row,idx.emb), itens:[], qtd:0, prod:0, saldo:0 };
       // se não vieram as datas das etapas, deriva a partir da embalagem
       const embD=pd(cur.emb);
@@ -670,6 +678,7 @@ function rowsToLotes(rows){
     }
     if(!cur) continue;
     if(!cur.cor) cur.cor=val(row,idx.cor);   // cor pode estar em qualquer linha do lote
+    if(!cur.interno) cur.interno=val(row,idx.interno);
     const cod=val(row,idx.cod), desc=val(row,idx.desc), q=num(val(row,idx.qtd));
     const prod=num(val(row,idx.prod)), perc=num(val(row,idx.perc)), status=val(row,idx.status);
     // volumes pendentes: usa a coluna SALDO/FALTA quando existe; senão, Qtd − PRODUZIDO
@@ -942,6 +951,7 @@ function render(){
   ll.innerHTML = atras.map(a=>{
     const pct=a.l.qtd?Math.round((a.l.qtd-a.pend)/a.l.qtd*100):0;
     return `<div class="row"><b class="lt">${a.l.lote}</b>
+      <span class="cel-int">${a.l.interno||""}</span>
       <span class="cel-cor">${a.l.cor?`<span class="cor" style="${corGPS(a.l.cor)}">${a.l.cor}</span>`:""}</span>
       <span class="pend">${a.pend.toLocaleString("pt-BR")}</span>
       <span class="rot">vol. pendentes</span>
@@ -953,17 +963,17 @@ function render(){
   nbLane.hidden=!sbaixa.length;
   document.getElementById("nbCnt").textContent=sbaixa.length;
   document.getElementById("nbList").innerHTML=sbaixa.map(w=>
-    `<div class="row"><b>${w.l.lote}</b> ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}
+    `<div class="row"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}
       <span class="tag">emb. ${fmt(pd(w.l.emb))} · ${(w.l.qtd||0).toLocaleString("pt-BR")} vol. sem reporte</span></div>`).join("");
 
   const wl=document.getElementById("waitList"),dl=document.getElementById("doneList");
   document.getElementById("waitCnt").textContent=wait.length;
   document.getElementById("doneCnt").textContent=done.length;
   wl.innerHTML=wait.length?wait.map(w=>
-    `<div class="row"><b>${w.l.lote}</b> ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}<span class="tag" style="color:var(--steel)">${w.dias!=null?"entra em "+w.dias+"d · "+fmt(pd(w.l.corte)):""}</span></div>`).join("")
+    `<div class="row"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}<span class="tag" style="color:var(--steel)">${w.dias!=null?"entra em "+w.dias+"d · "+fmt(pd(w.l.corte)):""}</span></div>`).join("")
     :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
   dl.innerHTML=done.length?done.map(w=>
-    `<div class="row"><b>${w.l.lote}</b> ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}<span class="tag" style="color:var(--green)">emb. ${fmt(pd(w.l.emb))}</span></div>`).join("")
+    `<div class="row"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}<span class="tag" style="color:var(--green)">emb. ${fmt(pd(w.l.emb))}</span></div>`).join("")
     :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
 
   if(TVKEY) renderTV(buckets, ref, atras, volAtraso);
@@ -995,7 +1005,7 @@ function renderTV(buckets, ref, atras, volAtraso){
     const itens=(l.itens&&l.itens.length)?`<div class="tv-items">${l.itens.map(it=>
       `<div class="tv-it"><span class="cd">${it.cod||""}</span><span class="d">${it.desc||""}</span><span class="q">${(it.qtd||0).toLocaleString("pt-BR")}</span></div>`).join("")}</div>`:"";
     return `<div class="tv-card${hoje?" today":""}">
-      <div class="l"><b>${l.lote}</b>${l.cor?`<span class="cor" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
+      <div class="l"><b>${l.lote}</b>${l.interno?`<span class="int">${l.interno}</span>`:""}${l.cor?`<span class="cor" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
       <div class="m">Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b>${l.itens?` · <b>${l.itens.length}</b> itens`:""}${l.prod>0?` · ${pct}%`:""}${pend>0?` · <b class="pend">falta ${nBR(pend)} vol.</b>`:""}</div>
       <div class="s"><span class="dot"></span>${st}</div>
       ${itens}
@@ -1042,7 +1052,7 @@ function cardEl(l,idx,ref){
   const prog=(l.prod>0)?`<span>Prod <b>${(l.prod||0).toLocaleString("pt-BR")}</b> · ${pct}%</span>`:"";
   const pend=temApontamento(l)?pendentes(l):0;
   const pendTxt=pend>0?`<span style="color:var(--red)">Pend <b style="color:var(--red)">${pend.toLocaleString("pt-BR")}</b> vol.</span>`:"";
-  c.innerHTML=`<div class="c-top"><span class="c-lote">${l.lote}</span>${l.cor?`<span class="cor" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
+  c.innerHTML=`<div class="c-top"><span class="c-lote">${l.lote}</span>${l.interno?`<span class="c-int">${l.interno}</span>`:""}${l.cor?`<span class="cor" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
     <div class="c-sub"><span>Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b></span>${prog}${pendTxt}${l.itens?`<span><b>${l.itens.length}</b> itens</span>`:""}</div>
     ${stat}<div class="tl">${tl}</div>${itensHtml}`;
   if(itensHtml) c.addEventListener("click",()=>c.classList.toggle("open"));
@@ -1088,7 +1098,7 @@ function buildPrint(ref, comItens){
   /* 2. destaques: o que muda de setor na data de referência */
   const destaques=[];
   ETAPAS.forEach((et,i)=>buckets[i].forEach(x=>{ if(ehHoje(x.l,i,ref))
-    destaques.push(`<div class="r"><span class="et">${esc(et.nome)}</span><b>${esc(x.l.lote)}</b>
+    destaques.push(`<div class="r"><span class="et">${esc(et.nome)}</span><b>${esc(x.l.lote)}</b>${x.l.interno?`<span style="color:#777">${esc(x.l.interno)}</span>`:""}
       <span style="color:#555">${esc(x.l.cor||"")}</span>
       <span class="q">${nBR(x.l.qtd)} pçs${x.l.itens&&x.l.itens.length?` · ${x.l.itens.length} itens`:""}</span></div>`);}));
   const dest = `<div class="pv-dest"><h3>Movimentação do dia — ${fmt(ref)}</h3>
@@ -1102,7 +1112,7 @@ function buildPrint(ref, comItens){
       <th style="text-align:right">Feito</th><th style="text-align:right">Pendente</th></tr></thead>
     <tbody>${atras.map(a=>{
       const feito=(a.l.qtd||0)-a.pend, pct=a.l.qtd?Math.round(feito/a.l.qtd*100):0;
-      return `<tr><td class="lt" style="color:#c1121f">${esc(a.l.lote)}</td>
+      return `<tr><td class="lt" style="color:#c1121f">${esc(a.l.lote)}${a.l.interno?`<span class="int">${esc(a.l.interno)}</span>`:""}</td>
         <td class="cel-cor">${chipCor(a.l.cor)}</td>
         <td class="n" style="text-align:left">${fmt(pd(a.l.emb))}</td>
         <td class="n">${a.dias}d</td><td class="n">${nBR(a.l.qtd)}</td>
@@ -1127,7 +1137,7 @@ function buildPrint(ref, comItens){
             `<li><span class="cd">${esc(it.cod||"")}</span><span>${esc(it.desc||"")}</span>
              <span class="dq">${nBR(it.qtd)}</span></li>`).join("")}</ul></td></tr>` : "";
       return `<tr class="${hoje?"hoje":""}">
-        <td class="lt">${esc(l.lote)}</td>
+        <td class="lt">${esc(l.lote)}${l.interno?`<span class="int">${esc(l.interno)}</span>`:""}</td>
         <td class="cel-cor">${chipCor(l.cor)}</td>
         <td class="n">${nBR(l.qtd)}</td>
         <td class="n">${l.itens?l.itens.length:"–"}</td>
@@ -1192,7 +1202,7 @@ function textoWhats(ref, comItens){
   if(atras.length){
     L.push(`⚠️ *EM ATRASO — ${nBR(volAtraso)} volumes pendentes*`);
     atras.forEach(a=>{
-      L.push(`🔴 ${a.l.lote}${a.l.cor?" "+a.l.cor:""} · *${nBR(a.pend)}* de ${nBR(a.l.qtd)} vol.`);
+      L.push(`🔴 ${a.l.lote}${a.l.interno?" ("+a.l.interno+")":""}${a.l.cor?" "+a.l.cor:""} · *${nBR(a.pend)}* de ${nBR(a.l.qtd)} vol.`);
       L.push(`   _emb. ${fmt(pd(a.l.emb))} · ${a.dias}d de atraso_`);
       if(comItens) itensPend(a.l)
         .forEach(it=>L.push(`   • ${it.desc||it.cod||""} — falta ${nBR(pendItem(it,a.l))}`));
@@ -1206,7 +1216,7 @@ function textoWhats(ref, comItens){
     L.push(`*${et.nome.toUpperCase()}* — ${b.length} lote${b.length>1?"s":""} · ${nBR(pq)} pçs`);
     b.forEach(x=>{
       const hoje=ehHoje(x.l,i,ref);
-      L.push(`${hoje?"🔸":"▫️"} ${x.l.lote}${x.l.cor?" "+x.l.cor:""} · ${nBR(x.l.qtd)} pçs`);
+      L.push(`${hoje?"🔸":"▫️"} ${x.l.lote}${x.l.interno?" ("+x.l.interno+")":""}${x.l.cor?" "+x.l.cor:""} · ${nBR(x.l.qtd)} pçs`);
       L.push(`   _${situacao(x.l,i,ref)}_`);
       if(comItens && x.l.itens && x.l.itens.length)
         x.l.itens.forEach(it=>L.push(`   • ${it.desc||it.cod||""} — ${nBR(it.qtd)}`));
