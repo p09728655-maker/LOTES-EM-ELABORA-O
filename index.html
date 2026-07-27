@@ -79,8 +79,8 @@
   .card.today{border-left-color:var(--amber); box-shadow:0 0 0 1px var(--amber-dim) inset}
   .c-top{display:flex; align-items:baseline; gap:8px}
   .c-lote{font-family:"IBM Plex Mono"; font-weight:600; font-size:19px}
-  .cor{margin-left:auto; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
-    padding:2px 7px; border-radius:20px; border:1px solid var(--line); color:var(--mut)}
+  .cor{margin-left:auto; font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    padding:3px 9px; border-radius:20px; border:1px solid var(--line); color:var(--mut); white-space:nowrap}
   .c-sub{display:flex; gap:14px; margin-top:5px; font-size:12px; color:var(--mut)}
   .c-sub b{color:var(--ink); font-family:"IBM Plex Mono"}
   .c-status{margin-top:9px; font-size:11.5px; display:flex; align-items:center; gap:6px;
@@ -112,6 +112,7 @@
     color:var(--mut); text-transform:uppercase; display:flex; align-items:center; gap:8px}
   .lane h3 .cnt{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:var(--ink)}
   .lane .row{display:flex; align-items:center; gap:10px; padding:7px 0; font-size:12.5px; color:var(--mut)}
+  .lane .row .cor{margin-left:0; font-size:9.5px; padding:2px 8px}
   .lane .row b{font-family:"IBM Plex Mono"; color:var(--ink); font-size:14px}
   .lane .row .tag{margin-left:auto; font-family:"IBM Plex Mono"; font-size:11px}
   .lane.done h3{color:var(--green)} .lane.wait h3{color:var(--steel)}
@@ -119,9 +120,8 @@
 
   /* faixa de atraso: lotes que passaram da embalagem com volume pendente */
   .kpi.late b{color:var(--red)} .kpi.late[hidden]{display:none}
-  /* fica acima do quadro: é a primeira coisa que se vê, sem precisar rolar */
-  .lane.late{margin:0 0 14px; border:1px solid var(--red); border-style:solid;
-    background:linear-gradient(180deg,rgba(255,59,48,.09),transparent)}
+  .lane.late{margin-top:14px; border:1px solid var(--red); border-style:solid;
+    background:linear-gradient(180deg,rgba(255,59,48,.07),transparent)}
   .lane.late h3{color:var(--red)}
   .lane.late h3 .cnt{margin-left:0; color:var(--bg); background:var(--red); border-radius:20px;
     padding:1px 8px; min-width:22px; text-align:center}
@@ -143,7 +143,7 @@
   #tv{display:none}
   body.tv{padding:0; overflow:hidden}
   body.tv header.top, body.tv .controls, body.tv .status, body.tv .lanes, body.tv .lane.late,
-  body.tv .foot, body.tv #board, body.tv .logobar{display:none}
+  body.tv .cfg, body.tv .foot, body.tv #board, body.tv .logobar{display:none}
   body.tv #tv{display:flex; flex-direction:column; height:100vh; padding:1vh 2.4vw 1.4vh}
   .tv-head{display:flex; align-items:center; gap:2vw; border-bottom:.4vh solid var(--wood); padding-bottom:1.1vh}
   .tv-head .tv-fase{font-family:"IBM Plex Mono"; font-size:1.5vw; letter-spacing:.2em; color:var(--mut); text-transform:uppercase}
@@ -159,8 +159,9 @@
   .tv-card.today{border-left-color:var(--amber); box-shadow:0 0 0 .2vw var(--amber-dim) inset}
   .tv-card .l{display:flex; align-items:baseline; gap:1vw}
   .tv-card .l b{font-family:"IBM Plex Mono"; font-weight:600; font-size:3.6vw; line-height:1}
-  .tv-card .l .cor{margin-left:auto; font-size:1vw; letter-spacing:.1em; text-transform:uppercase; color:var(--mut);
-    border:1px solid var(--line); border-radius:20px; padding:.35vh .9vw}
+  .tv-card .l .cor{margin-left:auto; font-size:1.35vw; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--mut); border:.15vw solid var(--line);
+    border-radius:20px; padding:.5vh 1.2vw; white-space:nowrap}
   .tv-card .m{font-family:"IBM Plex Mono"; font-size:1.5vw; color:var(--mut)} .tv-card .m b{color:var(--ink)}
   .tv-card .s{font-size:1.5vw; display:flex; align-items:center; gap:.7vw; color:var(--steel); margin-top:.3vh}
   .tv-card.today .s{color:var(--amber)}
@@ -198,6 +199,25 @@
   button.b.go:hover{background:var(--amber); color:#000; border-color:var(--amber)}
   button.b.zap{border-color:var(--green-dim); color:var(--green)}
   button.b.zap:hover{background:var(--green); color:#000; border-color:var(--green)}
+  /* aba de configurações: endereço da planilha e das abas */
+  .cfg{background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:14px 16px 12px; margin:0 0 10px}
+  .cfg h3{font-family:"Oswald"; font-weight:600; font-size:15px; letter-spacing:.06em;
+    text-transform:uppercase; margin:0 0 12px; color:var(--amber)}
+  .cfg-row{display:flex; flex-direction:column; gap:5px; margin-bottom:11px; flex:1}
+  .cfg-row label{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--mut)}
+  .cfg-row label .opc{color:var(--mut2); letter-spacing:.06em; text-transform:none; font-style:italic}
+  .cfg-row input{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:7px; padding:9px 11px; font-family:"IBM Plex Mono"; font-size:13px; width:100%}
+  .cfg-row input:focus{outline:none; border-color:var(--amber)}
+  .cfg-row small{font-size:11px; color:var(--mut2)}
+  .cfg-row2{display:flex; gap:14px; flex-wrap:wrap}
+  .cfg-acoes{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:2px}
+  .cfg-link{margin-left:auto; font-size:12px; color:var(--steel); text-decoration:none}
+  .cfg-link:hover{color:var(--amber)}
+  .cfg-fonte{margin-top:11px; padding-top:9px; border-top:1px solid var(--line);
+    font-size:11px; color:var(--mut2); word-break:break-all}
+  .cfg-fonte code{font-family:"IBM Plex Mono"; color:var(--mut)}
   .toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%); z-index:99;
     background:var(--panel2); border:1px solid var(--green); color:var(--green);
     font-size:13px; padding:10px 18px; border-radius:8px; box-shadow:0 6px 24px rgba(0,0,0,.6)}
@@ -255,6 +275,10 @@
     .pv-tab td{padding:2.5pt 4pt; border-bottom:.4pt solid #e2e2e2; vertical-align:top}
     .pv-tab tr{page-break-inside:avoid; break-inside:avoid}
     .pv-tab .lt{font-family:"IBM Plex Mono"; font-weight:600; font-size:11pt; white-space:nowrap}
+    .pv-tab .cel-cor{font-size:8pt; color:#333; white-space:nowrap}
+    .pv-tab .pchip{display:inline-block; width:7pt; height:7pt; border-radius:50%; margin-right:3pt;
+      vertical-align:-.5pt; border:.4pt solid #999;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact}
     .pv-tab .n{font-family:"IBM Plex Mono"; text-align:right; white-space:nowrap}
     .pv-tab .sit{font-size:8pt; color:#444}
     .pv-tab tr.hoje .lt{color:#d1420b}
@@ -306,12 +330,44 @@
     <button class="b go" id="imprimir" title="Gera a folha A4 — salve como PDF pra mandar no WhatsApp">🖨 Imprimir / PDF</button>
     <button class="b zap" id="whats" title="Monta o resumo em texto e abre o WhatsApp">Enviar no WhatsApp</button>
     <label class="chk" title="Lista os produtos de cada lote (desmarque para o resumo curto)"><input type="checkbox" id="pItens" checked> produtos</label>
+    <button class="b" id="cfgBtn" title="Endereço da planilha e das abas">⚙ Configurações</button>
   </div>
   <div class="refnote">Ref.: <b id="refTxt">–</b></div>
 </div>
 
+<div class="cfg" id="cfgBox" hidden>
+  <h3>Configurações</h3>
+  <div class="cfg-row">
+    <label for="cfgSheet">Endereço da planilha</label>
+    <input type="text" id="cfgSheet" spellcheck="false" placeholder="cole o link do Google Sheets ou só o ID">
+    <small>Pode colar o link inteiro da barra do navegador — o ID é extraído sozinho.</small>
+  </div>
+  <div class="cfg-row2">
+    <div class="cfg-row">
+      <label for="cfgGid">Aba da programação (gid)</label>
+      <input type="text" id="cfgGid" spellcheck="false" placeholder="1540822534">
+    </div>
+    <div class="cfg-row">
+      <label for="cfgBaixa">Aba da baixa (gid) <span class="opc">opcional</span></label>
+      <input type="text" id="cfgBaixa" spellcheck="false" placeholder="1353172751">
+    </div>
+  </div>
+  <div class="cfg-acoes">
+    <button class="b go" id="cfgSalvar">Salvar e recarregar</button>
+    <button class="b" id="cfgPadrao">Restaurar padrão</button>
+    <button class="b" id="cfgFechar">Fechar</button>
+    <a class="cfg-link" id="cfgAbrir" href="#" target="_blank" rel="noopener">abrir a planilha ↗</a>
+  </div>
+  <div class="cfg-fonte">Lendo de: <code id="srcUrl"></code></div>
+</div>
+
 <div class="status" id="status"><span class="led"></span><span id="statusTxt">Carregando…</span>
   <button class="mini" id="reload">recarregar</button></div>
+
+<div class="board" id="board"></div>
+
+<div id="tv"></div>
+<div id="printview"></div>
 
 <div class="lane late" id="lateLane" hidden>
   <h3>Em atraso <span class="cnt" id="lateCnt">0</span>
@@ -319,11 +375,6 @@
     <span class="tot" id="lateTot"></span></h3>
   <div id="lateList"></div>
 </div>
-
-<div class="board" id="board"></div>
-
-<div id="tv"></div>
-<div id="printview"></div>
 
 <div class="lanes">
   <div class="lane wait"><h3>Programados <span class="cnt" id="waitCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram</span></h3><div id="waitList"></div></div>
@@ -335,7 +386,7 @@
   Lê ao vivo a aba de elaboração no Google Sheets e posiciona cada lote pela <b>data prevista</b> de cada etapa
   (corte → furar → colar/PU → UV → embalagem). Clique num card para ver os itens (quando houver).
   Use ◀/▶ pra simular os próximos dias.<br>
-  Fonte: <code id="srcUrl"></code>
+  O endereço da planilha fica em <b style="color:var(--mut)">⚙ Configurações</b>, no alto da tela.
   <div class="tvlinks"><b style="color:var(--mut)">Modo TV</b> (um setor por tela, para pendurar):
     <a href="?setor=corte">Corte</a> ·
     <a href="?setor=furar">Furadeira</a> ·
@@ -347,21 +398,37 @@
 
 <script>
 /* ================== CONFIGURAÇÃO ================== */
-const SHEET_ID = "1W9bK_IoWknk8eKFbSWCMxILAQcaXuWD2gG7B0jcwFzg";
-const GID = "1540822534";               // aba de programação (Lote/Data/.../STATUS)
-const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
+/* Endereço da planilha e das abas. Os valores abaixo são o padrão de fábrica;
+   o que valer na tela de Configurações (botão ⚙) fica salvo neste navegador e
+   tem precedência — dá para apontar o painel para outra planilha sem mexer no
+   código. "Restaurar padrão" volta para estes valores. */
+const CFG_PADRAO = {
+  sheet:"1W9bK_IoWknk8eKFbSWCMxILAQcaXuWD2gG7B0jcwFzg",
+  gid:"1540822534",                     // aba de programação (Lote/Data/.../STATUS)
+  baixa:"1353172751"                    // aba BAIXA (reserva; a baixa vem pelo app)
+};
+const CFG_KEY = "lotesElaboracaoCfg";
+function lerCfg(){
+  try{ return Object.assign({},CFG_PADRAO,JSON.parse(localStorage.getItem(CFG_KEY)||"{}")); }
+  catch(e){ return Object.assign({},CFG_PADRAO); }
+}
+let CFG = lerCfg();
+// aceita a URL inteira da planilha colada, ou só o ID
+const extraiId = s => { const t=String(s||"").trim();
+  const m=t.match(/\/d\/([a-zA-Z0-9_-]{20,})/); return m?m[1]:t; };
+const csvURL = () => `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&gid=${CFG.gid}`;
+const linkPlanilha = () => `https://docs.google.com/spreadsheets/d/${CFG.sheet}/edit#gid=${CFG.gid}`;
 
 /* ---------- baixa (volumes embalados) ----------
    Aba onde entra o relatório do ERP "Transação 3 - REPORTE / Tipo L - VOLUMES".
    Lida pelo NOME da aba, então basta criar uma aba chamada BAIXA (ou EMBALADOS)
    na mesma planilha — não precisa descobrir o gid. Para fixar um gid, preencha
-   GID_BAIXA. Sem essa aba o painel funciona como antes, só pelas datas. */
+   Configurações (⚙). Sem essa aba o painel funciona como antes, só pelas datas. */
 const ABAS_BAIXA = ["BAIXA","EMBALADOS","BAIXAS"];
-const GID_BAIXA = "1353172751";          // aba BAIXA (DATA · CODIGO · QUANTIDADE)
 // tenta o gid primeiro; se a aba for recriada e mudar de gid, cai na busca por nome
 const baixaURL = aba => aba==="__gid__"
-  ? `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID_BAIXA}`
-  : `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(aba)}`;
+  ? `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&gid=${CFG.baixa}`
+  : `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(aba)}`;
 
 const ETAPAS = [
   {key:"corte", nome:"Corte",          fase:"Fase 50",    abrev:"C"},
@@ -394,6 +461,28 @@ function tvRotate(){ if(TVKEY && TV_PAGES>1){ TV_PAGE++; render(); } }
 const DEMO = [{"lote": "138/26", "cor": "PRETO", "corte": "2026-07-24", "furar": "2026-07-27", "cola": "2026-07-28", "uv": "2026-07-29", "emb": "2026-07-30", "itens": [{"cod": "114.011.001", "desc": "PENTEADEIRA CAMARIM ELOA BRANCO", "qtd": 180}, {"cod": "114.011.006", "desc": "PENTEADEIRA CAMARIM ELOA OFF WHITE", "qtd": 80}, {"cod": "114.011.117", "desc": "PENTEADEIRA CAMARIM ELOA CINAMOMO/OFF WHITE", "qtd": 40}, {"cod": "105.038.118", "desc": "RACK URBAN 1.8 OFF WHITE/CINAMOMO", "qtd": 150}, {"cod": "114013006", "desc": "PENTEADEIRA CAMARIM 1PT 2GAV DIAMANTE OFF WHITE", "qtd": 30}, {"cod": "114.013.021", "desc": "PENTEADEIRA CAMARIM 1PT 2GAV DIAMANTE BRANCO AC", "qtd": 370}], "qtd": 850}, {"lote": "137/26", "cor": "AZUL", "corte": "2026-07-23", "furar": "2026-07-24", "cola": "2026-07-27", "uv": "2026-07-28", "emb": "2026-07-29", "itens": [{"cod": "114.010.001", "desc": "PENTEADEIRA CAMARIM MEL BRANCO", "qtd": 180}, {"cod": "114.010.006", "desc": "PENTEADEIRA CAMARIM MEL OFF WHITE", "qtd": 160}, {"cod": "114.010.117", "desc": "PENTEADEIRA CAMARIM MEL CINAMOMO/OFF WHIHTE", "qtd": 60}, {"cod": "108.008.001", "desc": "MESA COMPUTADOR MILLION BRANCO", "qtd": 35}, {"cod": "108.008.116", "desc": "MESA COMPUTADOR MILLION CINAMOMO", "qtd": 190}, {"cod": "108.008.118", "desc": "MESA COMPUTADOR MILLION OFF WHHITE/CINAMOMO", "qtd": 60}, {"cod": "108.008.120", "desc": "MESA COMPUTADOR MILLION PRETO ACETINADO/CINAMOMO", "qtd": 55}, {"cod": "108.008.121", "desc": "MESA COMPUTADOR MILLION BRANCO/CINAMOMO", "qtd": 160}, {"cod": "109.046.006", "desc": "MESA CENTRO LUNA 670 OFF WHITE", "qtd": 170}, {"cod": "109.046.021", "desc": "MESA CENTRO LUNA 670 BRANCO ACETINADO", "qtd": 15}, {"cod": "109.046.073", "desc": "MESA CENTRO LUNA 670 CUMARU", "qtd": 65}, {"cod": "109.047.006", "desc": "MESA CENTRO LUNA 590 OFF WHITE", "qtd": 75}, {"cod": "109.047.073", "desc": "MESA CENTRO LUNA 590 CUMARU", "qtd": 25}, {"cod": "110.041.006", "desc": "MESA APOIO LUNA 530 OFF WHITE", "qtd": 90}, {"cod": "110.041.073", "desc": "MESA APOIO LUNA 530 CUMARU", "qtd": 10}, {"cod": "110.042.006", "desc": "MESA LATERAL LUNA 440 OFF WHITE", "qtd": 125}, {"cod": "110.042.073", "desc": "MESA LATERAL LUNA 440 CUMARU", "qtd": 55}, {"cod": "110.042.111", "desc": "MESA LATERAL LUNA 440 ALECRIM", "qtd": 20}], "qtd": 1550}, {"lote": "136/26", "cor": "AMARELO", "corte": "2026-07-22", "furar": "2026-07-23", "cola": "2026-07-24", "uv": "2026-07-27", "emb": "2026-07-28", "itens": [{"cod": "114.003.001", "desc": "PENTEADEIRA PRINCESA BRANCO", "qtd": 225}, {"cod": "114.003.002", "desc": "PENTEADEIRA PRINCESA ROSA", "qtd": 225}, {"cod": "113.006.116", "desc": "CRISTALEIRA ORION CINAMOMO", "qtd": 50}, {"cod": "113.006.118", "desc": "CRISTALEIRA ORION OFF WHITE/CINAMOMO", "qtd": 100}, {"cod": "106.066.116", "desc": "PAINEL ON 1.8 CINAMOMO", "qtd": 150}], "qtd": 750}, {"lote": "135/26", "cor": "VERMELHO", "corte": "2026-07-21", "furar": "2026-07-22", "cola": "2026-07-23", "uv": "2026-07-24", "emb": "2026-07-27", "itens": [{"cod": "109.044.001", "desc": "MESA CENTRO SLIM BRANCO", "qtd": 15}, {"cod": "109.044.006", "desc": "MESA CENTRO SLIM OFF WHITE", "qtd": 225}, {"cod": "109.044.070", "desc": "MESA CENTRO SLIM PRETO ACETINADO", "qtd": 20}, {"cod": "109.044.116", "desc": "MESA CENTRO SLIM CINAMOMO", "qtd": 190}, {"cod": "102.004.001", "desc": "SAPATEIRA SPAZIO BRANCO", "qtd": 10}, {"cod": "102.004.116", "desc": "SAPATEIRA SPAZIO CINAMOMO", "qtd": 120}, {"cod": "102.004.117", "desc": "SAPATEIRA SPAZIO CINAMOMO/OFF WHITE", "qtd": 220}, {"cod": "106.062.117", "desc": "HOME ANGEL 1.8 CINAMOMO/OFF WHITE", "qtd": 35}, {"cod": "106.062.118", "desc": "HOME ANGEL 1.8 OFF WHITE/CINAMOMO", "qtd": 115}, {"cod": "106.057.117", "desc": "HOME RIPADO ANTARES 1.4 CINAMOMO/OFF WHITE", "qtd": 100}], "qtd": 1050}, {"lote": "134/26", "cor": "BRANCO", "corte": "2026-07-20", "furar": "2026-07-21", "cola": "2026-07-22", "uv": "2026-07-23", "emb": "2026-07-24", "itens": [{"cod": "501.141.007", "desc": "VOL 1/1 BUFFET 4 PT PRISM CINAMOMO", "qtd": 250}, {"cod": "501.141.008", "desc": "VOL 1/1 BUFFET 4 PT PRISM OFF WHITE/CINAMOMO", "qtd": 375}, {"cod": "501.141.009", "desc": "VOL 1/1 BUFFET 4 PT PRISM BRANCO AC/CINAMOMO", "qtd": 25}, {"cod": "501.118.001", "desc": "VOL 1/1 ESCRIVANINHA TAURUS OFF WHITE", "qtd": 250}, {"cod": "501.118.002", "desc": "VOL 1/1 ESCRIVANINHA TAURUS BRANCO AC", "qtd": 50}, {"cod": "501.118.005", "desc": "VOL 1/1 ESCRIVANINHA TAURUS CINAMOMO", "qtd": 200}, {"cod": "501.115.001", "desc": "VOL 1/1 MESA COMP SPACE BRANCO", "qtd": 10}, {"cod": "501.115.002", "desc": "VOL 1/1 MESA COMP SPACE CINAMOMO", "qtd": 130}, {"cod": "501.115.004", "desc": "VOL 1/1 MESA COMP SPACE OFF WHITE/CINAMOMO", "qtd": 180}, {"cod": "501.115.003", "desc": "VOL 1/1 MESA COMP SPACE BRANCO/CINAMOMO", "qtd": 80}], "qtd": 1550}];
 
 let LOTES = [];
+
+/* ---------- cores do GPS ----------
+   A tarja do lote é pintada com a cor de verdade, para bater de olho com o
+   quadro do GPS. Cor não mapeada continua como tarja neutra. */
+const CORES_GPS = {
+  verde:"#2fbf4f", azul:"#2f7fe0", vermelho:"#e8342a", amarelo:"#f5c518",
+  laranja:"#ff6a1f", preto:"#0d0f12", branco:"#f2f4f7", cinza:"#9aa2ac",
+  rosa:"#f06fae", roxo:"#9a5cf0", lilas:"#c0a8f5", marrom:"#8a5a2b",
+  bege:"#e2d3ae", dourado:"#d4af37", prata:"#c6cbd1", azulclaro:"#5cc5f0",
+  verdeclaro:"#7ede8a", verdeescuro:"#1c7a35", azulescuro:"#1c3f8a"
+};
+// texto preto ou branco conforme a luminância da cor de fundo
+function corGPS(nome){
+  const hex=CORES_GPS[norm(nome)];
+  if(!hex) return "";
+  const r=parseInt(hex.substr(1,2),16), g=parseInt(hex.substr(3,2),16), b=parseInt(hex.substr(5,2),16);
+  const lum=(0.299*r+0.587*g+0.114*b)/255;
+  const fg=lum>0.6?"#000":"#fff";
+  // preto e cores escuras ganham borda clara para não sumirem no fundo preto
+  const bd=lum<0.18?"#6b7280":hex;
+  return `background:${hex};border-color:${bd};color:${fg}`;
+}
 
 /* ---------- datas ---------- */
 function pd(s){
@@ -599,7 +688,7 @@ function aplicarBaixa(){
 
 async function carregarBaixa(){
   BAIXA.linhas=[]; BAIXA.ativa=false; BAIXA.min=BAIXA.max=null; BAIXA.aba=""; BAIXA.erro="";
-  const abas = GID_BAIXA ? ["__gid__",...ABAS_BAIXA] : ABAS_BAIXA;
+  const abas = CFG.baixa ? ["__gid__",...ABAS_BAIXA] : ABAS_BAIXA;
   for(const aba of abas){
     try{
       const res=await fetch(baixaURL(aba),{cache:"no-store"});
@@ -635,9 +724,8 @@ function txtBaixa(){
 
 async function carregar(){
   setStatus("","Lendo planilha…");
-  document.getElementById("srcUrl").textContent = CSV_URL;
   try{
-    const res=await fetch(CSV_URL,{cache:"no-store"});
+    const res=await fetch(csvURL(),{cache:"no-store"});
     if(!res.ok) throw new Error("HTTP "+res.status);
     const txt=await res.text();
     if(/<html/i.test(txt)) throw new Error("sem-acesso");
@@ -758,7 +846,7 @@ function render(){
   document.getElementById("lateTot").textContent = volAtraso.toLocaleString("pt-BR")+" volumes pendentes";
   ll.innerHTML = atras.map(a=>{
     const pct=a.l.qtd?Math.round((a.l.qtd-a.pend)/a.l.qtd*100):0;
-    return `<div class="row"><b>${a.l.lote}</b>${a.l.cor?`<span class="cor">${a.l.cor}</span>`:""}
+    return `<div class="row"><b>${a.l.lote}</b>${a.l.cor?`<span class="cor" style="${corGPS(a.l.cor)}">${a.l.cor}</span>`:""}
       <span class="pend">${a.pend.toLocaleString("pt-BR")} vol. pendentes</span>
       <span class="pct">de ${(a.l.qtd||0).toLocaleString("pt-BR")} · ${pct}% feito</span>
       <span class="dias">emb. ${fmt(pd(a.l.emb))} · ${a.dias}d de atraso</span></div>`;}).join("");
@@ -768,17 +856,17 @@ function render(){
   nbLane.hidden=!sbaixa.length;
   document.getElementById("nbCnt").textContent=sbaixa.length;
   document.getElementById("nbList").innerHTML=sbaixa.map(w=>
-    `<div class="row"><b>${w.l.lote}</b> ${(w.l.cor||"")}
+    `<div class="row"><b>${w.l.lote}</b> ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}
       <span class="tag">emb. ${fmt(pd(w.l.emb))} · ${(w.l.qtd||0).toLocaleString("pt-BR")} vol. sem reporte</span></div>`).join("");
 
   const wl=document.getElementById("waitList"),dl=document.getElementById("doneList");
   document.getElementById("waitCnt").textContent=wait.length;
   document.getElementById("doneCnt").textContent=done.length;
   wl.innerHTML=wait.length?wait.map(w=>
-    `<div class="row"><b>${w.l.lote}</b> ${(w.l.cor||"")}<span class="tag" style="color:var(--steel)">${w.dias!=null?"entra em "+w.dias+"d · "+fmt(pd(w.l.corte)):""}</span></div>`).join("")
+    `<div class="row"><b>${w.l.lote}</b> ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}<span class="tag" style="color:var(--steel)">${w.dias!=null?"entra em "+w.dias+"d · "+fmt(pd(w.l.corte)):""}</span></div>`).join("")
     :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
   dl.innerHTML=done.length?done.map(w=>
-    `<div class="row"><b>${w.l.lote}</b> ${(w.l.cor||"")}<span class="tag" style="color:var(--green)">emb. ${fmt(pd(w.l.emb))}</span></div>`).join("")
+    `<div class="row"><b>${w.l.lote}</b> ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}<span class="tag" style="color:var(--green)">emb. ${fmt(pd(w.l.emb))}</span></div>`).join("")
     :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
 
   if(TVKEY) renderTV(buckets, ref, atras, volAtraso);
@@ -810,7 +898,7 @@ function renderTV(buckets, ref, atras, volAtraso){
     const itens=(l.itens&&l.itens.length)?`<div class="tv-items">${l.itens.map(it=>
       `<div class="tv-it"><span class="cd">${it.cod||""}</span><span class="d">${it.desc||""}</span><span class="q">${(it.qtd||0).toLocaleString("pt-BR")}</span></div>`).join("")}</div>`:"";
     return `<div class="tv-card${hoje?" today":""}">
-      <div class="l"><b>${l.lote}</b>${l.cor?`<span class="cor">${l.cor}</span>`:""}</div>
+      <div class="l"><b>${l.lote}</b>${l.cor?`<span class="cor" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
       <div class="m">Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b>${l.itens?` · <b>${l.itens.length}</b> itens`:""}${l.prod>0?` · ${pct}%`:""}${pend>0?` · <b class="pend">falta ${nBR(pend)} vol.</b>`:""}</div>
       <div class="s"><span class="dot"></span>${st}</div>
       ${itens}
@@ -856,7 +944,7 @@ function cardEl(l,idx,ref){
   const prog=(l.prod>0)?`<span>Prod <b>${(l.prod||0).toLocaleString("pt-BR")}</b> · ${pct}%</span>`:"";
   const pend=temApontamento(l)?pendentes(l):0;
   const pendTxt=pend>0?`<span style="color:var(--red)">Pend <b style="color:var(--red)">${pend.toLocaleString("pt-BR")}</b> vol.</span>`:"";
-  c.innerHTML=`<div class="c-top"><span class="c-lote">${l.lote}</span>${l.cor?`<span class="cor">${l.cor}</span>`:""}</div>
+  c.innerHTML=`<div class="c-top"><span class="c-lote">${l.lote}</span>${l.cor?`<span class="cor" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
     <div class="c-sub"><span>Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b></span>${prog}${pendTxt}${l.itens?`<span><b>${l.itens.length}</b> itens</span>`:""}</div>
     ${stat}<div class="tl">${tl}</div>${itensHtml}`;
   if(itensHtml) c.addEventListener("click",()=>c.classList.toggle("open"));
@@ -868,6 +956,10 @@ function cardEl(l,idx,ref){
    dia e o detalhamento por etapa. "Imprimir → Salvar como PDF" gera o
    arquivo que se manda no WhatsApp. */
 const esc = s => String(s??"").replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+// no papel a cor vira uma pastilha ao lado do nome
+const chipCor = c => { if(!c) return "";
+  const hex=CORES_GPS[norm(c)];
+  return (hex?`<span class="pchip" style="background:${hex}"></span>`:"")+esc(c); };
 const nBR = n => (n||0).toLocaleString("pt-BR");
 const dataExt = d => d.toLocaleDateString("pt-BR",{weekday:"long", day:"2-digit", month:"long", year:"numeric"});
 
@@ -913,7 +1005,7 @@ function buildPrint(ref, comItens){
     <tbody>${atras.map(a=>{
       const feito=(a.l.qtd||0)-a.pend, pct=a.l.qtd?Math.round(feito/a.l.qtd*100):0;
       return `<tr><td class="lt" style="color:#c1121f">${esc(a.l.lote)}</td>
-        <td style="font-size:8pt;color:#555">${esc(a.l.cor||"")}</td>
+        <td class="cel-cor">${chipCor(a.l.cor)}</td>
         <td class="n" style="text-align:left">${fmt(pd(a.l.emb))}</td>
         <td class="n">${a.dias}d</td><td class="n">${nBR(a.l.qtd)}</td>
         <td class="n">${nBR(feito)} · ${pct}%</td>
@@ -938,7 +1030,7 @@ function buildPrint(ref, comItens){
              <span class="dq">${nBR(it.qtd)}</span></li>`).join("")}</ul></td></tr>` : "";
       return `<tr class="${hoje?"hoje":""}">
         <td class="lt">${esc(l.lote)}</td>
-        <td style="font-size:8pt;color:#555">${esc(l.cor||"")}</td>
+        <td class="cel-cor">${chipCor(l.cor)}</td>
         <td class="n">${nBR(l.qtd)}</td>
         <td class="n">${l.itens?l.itens.length:"–"}</td>
         <td class="n">${l.prod>0?pct+"%":"–"}</td>
@@ -1050,6 +1142,32 @@ refInput.addEventListener("change",render);
 function montarImpresso(){
   buildPrint(pd(refInput.value), document.getElementById("pItens").checked);
 }
+/* ---------- configurações ---------- */
+const cfgBox=document.getElementById("cfgBox");
+function pintaCfg(){
+  document.getElementById("cfgSheet").value=CFG.sheet;
+  document.getElementById("cfgGid").value=CFG.gid;
+  document.getElementById("cfgBaixa").value=CFG.baixa||"";
+  document.getElementById("srcUrl").textContent=csvURL();
+  document.getElementById("cfgAbrir").href=linkPlanilha();
+}
+document.getElementById("cfgBtn").onclick=()=>{ cfgBox.hidden=!cfgBox.hidden; if(!cfgBox.hidden) pintaCfg(); };
+document.getElementById("cfgFechar").onclick=()=>{ cfgBox.hidden=true; };
+document.getElementById("cfgSalvar").onclick=()=>{
+  const sheet=extraiId(document.getElementById("cfgSheet").value);
+  if(!sheet){ toast("Informe o endereço da planilha"); return; }
+  CFG={ sheet, gid:document.getElementById("cfgGid").value.trim()||CFG_PADRAO.gid,
+        baixa:document.getElementById("cfgBaixa").value.trim() };
+  try{ localStorage.setItem(CFG_KEY,JSON.stringify(CFG)); }catch(e){}
+  pintaCfg(); toast("Configuração salva — recarregando a planilha"); carregar();
+};
+document.getElementById("cfgPadrao").onclick=()=>{
+  CFG=Object.assign({},CFG_PADRAO);
+  try{ localStorage.removeItem(CFG_KEY); }catch(e){}
+  pintaCfg(); toast("Voltou para a planilha padrão"); carregar();
+};
+pintaCfg();
+
 document.getElementById("imprimir").onclick=()=>{ montarImpresso(); setTimeout(()=>window.print(),60); };
 // Ctrl+P direto do navegador também sai com o relatório montado
 window.addEventListener("beforeprint", montarImpresso);
