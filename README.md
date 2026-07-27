@@ -18,13 +18,16 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
 A baixa real não está na planilha, está no ERP: relatório **Transação 3 – REPORTE, Tipo L –
 VOLUMES**, que lista por dia o código do volume (`501.*`) e a quantidade reportada.
 
-Crie na mesma planilha uma aba chamada **`BAIXA`** (aceita também `EMBALADOS` ou `BAIXAS`) e
-jogue esse relatório lá. A aba é lida pelo **nome**, então não é preciso descobrir o `gid`.
-Dois formatos servem:
+Esse relatório vai na aba **`BAIXA`** da mesma planilha (`GID_BAIXA`, hoje `1353172751`). Se a aba
+for recriada e mudar de `gid`, o painel ainda a encontra pelo **nome** — `BAIXA`, `EMBALADOS` ou
+`BAIXAS`. Dois formatos servem:
 
 - **Tabela**: colunas `DATA`, `CODIGO`, `QUANTIDADE` (descrição opcional).
 - **Texto cru do relatório colado**: o painel acha as linhas `código … UN … 337,000` e pega a
   data do `Período:` — nunca do `Data:` do cabeçalho, que é a data de emissão.
+
+O código é comparado sem pontuação, então `501.096.004` e `501096004` são o mesmo produto — os
+dois formatos convivem na planilha.
 
 Cada lançamento é casado com o lote **pelo código do produto**, escolhendo o lote cuja embalagem
 está mais perto da data do lançamento. Volume reportado no dia X nunca entra em lote que embala

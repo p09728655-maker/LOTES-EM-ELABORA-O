@@ -355,8 +355,9 @@ const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=
    na mesma planilha — não precisa descobrir o gid. Para fixar um gid, preencha
    GID_BAIXA. Sem essa aba o painel funciona como antes, só pelas datas. */
 const ABAS_BAIXA = ["BAIXA","EMBALADOS","BAIXAS"];
-const GID_BAIXA = "";
-const baixaURL = aba => GID_BAIXA
+const GID_BAIXA = "1353172751";          // aba BAIXA (DATA · CODIGO · QUANTIDADE)
+// tenta o gid primeiro; se a aba for recriada e mudar de gid, cai na busca por nome
+const baixaURL = aba => aba==="__gid__"
   ? `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID_BAIXA}`
   : `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(aba)}`;
 
@@ -502,7 +503,8 @@ function rowsToLotes(rows){
    relatório do ERP colado direto. No texto cru, a data vem do "Período:" —
    nunca do "Data:" do cabeçalho, que é a data de emissão. */
 const BAIXA = { linhas:[], ativa:false, min:null, max:null, aba:"", semLote:0, excedente:0, erro:"" };
-const normCod = s => String(s||"").trim().replace(/\s/g,"");
+// código sem pontuação: 501.096.004 e 501096004 são o mesmo produto
+const normCod = s => String(s||"").toUpperCase().replace(/[^0-9A-Z]/g,"");
 const ALIAS_BAIXA = { cod:["codigo","cod","cdigo","produto","sku","item"],
   qtd:["quantidade","qtd","qtde","qt","volumes","vol"], data:["data","dia","dt","dataemb","periodo"] };
 function mapHeaderBaixa(hrow){ const idx={};
@@ -589,7 +591,7 @@ function aplicarBaixa(){
 
 async function carregarBaixa(){
   BAIXA.linhas=[]; BAIXA.ativa=false; BAIXA.min=BAIXA.max=null; BAIXA.aba=""; BAIXA.erro="";
-  const abas = GID_BAIXA ? ["(gid fixo)"] : ABAS_BAIXA;
+  const abas = GID_BAIXA ? ["__gid__",...ABAS_BAIXA] : ABAS_BAIXA;
   for(const aba of abas){
     try{
       const res=await fetch(baixaURL(aba),{cache:"no-store"});
@@ -598,7 +600,7 @@ async function carregarBaixa(){
       if(/<html/i.test(txt)) continue;
       const linhas=parseBaixa(parseCSV(txt));
       if(!linhas.length){ BAIXA.aba=aba; BAIXA.erro="aba encontrada, mas sem lançamento reconhecido"; continue; }
-      BAIXA.linhas=linhas; BAIXA.ativa=true; BAIXA.aba=aba; BAIXA.erro="";
+      BAIXA.linhas=linhas; BAIXA.ativa=true; BAIXA.aba=(aba==="__gid__"?"BAIXA":aba); BAIXA.erro="";
       const ds=linhas.map(b=>b.data).filter(Boolean);
       if(ds.length){ BAIXA.min=new Date(Math.min(...ds)); BAIXA.max=new Date(Math.max(...ds)); }
       break;
