@@ -11,7 +11,23 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
 - Faixas **Programados** (ainda não entraram) e **Concluídos** (após embalagem).
 - Navegação por **data de referência** (◀/▶/Hoje) para simular os próximos dias.
 - Card expansível com os itens do lote (código, descrição, quantidade).
+- **Impressão gerencial** e **envio por WhatsApp** (ver abaixo).
 - Recarrega automaticamente a cada 5 minutos.
+
+## Impressão / WhatsApp
+Dois botões na barra de controles, sempre referentes à **data de referência** selecionada:
+
+- **🖨 Imprimir / PDF** — monta um relatório gerencial em A4 retrato, fundo branco: cabeçalho com
+  logo e KPIs, quadro de **carga por etapa** (lotes, peças e distribuição), **movimentação do dia**
+  (o que muda de setor na data), detalhamento por etapa com a situação de cada lote e as faixas de
+  programados/concluídos. Em "Imprimir → Salvar como PDF" sai o arquivo para mandar no grupo.
+  `Ctrl+P` direto do navegador também gera o relatório.
+- **Enviar no WhatsApp** — monta o mesmo resumo em texto, já na formatação do WhatsApp
+  (`*negrito*`), copia para a área de transferência e abre o WhatsApp (`wa.me`, ou o menu de
+  compartilhar no celular).
+
+A caixa **produtos** (marcada por padrão) inclui a lista de itens de cada lote — código, descrição e
+quantidade — nas duas saídas. Desmarque para o resumo curto, só com os lotes.
 - Sem acesso à planilha, exibe **dados de exemplo**.
 
 ## Configuração

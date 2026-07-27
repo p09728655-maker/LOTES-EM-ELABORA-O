@@ -162,6 +162,86 @@
   .tv-foot{border-top:1px solid var(--line); margin-top:1.6vh; padding-top:1.1vh;
     font-family:"IBM Plex Mono"; font-size:1vw; color:var(--mut2); display:flex; gap:2.4vw}
   .tv-foot span:last-child{margin-left:auto}
+
+  /* ============ IMPRESSÃO / WHATSAPP ============ */
+  .controls .chk{display:flex; align-items:center; gap:6px; font-size:11px;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--mut); cursor:pointer}
+  .controls .chk input{accent-color:var(--amber); cursor:pointer}
+  button.b.go{border-color:var(--amber-dim); color:var(--amber)}
+  button.b.go:hover{background:var(--amber); color:#000; border-color:var(--amber)}
+  button.b.zap{border-color:var(--green-dim); color:var(--green)}
+  button.b.zap:hover{background:var(--green); color:#000; border-color:var(--green)}
+  .toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%); z-index:99;
+    background:var(--panel2); border:1px solid var(--green); color:var(--green);
+    font-size:13px; padding:10px 18px; border-radius:8px; box-shadow:0 6px 24px rgba(0,0,0,.6)}
+
+  #printview{display:none}
+  @media print{
+    @page{size:A4 portrait; margin:9mm 10mm}
+    html,body{background:#fff !important; color:#000 !important}
+    body{padding:0 !important; font-family:"Inter",system-ui,sans-serif}
+    body > *{display:none !important}
+    body > #printview{display:block !important}
+    #printview{font-size:9.5pt; color:#000}
+    .pv-head{display:flex; align-items:center; gap:10px; border-bottom:2.5pt solid #ff5a1f; padding-bottom:6pt}
+    .pv-head img{height:30pt; width:auto; flex:none}
+    .pv-head h1{font-family:"Oswald"; font-size:17pt; margin:0; line-height:1; font-weight:600; white-space:nowrap}
+    .pv-head .pv-title{min-width:0}
+    .pv-head .pv-sub{font-size:6.8pt; color:#555; margin-top:3pt; letter-spacing:.03em;
+      text-transform:uppercase; line-height:1.3}
+    .pv-kpis{margin-left:auto; display:flex; gap:9pt; text-align:right; flex:none; padding-left:6pt}
+    .pv-kpis div b{font-family:"Oswald"; font-size:15pt; display:block; line-height:1}
+    .pv-kpis div small{font-size:6pt; letter-spacing:.07em; text-transform:uppercase; color:#666; white-space:nowrap}
+    /* quadro gerencial: carga por etapa */
+    .pv-resumo{margin-top:9pt}
+    .pv-resumo .bar{display:inline-block; height:5pt; background:#ff5a1f; border-radius:2pt;
+      vertical-align:middle; min-width:1pt; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+    .pv-resumo tfoot td{border-top:.8pt solid #999; border-bottom:none; font-weight:700; padding-top:3pt}
+    .pv-dest{margin-top:9pt; border:.6pt solid #ff5a1f; border-radius:3pt; padding:5pt 8pt;
+      page-break-inside:avoid; break-inside:avoid}
+    .pv-dest h3{font-family:"Oswald"; font-size:10pt; margin:0 0 3pt; text-transform:uppercase;
+      letter-spacing:.05em; color:#d1420b; font-weight:600}
+    .pv-dest .r{font-size:8.5pt; padding:1.5pt 0; display:flex; gap:6pt; border-bottom:.3pt dotted #ddd}
+    .pv-dest .r b{font-family:"IBM Plex Mono"; min-width:44pt}
+    .pv-dest .r .et{font-family:"Oswald"; letter-spacing:.03em; min-width:70pt}
+    .pv-dest .r .q{margin-left:auto; font-family:"IBM Plex Mono"; white-space:nowrap}
+    .pv-h2{font-family:"Oswald"; font-size:11pt; font-weight:600; letter-spacing:.08em;
+      text-transform:uppercase; color:#333; margin:12pt 0 4pt; border-bottom:.8pt solid #333; padding-bottom:2pt}
+    .pv-sec{margin-top:9pt; page-break-inside:avoid; break-inside:avoid}
+    .pv-sec h2{font-family:"Oswald"; font-size:12pt; font-weight:600; margin:0 0 3pt;
+      padding:3pt 6pt; background:#f0f0f0; border-left:3pt solid #ff5a1f;
+      display:flex; align-items:baseline; gap:8pt; letter-spacing:.02em}
+    .pv-sec h2 .fase{font-family:"IBM Plex Mono"; font-size:7pt; color:#666; letter-spacing:.1em}
+    .pv-sec h2 .qt{margin-left:auto; font-family:"IBM Plex Mono"; font-size:8.5pt; color:#444}
+    .pv-sec.livre h2{border-left-color:#bbb; color:#777}
+    .pv-tab{width:100%; border-collapse:collapse}
+    .pv-tab th{font-size:6.8pt; letter-spacing:.1em; text-transform:uppercase; color:#666;
+      text-align:left; border-bottom:.6pt solid #ccc; padding:2pt 4pt; font-weight:600}
+    .pv-tab td{padding:2.5pt 4pt; border-bottom:.4pt solid #e2e2e2; vertical-align:top}
+    .pv-tab tr{page-break-inside:avoid; break-inside:avoid}
+    .pv-tab .lt{font-family:"IBM Plex Mono"; font-weight:600; font-size:11pt; white-space:nowrap}
+    .pv-tab .n{font-family:"IBM Plex Mono"; text-align:right; white-space:nowrap}
+    .pv-tab .sit{font-size:8pt; color:#444}
+    .pv-tab tr.hoje .lt{color:#d1420b}
+    .pv-tab tr.hoje .sit{color:#d1420b; font-weight:600}
+    .pv-its td{padding:1pt 4pt 5pt 4pt; border-bottom:.4pt solid #e2e2e2}
+    .pv-its ul{margin:0; padding:0; list-style:none; columns:2; column-gap:10pt}
+    .pv-its li{font-size:7.4pt; line-height:1.32; color:#333; break-inside:avoid;
+      display:flex; gap:4pt; border-bottom:.2pt dotted #ddd}
+    .pv-its li .cd{font-family:"IBM Plex Mono"; color:#888; white-space:nowrap}
+    .pv-its li .dq{font-family:"IBM Plex Mono"; margin-left:auto; white-space:nowrap; color:#000}
+    .pv-lanes{display:flex; gap:14pt; margin-top:10pt; page-break-inside:avoid}
+    .pv-lane{flex:1; border:.6pt dashed #bbb; border-radius:3pt; padding:5pt 7pt}
+    .pv-lane h3{font-family:"Oswald"; font-size:9.5pt; margin:0 0 3pt; text-transform:uppercase;
+      letter-spacing:.05em; color:#555; font-weight:500}
+    .pv-lane .r{font-size:8pt; padding:1.5pt 0; display:flex; gap:6pt; border-bottom:.3pt dotted #ddd}
+    .pv-lane .r b{font-family:"IBM Plex Mono"}
+    .pv-lane .r span{margin-left:auto; color:#666; font-family:"IBM Plex Mono"; font-size:7.5pt}
+    .pv-vazio{font-size:8pt; color:#999; font-style:italic}
+    .pv-foot{margin-top:10pt; padding-top:5pt; border-top:.6pt solid #ccc;
+      font-family:"IBM Plex Mono"; font-size:7pt; color:#777; display:flex; gap:14pt}
+    .pv-foot span:last-child{margin-left:auto}
+  }
 </style>
 </head>
 <body>
@@ -186,6 +266,11 @@
     <button class="b" id="next">dia ▶</button>
     <button class="b" id="hoje">Hoje</button>
   </div>
+  <div class="grp">
+    <button class="b go" id="imprimir" title="Gera a folha A4 — salve como PDF pra mandar no WhatsApp">🖨 Imprimir / PDF</button>
+    <button class="b zap" id="whats" title="Monta o resumo em texto e abre o WhatsApp">Enviar no WhatsApp</button>
+    <label class="chk" title="Lista os produtos de cada lote (desmarque para o resumo curto)"><input type="checkbox" id="pItens" checked> produtos</label>
+  </div>
   <div class="refnote">Ref.: <b id="refTxt">–</b></div>
 </div>
 
@@ -195,6 +280,7 @@
 <div class="board" id="board"></div>
 
 <div id="tv"></div>
+<div id="printview"></div>
 
 <div class="lanes">
   <div class="lane wait"><h3>Programados <span class="cnt" id="waitCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram</span></h3><div id="waitList"></div></div>
@@ -383,10 +469,9 @@ async function carregar(){
 function estagioAtual(l, ref){ let idx=-1;
   for(let i=0;i<ETAPAS.length;i++){ const d=pd(l[ETAPAS[i].key]); if(d && d<=ref) idx=i; } return idx; }
 
-function render(){
-  if(TVKEY) document.getElementById("ref").value=isoOf(new Date()); // TV: sempre o dia de hoje
-  const ref=pd(document.getElementById("ref").value);
-  document.getElementById("refTxt").textContent=fmt(ref)+"/"+ref.getFullYear();
+/* Distribui os lotes nas estações da data de referência.
+   Usado pela tela, pelo modo TV, pelo impresso e pelo texto do WhatsApp. */
+function computeBuckets(ref){
   const buckets=ETAPAS.map(()=>[]), wait=[], done=[];
   LOTES.forEach(l=>{
     const idx=estagioAtual(l,ref);
@@ -398,6 +483,24 @@ function render(){
   const ativos=buckets.reduce((s,b)=>s+b.length,0);
   const pecas=buckets.flat().reduce((s,x)=>s+(x.l.qtd||0),0);
   let mov=0; buckets.forEach((b,i)=>b.forEach(x=>{const d=pd(x.l[ETAPAS[i].key]); if(d&&+d===+ref)mov++;}));
+  wait.sort((a,b)=>(a.dias??99)-(b.dias??99)); done.sort((a,b)=>a.dias-b.dias);
+  return {buckets,wait,done,ativos,pecas,mov};
+}
+// situação do lote na etapa i, em texto curto (reaproveitada nas 4 saídas)
+function situacao(l,i,ref){
+  const et=ETAPAS[i], d=pd(l[et.key]), hoje=d&&+d===+ref, prox=i<4?ETAPAS[i+1]:null;
+  if(!prox) return hoje?"Embalando hoje":"Em embalagem";
+  const dd=wdBetween(ref,pd(l[prox.key]));
+  return hoje ? `Chegou hoje · vai p/ ${prox.nome} em ${dd}d`
+              : `No setor · próx. ${prox.nome} em ${dd}d (${fmt(pd(l[prox.key]))})`;
+}
+const ehHoje=(l,i,ref)=>{const d=pd(l[ETAPAS[i].key]); return !!(d&&+d===+ref);};
+
+function render(){
+  if(TVKEY) document.getElementById("ref").value=isoOf(new Date()); // TV: sempre o dia de hoje
+  const ref=pd(document.getElementById("ref").value);
+  document.getElementById("refTxt").textContent=fmt(ref)+"/"+ref.getFullYear();
+  const {buckets,wait,done,ativos,pecas,mov}=computeBuckets(ref);
   document.getElementById("kLotes").textContent=ativos;
   document.getElementById("kPecas").textContent=pecas.toLocaleString("pt-BR");
   document.getElementById("kHoje").textContent=mov;
@@ -418,10 +521,10 @@ function render(){
   const wl=document.getElementById("waitList"),dl=document.getElementById("doneList");
   document.getElementById("waitCnt").textContent=wait.length;
   document.getElementById("doneCnt").textContent=done.length;
-  wl.innerHTML=wait.length?wait.sort((a,b)=>(a.dias??99)-(b.dias??99)).map(w=>
+  wl.innerHTML=wait.length?wait.map(w=>
     `<div class="row"><b>${w.l.lote}</b> ${(w.l.cor||"")}<span class="tag" style="color:var(--steel)">${w.dias!=null?"entra em "+w.dias+"d · "+fmt(pd(w.l.corte)):""}</span></div>`).join("")
     :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
-  dl.innerHTML=done.length?done.sort((a,b)=>a.dias-b.dias).map(w=>
+  dl.innerHTML=done.length?done.map(w=>
     `<div class="row"><b>${w.l.lote}</b> ${(w.l.cor||"")}<span class="tag" style="color:var(--green)">emb. ${fmt(pd(w.l.emb))}</span></div>`).join("")
     :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
 
@@ -496,6 +599,144 @@ function cardEl(l,idx,ref){
   return c;
 }
 
+/* ================== SAÍDA GERENCIAL: IMPRESSO A4 ==================
+   Monta uma folha branca (A4 retrato) com resumo de carga, destaques do
+   dia e o detalhamento por etapa. "Imprimir → Salvar como PDF" gera o
+   arquivo que se manda no WhatsApp. */
+const esc = s => String(s??"").replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const nBR = n => (n||0).toLocaleString("pt-BR");
+const dataExt = d => d.toLocaleDateString("pt-BR",{weekday:"long", day:"2-digit", month:"long", year:"numeric"});
+
+function buildPrint(ref, comItens){
+  const {buckets,wait,done,ativos,pecas,mov}=computeBuckets(ref);
+  const pecasEt = buckets.map(b=>b.reduce((s,x)=>s+(x.l.qtd||0),0));
+  const maxP = Math.max(1,...pecasEt);
+  const prodTot = buckets.flat().reduce((s,x)=>s+(x.l.prod||0),0);
+
+  /* 1. quadro de carga por etapa */
+  const resumo = `<div class="pv-resumo"><div class="pv-h2">Carga por etapa</div>
+    <table class="pv-tab">
+      <thead><tr><th>Etapa</th><th>Fase</th><th style="text-align:right">Lotes</th>
+        <th style="text-align:right">Peças</th><th style="width:26%">Distribuição</th>
+        <th style="text-align:right">Movim. hoje</th></tr></thead>
+      <tbody>${ETAPAS.map((et,i)=>{
+        const mv=buckets[i].filter(x=>ehHoje(x.l,i,ref)).length;
+        return `<tr><td style="font-family:Oswald;font-size:10pt">${et.nome}</td>
+          <td style="font-size:7.5pt;color:#666">${et.fase}</td>
+          <td class="n">${buckets[i].length||"–"}</td>
+          <td class="n">${pecasEt[i]?nBR(pecasEt[i]):"–"}</td>
+          <td>${pecasEt[i]?`<span class="bar" style="width:${Math.round(pecasEt[i]/maxP*100)}%"></span>`:""}</td>
+          <td class="n">${mv||"–"}</td></tr>`;}).join("")}</tbody>
+      <tfoot><tr><td colspan="2">Total em elaboração</td><td class="n">${ativos}</td>
+        <td class="n">${nBR(pecas)}</td><td></td><td class="n">${mov||"–"}</td></tr></tfoot>
+    </table></div>`;
+
+  /* 2. destaques: o que muda de setor na data de referência */
+  const destaques=[];
+  ETAPAS.forEach((et,i)=>buckets[i].forEach(x=>{ if(ehHoje(x.l,i,ref))
+    destaques.push(`<div class="r"><span class="et">${esc(et.nome)}</span><b>${esc(x.l.lote)}</b>
+      <span style="color:#555">${esc(x.l.cor||"")}</span>
+      <span class="q">${nBR(x.l.qtd)} pçs${x.l.itens&&x.l.itens.length?` · ${x.l.itens.length} itens`:""}</span></div>`);}));
+  const dest = `<div class="pv-dest"><h3>Movimentação do dia — ${fmt(ref)}</h3>
+    ${destaques.length?destaques.join(""):`<div class="pv-vazio">Nenhum lote muda de etapa nesta data.</div>`}</div>`;
+
+  /* 3. detalhamento por etapa */
+  const secs = ETAPAS.map((et,i)=>{
+    const b=buckets[i];
+    if(!b.length) return `<div class="pv-sec livre"><h2>${esc(et.nome)}
+      <span class="fase">${et.fase}</span><span class="qt">sem lote</span></h2></div>`;
+    const linhas=b.map(x=>{
+      const l=x.l, hoje=ehHoje(l,i,ref);
+      const pct=l.qtd?Math.round((l.prod||0)/l.qtd*100):0;
+      const its=(comItens && l.itens && l.itens.length)
+        ? `<tr class="pv-its"><td colspan="6"><ul>${l.itens.map(it=>
+            `<li><span class="cd">${esc(it.cod||"")}</span><span>${esc(it.desc||"")}</span>
+             <span class="dq">${nBR(it.qtd)}</span></li>`).join("")}</ul></td></tr>` : "";
+      return `<tr class="${hoje?"hoje":""}">
+        <td class="lt">${esc(l.lote)}</td>
+        <td style="font-size:8pt;color:#555">${esc(l.cor||"")}</td>
+        <td class="n">${nBR(l.qtd)}</td>
+        <td class="n">${l.itens?l.itens.length:"–"}</td>
+        <td class="n">${l.prod>0?pct+"%":"–"}</td>
+        <td class="sit">${esc(situacao(l,i,ref))}</td></tr>${its}`;}).join("");
+    return `<div class="pv-sec"><h2>${esc(et.nome)}<span class="fase">${et.fase}</span>
+      <span class="qt">${b.length} lote${b.length>1?"s":""} · ${nBR(pecasEt[i])} pçs</span></h2>
+      <table class="pv-tab"><thead><tr><th>Lote</th><th>Cor</th><th style="text-align:right">Qtd</th>
+        <th style="text-align:right">Itens</th><th style="text-align:right">Prod.</th><th>Situação</th></tr></thead>
+      <tbody>${linhas}</tbody></table></div>`;}).join("");
+
+  /* 4. entradas e saídas da esteira */
+  const lanes = `<div class="pv-lanes">
+    <div class="pv-lane"><h3>Programados · ${wait.length}</h3>
+      ${wait.length?wait.map(w=>`<div class="r"><b>${esc(w.l.lote)}</b>${esc(w.l.cor||"")}
+        <span>${w.dias!=null?`entra em ${w.dias}d · ${fmt(pd(w.l.corte))}`:""}</span></div>`).join("")
+        :`<div class="pv-vazio">nenhum</div>`}</div>
+    <div class="pv-lane"><h3>Concluídos · ${done.length}</h3>
+      ${done.length?done.map(w=>`<div class="r"><b>${esc(w.l.lote)}</b>${esc(w.l.cor||"")}
+        <span>emb. ${fmt(pd(w.l.emb))}</span></div>`).join("")
+        :`<div class="pv-vazio">nenhum</div>`}</div></div>`;
+
+  const agora=new Date();
+  document.getElementById("printview").innerHTML=`
+    <div class="pv-head">
+      <img src="logo-patrimar.png" alt="Patrimar Móveis">
+      <div><h1>Lotes em Elaboração</h1>
+        <div class="pv-sub">Relatório gerencial · PPCP Patrimar · ${dataExt(ref)}</div></div>
+      <div class="pv-kpis">
+        <div><b>${ativos}</b><small>lotes ativos</small></div>
+        <div><b>${nBR(pecas)}</b><small>peças</small></div>
+        <div><b>${mov||"–"}</b><small>movim. hoje</small></div>
+        ${prodTot>0?`<div><b>${Math.round(prodTot/pecas*100)}%</b><small>produzido</small></div>`:""}
+      </div>
+    </div>
+    ${resumo}
+    ${dest}
+    <div class="pv-h2">Detalhamento por etapa</div>
+    ${secs}
+    ${lanes}
+    <div class="pv-foot">
+      <span>PPCP · Patrimar Móveis · Esteira de Elaboração</span>
+      <span>Datas das etapas anteriores estimadas a partir da embalagem (1 dia útil/etapa)</span>
+      <span>Emitido ${agora.toLocaleDateString("pt-BR")} ${agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span>
+    </div>`;
+}
+
+/* ================== SAÍDA GERENCIAL: TEXTO DO WHATSAPP ==================
+   Resumo curto, na formatação do WhatsApp (*negrito*), pra colar no grupo. */
+function textoWhats(ref, comItens){
+  const {buckets,wait,done,ativos,pecas,mov}=computeBuckets(ref);
+  const L=[];
+  L.push(`*LOTES EM ELABORAÇÃO*`);
+  L.push(`PPCP Patrimar · ref. ${fmt(ref)}/${ref.getFullYear()}`);
+  L.push(``);
+  L.push(`*${ativos}* lotes ativos · *${nBR(pecas)}* peças · *${mov}* movimentam hoje`);
+  L.push(``);
+  ETAPAS.forEach((et,i)=>{
+    const b=buckets[i];
+    if(!b.length){ L.push(`*${et.nome.toUpperCase()}* — livre`); return; }
+    const pq=b.reduce((s,x)=>s+(x.l.qtd||0),0);
+    L.push(`*${et.nome.toUpperCase()}* — ${b.length} lote${b.length>1?"s":""} · ${nBR(pq)} pçs`);
+    b.forEach(x=>{
+      const hoje=ehHoje(x.l,i,ref);
+      L.push(`${hoje?"🔸":"▫️"} ${x.l.lote}${x.l.cor?" "+x.l.cor:""} · ${nBR(x.l.qtd)} pçs`);
+      L.push(`   _${situacao(x.l,i,ref)}_`);
+      if(comItens && x.l.itens && x.l.itens.length)
+        x.l.itens.forEach(it=>L.push(`   • ${it.desc||it.cod||""} — ${nBR(it.qtd)}`));
+    });
+    L.push(``);
+  });
+  if(wait.length) L.push(`⏳ *Programados (${wait.length}):* `+wait.map(w=>
+    `${w.l.lote}${w.dias!=null?` em ${w.dias}d`:""}`).join(" · "));
+  if(done.length) L.push(`✅ *Concluídos (${done.length}):* `+done.map(w=>
+    `${w.l.lote} emb. ${fmt(pd(w.l.emb))}`).join(" · "));
+  return L.join("\n").replace(/\n{3,}/g,"\n\n").trim();
+}
+
+function toast(msg){
+  const t=document.createElement("div"); t.className="toast"; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),3200);
+}
+
 /* ---------- controles ---------- */
 const refInput=document.getElementById("ref");
 refInput.value=isoOf(new Date());
@@ -505,6 +746,20 @@ document.getElementById("next").onclick=()=>shift(1);
 document.getElementById("hoje").onclick=()=>{refInput.value=isoOf(new Date());render();};
 document.getElementById("reload").onclick=carregar;
 refInput.addEventListener("change",render);
+
+function montarImpresso(){
+  buildPrint(pd(refInput.value), document.getElementById("pItens").checked);
+}
+document.getElementById("imprimir").onclick=()=>{ montarImpresso(); setTimeout(()=>window.print(),60); };
+// Ctrl+P direto do navegador também sai com o relatório montado
+window.addEventListener("beforeprint", montarImpresso);
+document.getElementById("whats").onclick=async ()=>{
+  const txt=textoWhats(pd(refInput.value), document.getElementById("pItens").checked);
+  try{ await navigator.clipboard.writeText(txt); toast("Resumo copiado — é só colar no grupo"); }
+  catch(e){ /* sem permissão de área de transferência: segue pro WhatsApp */ }
+  if(navigator.share){ try{ await navigator.share({text:txt}); return; }catch(e){ if(e.name==="AbortError") return; } }
+  window.open("https://wa.me/?text="+encodeURIComponent(txt), "_blank", "noopener");
+};
 carregar();
 setInterval(carregar, 5*60*1000); // recarrega a cada 5 min
 if(TVKEY){ setInterval(tvClock, 30000); setInterval(tvRotate, 14000); } // relógio + rotação de páginas
