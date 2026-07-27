@@ -14,26 +14,39 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
 - **Impressão gerencial** e **envio por WhatsApp** (ver abaixo).
 - Recarrega automaticamente a cada 5 minutos.
 
-## Volumes pendentes / atraso
-Antes, quando a data da embalagem passava o lote ia para **Concluídos** mesmo sem ter sido
-produzido — o que ficou para trás sumia do painel. Agora:
+## Baixa: volumes embalados
+A baixa real não está na planilha, está no ERP: relatório **Transação 3 – REPORTE, Tipo L –
+VOLUMES**, que lista por dia o código do volume (`501.*`) e a quantidade reportada.
 
-- **Volume pendente** de cada produto = coluna `SALDO`/`FALTA` da planilha; quando ela não existe,
-  `Qtd_cx − PRODUZIDO`. O pendente do lote é a soma dos produtos.
-- Um lote só cai em **Concluídos** se não sobrou volume. Se passou da embalagem e ainda falta
-  algo, ele vai para a faixa vermelha **Em atraso**, com dias úteis de atraso, volumes pendentes
-  e % feito. O KPI **volumes em atraso** fica no topo.
-- O card do lote mostra `Pend N vol.` e, ao abrir, o que falta de cada produto.
-- No **modo TV** entra uma tarja vermelha com o total pendente e os lotes atrasados; o card
-  mostra `falta N vol.`.
-- O atraso também sai no **impresso** (bloco vermelho no topo, com os produtos que faltam) e no
-  **texto do WhatsApp**.
+Crie na mesma planilha uma aba chamada **`BAIXA`** (aceita também `EMBALADOS` ou `BAIXAS`) e
+jogue esse relatório lá. A aba é lida pelo **nome**, então não é preciso descobrir o `gid`.
+Dois formatos servem:
+
+- **Tabela**: colunas `DATA`, `CODIGO`, `QUANTIDADE` (descrição opcional).
+- **Texto cru do relatório colado**: o painel acha as linhas `código … UN … 337,000` e pega a
+  data do `Período:` — nunca do `Data:` do cabeçalho, que é a data de emissão.
+
+Cada lançamento é casado com o lote **pelo código do produto**, escolhendo o lote cuja embalagem
+está mais perto da data do lançamento. Volume reportado no dia X nunca entra em lote que embala
+**depois** de X (seria baixa de lote antigo); o que não acha lote aparece como `N sem lote` na
+linha de status, junto com o que foi reportado acima do programado.
+
+## Volumes pendentes / atraso
+- **Volume pendente** = programado − baixa. Sem a aba de baixa, cai para a coluna `SALDO`/`FALTA`
+  e, na falta dela, `Qtd_cx − PRODUZIDO`.
+- Passou a embalagem e ainda falta volume → faixa vermelha **Em atraso**, com dias úteis de
+  atraso, volumes pendentes e % feito. KPI **volumes em atraso** no topo.
+- Passou a embalagem e a baixa **não cobre aquele dia** → faixa **Sem baixa**, em laranja. Não é
+  atraso nem conclusão: é desconhecido. Serve para não pintar de vermelho lote que ninguém
+  reportou, e para cobrar o reporte que falta.
+- Só cai em **Concluídos** quem teve baixa e não deixou saldo.
+- O card mostra `Pend N vol.` e, aberto, o que falta de cada produto. No **modo TV** entra uma
+  tarja vermelha com o total pendente. **Impresso** e **WhatsApp** trazem o bloco de atraso com
+  os produtos que faltam.
 - Uma linha de `STATUS` com "atrasado", "pendente", "parado" ou "falta" também marca o lote.
 
-Sem nenhum apontamento na planilha (nada em `PRODUZIDO` nem em `SALDO`) não dá para afirmar
-atraso — nesse caso o painel se guia só pelas datas, como antes, e o KPI fica oculto. Em
-compensação, um lote que passou da embalagem **sem nenhum apontamento** conta como 100% pendente:
-ou a produção não saiu, ou o apontamento não foi feito — os dois casos merecem aparecer.
+A baixa só responde pelos dias que ela cobre: um lote com embalagem fora do período carregado
+nunca é acusado de atraso.
 
 ## Impressão / WhatsApp
 Dois botões na barra de controles, sempre referentes à **data de referência** selecionada:
