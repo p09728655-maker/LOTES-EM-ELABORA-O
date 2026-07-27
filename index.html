@@ -127,12 +127,19 @@
   .lane.late h3 .cnt{margin-left:0; color:var(--bg); background:var(--red); border-radius:20px;
     padding:1px 8px; min-width:22px; text-align:center}
   .lane.late h3 .tot{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:var(--red)}
-  .lane.late .row{border-bottom:1px solid rgba(255,59,48,.16)}
+  /* grade de colunas fixas: lote · cor · nº · rótulo · de N/% · atraso */
+  .lane.late .row{display:grid; align-items:center; gap:0 10px; padding:6px 0;
+    grid-template-columns:58px 104px 64px 96px 1fr auto;
+    border-bottom:1px solid rgba(255,59,48,.16)}
   .lane.late .row:last-child{border-bottom:none}
-  .lane.late .row .pend{font-family:"IBM Plex Mono"; color:var(--red); font-weight:600}
-  .lane.late .row .dias{margin-left:auto; font-family:"IBM Plex Mono"; font-size:11px; color:var(--red)}
+  .lane.late .row .lt{font-family:"IBM Plex Mono"; font-size:13.5px; color:var(--ink)}
+  .lane.late .row .cel-cor{display:flex}
   .lane.late .row .cor{margin-left:0}
+  .lane.late .row .pend{font-family:"IBM Plex Mono"; color:var(--red); font-weight:600;
+    text-align:right; font-size:13.5px}
+  .lane.late .row .rot{color:var(--red); font-size:12px}
   .lane.late .row .pct{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut)}
+  .lane.late .row .dias{text-align:right; font-family:"IBM Plex Mono"; font-size:11px; color:var(--red)}
   .lane.late .aviso{font-size:11.5px; color:var(--mut2); font-style:italic; padding-top:6px}
   .foot{margin-top:26px; font-size:11.5px; color:var(--mut2); line-height:1.6; max-width:760px}
   .foot code{font-family:"IBM Plex Mono"; color:var(--mut); background:var(--panel); padding:1px 5px; border-radius:4px}
@@ -359,9 +366,11 @@
     .lane{padding:10px 11px}
     .lane h3{font-size:13px; flex-wrap:wrap; gap:6px}
     .lane h3 .tot{margin-left:0; width:100%}
-    .lane.late .row{flex-wrap:wrap; gap:6px 9px; padding:9px 0}
-    .lane.late .row .pend{width:auto}
-    .lane.late .row .dias{margin-left:0; width:100%; font-size:10.5px}
+    /* no celular a grade não cabe: vira bloco, com % e atraso em linha própria */
+    .lane.late .row{display:flex; flex-wrap:wrap; align-items:center; gap:5px 8px; padding:9px 0}
+    .lane.late .row .pend{text-align:left}
+    .lane.late .row .pct{width:100%; font-size:11px}
+    .lane.late .row .dias{width:100%; text-align:left; font-size:10.5px}
     .lane .row{flex-wrap:wrap; gap:6px 9px}
     .lane .row .tag{margin-left:0; width:100%; font-size:10.5px}
     .lanes{gap:9px; margin-top:9px}
@@ -928,10 +937,14 @@ function render(){
   lane.hidden = !atras.length;
   document.getElementById("lateCnt").textContent = atras.length;
   document.getElementById("lateTot").textContent = volAtraso.toLocaleString("pt-BR")+" volumes pendentes";
+  // uma célula por coluna, sempre todas: assim os números ficam alinhados
+  // mesmo quando o lote não tem cor ou o valor tem menos dígitos
   ll.innerHTML = atras.map(a=>{
     const pct=a.l.qtd?Math.round((a.l.qtd-a.pend)/a.l.qtd*100):0;
-    return `<div class="row"><b>${a.l.lote}</b>${a.l.cor?`<span class="cor" style="${corGPS(a.l.cor)}">${a.l.cor}</span>`:""}
-      <span class="pend">${a.pend.toLocaleString("pt-BR")} vol. pendentes</span>
+    return `<div class="row"><b class="lt">${a.l.lote}</b>
+      <span class="cel-cor">${a.l.cor?`<span class="cor" style="${corGPS(a.l.cor)}">${a.l.cor}</span>`:""}</span>
+      <span class="pend">${a.pend.toLocaleString("pt-BR")}</span>
+      <span class="rot">vol. pendentes</span>
       <span class="pct">de ${(a.l.qtd||0).toLocaleString("pt-BR")} · ${pct}% feito</span>
       <span class="dias">emb. ${fmt(pd(a.l.emb))} · ${a.dias}d de atraso</span></div>`;}).join("");
 
