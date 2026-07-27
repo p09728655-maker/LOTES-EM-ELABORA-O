@@ -80,8 +80,10 @@
   .card.today{border-left-color:var(--amber); box-shadow:0 0 0 1px var(--amber-dim) inset}
   .c-top{display:flex; align-items:baseline; gap:8px}
   .c-lote{font-family:"IBM Plex Mono"; font-weight:600; font-size:19px}
-  .c-int{font-family:"IBM Plex Mono"; font-size:12px; color:var(--mut); letter-spacing:.02em}
-  .lane .row .int{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2)}
+  .c-int{font-family:"IBM Plex Mono"; font-size:14px; font-weight:600; color:var(--ink);
+    letter-spacing:.02em; background:rgba(255,255,255,.07); border:1px solid var(--line);
+    border-radius:5px; padding:1px 7px}
+  .lane .row .int{font-family:"IBM Plex Mono"; font-size:12.5px; font-weight:600; color:var(--ink)}
   .cor{margin-left:auto; font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
     padding:3px 9px; border-radius:20px; border:1px solid var(--line); color:var(--mut); white-space:nowrap}
   .c-sub{display:flex; gap:14px; margin-top:5px; font-size:12px; color:var(--mut)}
@@ -135,7 +137,7 @@
     border-bottom:1px solid rgba(255,59,48,.16)}
   .lane.late .row:last-child{border-bottom:none}
   .lane.late .row .lt{font-family:"IBM Plex Mono"; font-size:13.5px; color:var(--ink)}
-  .lane.late .row .cel-int{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2)}
+  .lane.late .row .cel-int{font-family:"IBM Plex Mono"; font-size:12.5px; font-weight:600; color:var(--ink)}
   .lane.late .row .cel-cor{display:flex}
   .lane.late .row .cor{margin-left:0}
   .lane.late .row .pend{font-family:"IBM Plex Mono"; color:var(--red); font-weight:600;
@@ -174,7 +176,8 @@
   .tv-card.today{border-left-color:var(--amber); box-shadow:0 0 0 .2vw var(--amber-dim) inset}
   .tv-card .l{display:flex; align-items:baseline; gap:1vw}
   .tv-card .l b{font-family:"IBM Plex Mono"; font-weight:600; font-size:3.6vw; line-height:1}
-  .tv-card .l .int{font-family:"IBM Plex Mono"; font-size:1.5vw; color:var(--mut)}
+  .tv-card .l .int{font-family:"IBM Plex Mono"; font-size:2vw; font-weight:600; color:var(--ink);
+    background:rgba(255,255,255,.08); border-radius:.5vw; padding:.2vh .8vw}
   .tv-card .l .cor{margin-left:auto; font-size:1.35vw; font-weight:700; letter-spacing:.1em;
     text-transform:uppercase; color:var(--mut); border:.15vw solid var(--line);
     border-radius:20px; padding:.5vh 1.2vw; white-space:nowrap}
@@ -293,7 +296,7 @@
     .pv-tab td{padding:2.5pt 4pt; border-bottom:.4pt solid #e2e2e2; vertical-align:top}
     .pv-tab tr{page-break-inside:avoid; break-inside:avoid}
     .pv-tab .lt{font-family:"IBM Plex Mono"; font-weight:600; font-size:11pt; white-space:nowrap}
-    .pv-tab .lt .int{display:block; font-size:7.5pt; font-weight:400; color:#777}
+    .pv-tab .lt .int{display:block; font-size:8.5pt; font-weight:600; color:#333}
     .pv-tab .cel-cor{font-size:8pt; color:#333; white-space:nowrap}
     .pv-tab .pchip{display:inline-block; width:7pt; height:7pt; border-radius:50%; margin-right:3pt;
       vertical-align:-.5pt; border:.4pt solid #999;
