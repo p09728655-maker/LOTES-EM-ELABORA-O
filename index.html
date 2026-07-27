@@ -301,6 +301,71 @@
       font-family:"IBM Plex Mono"; font-size:7pt; color:#777; display:flex; gap:14pt}
     .pv-foot span:last-child{margin-left:auto}
   }
+  /* ===================== CELULAR ===================== */
+  @media(max-width:640px){
+    body{padding:6px 10px 26px}
+    .logobar{padding:0 0 4px} .logo{height:34px}
+    header.top{gap:8px; padding-bottom:7px}
+    .brand .eyebrow{font-size:9.5px; letter-spacing:.16em}
+    .brand h1{font-size:23px}
+    /* KPIs em quatro colunas, sem espremer */
+    .headmeta{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; width:100%; margin:6px 0 0}
+    .kpi{align-items:flex-start} .kpi b{font-size:19px}
+    .kpi small{font-size:8px; letter-spacing:.04em; margin-top:3px; line-height:1.2}
+
+    /* controles: cada grupo ocupa a linha inteira; nada vaza para fora */
+    .controls{flex-direction:column; align-items:stretch; gap:8px; padding:9px 10px; margin:8px 0 6px}
+    .controls .grp{width:100%; display:grid; gap:7px}
+    .controls .grp:nth-of-type(1){grid-template-columns:auto 1fr}
+    .controls .grp:nth-of-type(2){grid-template-columns:repeat(3,1fr)}
+    .controls .grp:nth-of-type(3){grid-template-columns:1fr 1fr}
+    .controls .grp:nth-of-type(3) .chk{grid-column:1/-1; justify-content:center; padding:5px 0;
+      border:1px solid var(--line); border-radius:7px}
+    /* configurações é coisa de desktop: no celular só atrapalha */
+    #cfgBtn, .cfg, .so-desktop{display:none !important}
+    .controls label{align-self:center}
+    input[type=date]{width:100%}
+    button.b{padding:10px 8px; font-size:13.5px; white-space:nowrap}
+    .refnote{margin:0; text-align:right; font-size:11.5px}
+    .status{font-size:11.5px; flex-wrap:wrap; margin-bottom:8px}
+
+    .board{gap:9px}
+    .station{min-height:0}
+    .st-head{padding:8px 11px 7px} .st-head .nm{font-size:15px}
+    .st-body{padding:9px; gap:9px}
+    .empty{min-height:0; padding:7px; font-size:11px}
+    /* estação sem lote encolhe para uma linha: não gasta tela dizendo "livre" */
+    .station.vazia .st-body{display:none}
+    .station.vazia .st-head{border-bottom:none; opacity:.5; padding:7px 11px}
+    .station.vazia .st-head .fase{display:none}
+    .station.vazia .st-head .nm{margin-top:0; font-size:13.5px}
+    .station.vazia .st-head .nm::after{content:"livre"; margin-left:auto; order:2;
+      font-family:"IBM Plex Mono"; font-size:11px; font-style:italic; color:var(--mut2)}
+    .station.vazia .st-head .nm .cnt{display:none}
+    .card{padding:9px 10px} .c-lote{font-size:17px}
+    .c-sub{gap:10px; font-size:11.5px; flex-wrap:wrap}
+    .c-status{font-size:11px; margin-top:7px; padding-top:7px}
+    .tl .dt{font-size:7.5px} .tl .lbl{font-size:7.5px}
+    .items td{font-size:10.5px}
+
+    /* faixa de atraso: uma linha por lote vira bloco, sem cortar texto */
+    .lane{padding:10px 11px}
+    .lane h3{font-size:13px; flex-wrap:wrap; gap:6px}
+    .lane h3 .tot{margin-left:0; width:100%}
+    .lane.late .row{flex-wrap:wrap; gap:6px 9px; padding:9px 0}
+    .lane.late .row .pend{width:auto}
+    .lane.late .row .dias{margin-left:0; width:100%; font-size:10.5px}
+    .lane .row{flex-wrap:wrap; gap:6px 9px}
+    .lane .row .tag{margin-left:0; width:100%; font-size:10.5px}
+    .lanes{gap:9px; margin-top:9px}
+
+    .cfg{padding:12px 12px 10px} .cfg-row2{flex-direction:column; gap:0}
+    .cfg-acoes{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+    .cfg-acoes .b{width:100%}
+    .cfg-acoes #cfgSalvar{grid-column:1/-1}
+    .cfg-link{margin:2px 0 0; grid-column:1/-1; text-align:center}
+    .foot{font-size:11px; margin-top:18px}
+  }
 </style>
 </head>
 <body>
@@ -386,7 +451,7 @@
   Lê ao vivo a aba de elaboração no Google Sheets e posiciona cada lote pela <b>data prevista</b> de cada etapa
   (corte → furar → colar/PU → UV → embalagem). Clique num card para ver os itens (quando houver).
   Use ◀/▶ pra simular os próximos dias.<br>
-  O endereço da planilha fica em <b style="color:var(--mut)">⚙ Configurações</b>, no alto da tela.
+  <span class="so-desktop">O endereço da planilha fica em <b style="color:var(--mut)">⚙ Configurações</b>, no alto da tela.</span>
   <div class="tvlinks"><b style="color:var(--mut)">Modo TV</b> (um setor por tela, para pendurar):
     <a href="?setor=corte">Corte</a> ·
     <a href="?setor=furar">Furadeira</a> ·
@@ -590,7 +655,9 @@ function rowsToLotes(rows){
     if(cod || (desc && q>0)){ cur.itens.push({cod,desc,qtd:q,prod,perc,saldo,status});
       cur.qtd+=q; cur.prod+=prod; cur.saldo+=saldo;
       if(sCol!=="") cur.temSaldo=true;                 // saldo veio da planilha, não estimado
-      if(/atras|pend|parad|falta/i.test(status)) cur.flagStatus=true; }
+      // só marca atraso por status quando a planilha diz isso explicitamente.
+      // "PENDENTE" aqui significa "ainda não começou", não atraso.
+      if(/atras|parad|bloque/i.test(status)) cur.flagStatus=true; }
   }
   return out;
 }
@@ -827,7 +894,8 @@ function render(){
   const board=document.getElementById("board"); board.innerHTML="";
   ETAPAS.forEach((et,i)=>{
     const hot=buckets[i].some(x=>{const d=pd(x.l[et.key]); return d&&+d===+ref;});
-    const st=document.createElement("div"); st.className="station"+(hot?" hot":"");
+    const st=document.createElement("div");
+    st.className="station"+(hot?" hot":"")+(buckets[i].length?"":" vazia");
     st.innerHTML=`<div class="st-head"><div class="fase">${et.fase}</div>
       <div class="nm">${et.nome}<span class="cnt">${buckets[i].length}</span></div></div>
       <div class="st-body"></div>`;
