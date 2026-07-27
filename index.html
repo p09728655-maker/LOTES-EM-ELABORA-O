@@ -119,8 +119,9 @@
 
   /* faixa de atraso: lotes que passaram da embalagem com volume pendente */
   .kpi.late b{color:var(--red)} .kpi.late[hidden]{display:none}
-  .lane.late{margin-top:14px; border:1px solid var(--red); border-style:solid;
-    background:linear-gradient(180deg,rgba(255,59,48,.07),transparent)}
+  /* fica acima do quadro: é a primeira coisa que se vê, sem precisar rolar */
+  .lane.late{margin:0 0 14px; border:1px solid var(--red); border-style:solid;
+    background:linear-gradient(180deg,rgba(255,59,48,.09),transparent)}
   .lane.late h3{color:var(--red)}
   .lane.late h3 .cnt{margin-left:0; color:var(--bg); background:var(--red); border-radius:20px;
     padding:1px 8px; min-width:22px; text-align:center}
@@ -141,7 +142,8 @@
   .tvlinks a{color:var(--steel); text-decoration:none} .tvlinks a:hover{color:var(--amber)}
   #tv{display:none}
   body.tv{padding:0; overflow:hidden}
-  body.tv header.top, body.tv .controls, body.tv .status, body.tv .lanes, body.tv .foot, body.tv #board, body.tv .logobar{display:none}
+  body.tv header.top, body.tv .controls, body.tv .status, body.tv .lanes, body.tv .lane.late,
+  body.tv .foot, body.tv #board, body.tv .logobar{display:none}
   body.tv #tv{display:flex; flex-direction:column; height:100vh; padding:1vh 2.4vw 1.4vh}
   .tv-head{display:flex; align-items:center; gap:2vw; border-bottom:.4vh solid var(--wood); padding-bottom:1.1vh}
   .tv-head .tv-fase{font-family:"IBM Plex Mono"; font-size:1.5vw; letter-spacing:.2em; color:var(--mut); text-transform:uppercase}
@@ -311,17 +313,17 @@
 <div class="status" id="status"><span class="led"></span><span id="statusTxt">Carregando…</span>
   <button class="mini" id="reload">recarregar</button></div>
 
-<div class="board" id="board"></div>
-
-<div id="tv"></div>
-<div id="printview"></div>
-
 <div class="lane late" id="lateLane" hidden>
   <h3>Em atraso <span class="cnt" id="lateCnt">0</span>
     <span style="font-weight:400;letter-spacing:.06em">· passou a embalagem com volume pendente</span>
     <span class="tot" id="lateTot"></span></h3>
   <div id="lateList"></div>
 </div>
+
+<div class="board" id="board"></div>
+
+<div id="tv"></div>
+<div id="printview"></div>
 
 <div class="lanes">
   <div class="lane wait"><h3>Programados <span class="cnt" id="waitCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram</span></h3><div id="waitList"></div></div>
@@ -619,12 +621,11 @@ async function carregarBaixa(){
 function setStatus(kind,txt){ const el=document.getElementById("status");
   el.className="status "+kind; document.getElementById("statusTxt").innerHTML=txt; }
 
-// resumo da baixa para a linha de status
+/* Resumo da baixa na linha de status. A baixa hoje chega pelo app na própria
+   aba de programação (PRODUZIDO/SALDO); a aba BAIXA é só reserva, então
+   quando ela não está em uso a linha fica calada — nada a avisar. */
 function txtBaixa(){
-  if(!BAIXA.ativa){
-    return BAIXA.erro ? ` · <span style="color:var(--amber)">baixa: ${BAIXA.erro}</span>`
-                      : ` · <span style="color:var(--mut2)">sem aba de baixa (${ABAS_BAIXA[0]})</span>`;
-  }
+  if(!BAIXA.ativa) return "";
   const per=BAIXA.min?`${fmt(BAIXA.min)}${+BAIXA.max!==+BAIXA.min?" a "+fmt(BAIXA.max):""}`:"sem data";
   const vol=BAIXA.linhas.reduce((s,b)=>s+b.qtd,0);
   const sobra=BAIXA.semLote?` · <span style="color:var(--amber)">${BAIXA.semLote.toLocaleString("pt-BR")} sem lote</span>`:"";
