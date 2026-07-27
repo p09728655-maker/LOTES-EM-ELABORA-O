@@ -115,6 +115,22 @@
   .lane .row b{font-family:"IBM Plex Mono"; color:var(--ink); font-size:14px}
   .lane .row .tag{margin-left:auto; font-family:"IBM Plex Mono"; font-size:11px}
   .lane.done h3{color:var(--green)} .lane.wait h3{color:var(--steel)}
+
+  /* faixa de atraso: lotes que passaram da embalagem com volume pendente */
+  .kpi.late b{color:var(--red)} .kpi.late[hidden]{display:none}
+  .lane.late{margin-top:14px; border:1px solid var(--red); border-style:solid;
+    background:linear-gradient(180deg,rgba(255,59,48,.07),transparent)}
+  .lane.late h3{color:var(--red)}
+  .lane.late h3 .cnt{margin-left:0; color:var(--bg); background:var(--red); border-radius:20px;
+    padding:1px 8px; min-width:22px; text-align:center}
+  .lane.late h3 .tot{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:var(--red)}
+  .lane.late .row{border-bottom:1px solid rgba(255,59,48,.16)}
+  .lane.late .row:last-child{border-bottom:none}
+  .lane.late .row .pend{font-family:"IBM Plex Mono"; color:var(--red); font-weight:600}
+  .lane.late .row .dias{margin-left:auto; font-family:"IBM Plex Mono"; font-size:11px; color:var(--red)}
+  .lane.late .row .cor{margin-left:0}
+  .lane.late .row .pct{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut)}
+  .lane.late .aviso{font-size:11.5px; color:var(--mut2); font-style:italic; padding-top:6px}
   .foot{margin-top:26px; font-size:11.5px; color:var(--mut2); line-height:1.6; max-width:760px}
   .foot code{font-family:"IBM Plex Mono"; color:var(--mut); background:var(--panel); padding:1px 5px; border-radius:4px}
   @media(max-width:900px){ .board{grid-template-columns:1fr} .headmeta{width:100%; justify-content:flex-start; margin-left:0} .lanes{grid-template-columns:1fr} }
@@ -157,6 +173,14 @@
   .logo{height:50px; width:auto; display:block}
   .tv-logobar{display:flex; justify-content:center; padding:0 0 .6vh}
   .tv-logo{height:5.6vh; width:auto}
+  .tv-card .m b.pend{color:var(--red)}
+  .tv-atraso{display:flex; align-items:center; gap:1.4vw; margin-top:1.2vh; padding:.9vh 1.4vw;
+    border:.25vw solid var(--red); border-radius:.8vw; background:rgba(255,59,48,.1); font-size:1.5vw}
+  .tv-atraso .tag{font-family:"Oswald"; font-weight:700; color:var(--red); letter-spacing:.04em;
+    text-transform:uppercase; white-space:nowrap}
+  .tv-atraso .tot{font-family:"IBM Plex Mono"; font-weight:600; color:var(--red); white-space:nowrap}
+  .tv-atraso .ls{font-family:"IBM Plex Mono"; color:var(--mut); margin-left:auto;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .tv-empty{grid-column:1/-1; display:flex; align-items:center; justify-content:center;
     color:var(--mut2); font-size:2.2vw; font-style:italic; height:64vh}
   .tv-foot{border-top:1px solid var(--line); margin-top:1.6vh; padding-top:1.1vh;
@@ -205,6 +229,14 @@
     .pv-dest .r b{font-family:"IBM Plex Mono"; min-width:44pt}
     .pv-dest .r .et{font-family:"Oswald"; letter-spacing:.03em; min-width:70pt}
     .pv-dest .r .q{margin-left:auto; font-family:"IBM Plex Mono"; white-space:nowrap}
+    /* bloco de atraso: volumes pendentes que passaram da embalagem */
+    .pv-kpis div.atr b{color:#c1121f}
+    .pv-atraso{margin-top:9pt; border:1pt solid #c1121f; border-radius:3pt; padding:5pt 7pt 3pt;
+      background:#fdf0f0; -webkit-print-color-adjust:exact; print-color-adjust:exact;
+      page-break-inside:avoid; break-inside:avoid}
+    .pv-atraso h3{font-family:"Oswald"; font-size:10.5pt; margin:0 0 3pt; text-transform:uppercase;
+      letter-spacing:.05em; color:#c1121f; font-weight:600}
+    .pv-atraso .pv-tab td{border-bottom-color:#eecccc}
     .pv-h2{font-family:"Oswald"; font-size:11pt; font-weight:600; letter-spacing:.08em;
       text-transform:uppercase; color:#333; margin:12pt 0 4pt; border-bottom:.8pt solid #333; padding-bottom:2pt}
     .pv-sec{margin-top:9pt; page-break-inside:avoid; break-inside:avoid}
@@ -256,6 +288,7 @@
     <div class="kpi"><b id="kLotes">–</b><small>lotes ativos</small></div>
     <div class="kpi"><b id="kPecas">–</b><small>peças em elaboração</small></div>
     <div class="kpi"><b id="kHoje">–</b><small>movimentam hoje</small></div>
+    <div class="kpi late" id="kAtrasoBox"><b id="kAtraso">–</b><small>volumes em atraso</small></div>
   </div>
 </header>
 
@@ -281,6 +314,13 @@
 
 <div id="tv"></div>
 <div id="printview"></div>
+
+<div class="lane late" id="lateLane" hidden>
+  <h3>Em atraso <span class="cnt" id="lateCnt">0</span>
+    <span style="font-weight:400;letter-spacing:.06em">· passou a embalagem com volume pendente</span>
+    <span class="tot" id="lateTot"></span></h3>
+  <div id="lateList"></div>
+</div>
 
 <div class="lanes">
   <div class="lane wait"><h3>Programados <span class="cnt" id="waitCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram</span></h3><div id="waitList"></div></div>
@@ -417,7 +457,7 @@ function rowsToLotes(rows){
     if(lote && (!cur || cur.lote!==lote)){
       cur={ lote, cor:val(row,idx.cor),
         corte:val(row,idx.corte), furar:val(row,idx.furar), cola:val(row,idx.cola),
-        uv:val(row,idx.uv), emb:val(row,idx.emb), itens:[], qtd:0, prod:0 };
+        uv:val(row,idx.uv), emb:val(row,idx.emb), itens:[], qtd:0, prod:0, saldo:0 };
       // se não vieram as datas das etapas, deriva a partir da embalagem
       const embD=pd(cur.emb);
       if(embD && !pd(cur.corte)){
@@ -432,9 +472,14 @@ function rowsToLotes(rows){
     if(!cur) continue;
     const cod=val(row,idx.cod), desc=val(row,idx.desc), q=num(val(row,idx.qtd));
     const prod=num(val(row,idx.prod)), perc=num(val(row,idx.perc)), status=val(row,idx.status);
+    // volumes pendentes: usa a coluna SALDO/FALTA quando existe; senão, Qtd − PRODUZIDO
+    const sCol=val(row,idx.saldo), saldo = sCol!=="" ? num(sCol) : Math.max(0, q-prod);
     // só produto de verdade (tem código, ou descrição com quantidade);
     // pula subtotais (só números) e linhas de assistência/observação
-    if(cod || (desc && q>0)){ cur.itens.push({cod,desc,qtd:q,prod,perc,status}); cur.qtd+=q; cur.prod+=prod; }
+    if(cod || (desc && q>0)){ cur.itens.push({cod,desc,qtd:q,prod,perc,saldo,status});
+      cur.qtd+=q; cur.prod+=prod; cur.saldo+=saldo;
+      if(sCol!=="") cur.temSaldo=true;                 // saldo veio da planilha, não estimado
+      if(/atras|pend|parad|falta/i.test(status)) cur.flagStatus=true; }
   }
   return out;
 }
@@ -469,22 +514,48 @@ async function carregar(){
 function estagioAtual(l, ref){ let idx=-1;
   for(let i=0;i<ETAPAS.length;i++){ const d=pd(l[ETAPAS[i].key]); if(d && d<=ref) idx=i; } return idx; }
 
+/* ---------- volumes pendentes / atraso ----------
+   Pendente = coluna SALDO/FALTA da planilha; quando ela não existe,
+   Qtd − PRODUZIDO. Um lote só é dado como concluído se não sobrou volume.
+   Sem nenhum apontamento na planilha (nada em PRODUZIDO/SALDO) não dá pra
+   afirmar atraso — aí o painel volta a se guiar só pelas datas. */
+const temApontamento = l => !!l.temSaldo || (l.prod||0)>0;
+const pendentes = l => l.temSaldo ? (l.saldo||0) : Math.max(0,(l.qtd||0)-(l.prod||0));
+// pendente do produto: saldo da linha quando existe, senão Qtd − produzido do item
+const pendItem = it => it.saldo!==undefined ? (it.saldo||0) : Math.max(0,(it.qtd||0)-(it.prod||0));
+const itensPend = l => (l.itens||[]).filter(it=>pendItem(it)>0);
+const APONTA = () => LOTES.some(l=>temApontamento(l)||l.flagStatus);
+// atraso = passou a data da embalagem e ainda sobra volume (ou a planilha marcou)
+function atrasoDe(l, ref){
+  const emb=pd(l.emb); if(!emb || ref<=emb) return null;
+  if(!APONTA()) return null;
+  const pend=pendentes(l);
+  if(pend<=0 && !l.flagStatus) return null;
+  return { dias: wdBetween(emb,ref), pend };
+}
+
 /* Distribui os lotes nas estações da data de referência.
    Usado pela tela, pelo modo TV, pelo impresso e pelo texto do WhatsApp. */
 function computeBuckets(ref){
-  const buckets=ETAPAS.map(()=>[]), wait=[], done=[];
+  const buckets=ETAPAS.map(()=>[]), wait=[], done=[], atras=[];
   LOTES.forEach(l=>{
     const idx=estagioAtual(l,ref);
     const emb=pd(l.emb), corte=pd(l.corte);
     if(idx<0){ wait.push({l,dias:corte?wdBetween(ref,corte):null}); return; }
-    if(idx===4 && emb && ref>emb){ done.push({l,dias:diasEntre(emb,ref)}); return; }
+    if(idx===4 && emb && ref>emb){
+      const a=atrasoDe(l,ref);
+      if(a){ atras.push({l,dias:a.dias,pend:a.pend}); return; }   // não some do painel
+      done.push({l,dias:diasEntre(emb,ref)}); return;
+    }
     buckets[idx].push({l,idx});
   });
   const ativos=buckets.reduce((s,b)=>s+b.length,0);
   const pecas=buckets.flat().reduce((s,x)=>s+(x.l.qtd||0),0);
   let mov=0; buckets.forEach((b,i)=>b.forEach(x=>{const d=pd(x.l[ETAPAS[i].key]); if(d&&+d===+ref)mov++;}));
   wait.sort((a,b)=>(a.dias??99)-(b.dias??99)); done.sort((a,b)=>a.dias-b.dias);
-  return {buckets,wait,done,ativos,pecas,mov};
+  atras.sort((a,b)=>b.dias-a.dias || b.pend-a.pend);              // o mais velho primeiro
+  const volAtraso=atras.reduce((s,x)=>s+x.pend,0);
+  return {buckets,wait,done,atras,ativos,pecas,mov,volAtraso};
 }
 // situação do lote na etapa i, em texto curto (reaproveitada nas 4 saídas)
 function situacao(l,i,ref){
@@ -500,7 +571,7 @@ function render(){
   if(TVKEY) document.getElementById("ref").value=isoOf(new Date()); // TV: sempre o dia de hoje
   const ref=pd(document.getElementById("ref").value);
   document.getElementById("refTxt").textContent=fmt(ref)+"/"+ref.getFullYear();
-  const {buckets,wait,done,ativos,pecas,mov}=computeBuckets(ref);
+  const {buckets,wait,done,atras,ativos,pecas,mov,volAtraso}=computeBuckets(ref);
   document.getElementById("kLotes").textContent=ativos;
   document.getElementById("kPecas").textContent=pecas.toLocaleString("pt-BR");
   document.getElementById("kHoje").textContent=mov;
@@ -518,6 +589,20 @@ function render(){
     buckets[i].forEach(x=>body.appendChild(cardEl(x.l,x.idx,ref)));
   });
 
+  // faixa de atraso — volumes que passaram da embalagem e não foram produzidos
+  const lane=document.getElementById("lateLane"), ll=document.getElementById("lateList");
+  document.getElementById("kAtrasoBox").hidden = !APONTA();
+  document.getElementById("kAtraso").textContent = APONTA() ? volAtraso.toLocaleString("pt-BR") : "–";
+  lane.hidden = !atras.length;
+  document.getElementById("lateCnt").textContent = atras.length;
+  document.getElementById("lateTot").textContent = volAtraso.toLocaleString("pt-BR")+" volumes pendentes";
+  ll.innerHTML = atras.map(a=>{
+    const pct=a.l.qtd?Math.round((a.l.qtd-a.pend)/a.l.qtd*100):0;
+    return `<div class="row"><b>${a.l.lote}</b><span class="cor">${a.l.cor||""}</span>
+      <span class="pend">${a.pend.toLocaleString("pt-BR")} vol. pendentes</span>
+      <span class="pct">de ${(a.l.qtd||0).toLocaleString("pt-BR")} · ${pct}% feito</span>
+      <span class="dias">emb. ${fmt(pd(a.l.emb))} · ${a.dias}d de atraso</span></div>`;}).join("");
+
   const wl=document.getElementById("waitList"),dl=document.getElementById("doneList");
   document.getElementById("waitCnt").textContent=wait.length;
   document.getElementById("doneCnt").textContent=done.length;
@@ -528,13 +613,13 @@ function render(){
     `<div class="row"><b>${w.l.lote}</b> ${(w.l.cor||"")}<span class="tag" style="color:var(--green)">emb. ${fmt(pd(w.l.emb))}</span></div>`).join("")
     :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
 
-  if(TVKEY) renderTV(buckets, ref);
+  if(TVKEY) renderTV(buckets, ref, atras, volAtraso);
 }
 
 /* ---------- modo TV: renderiza só o setor escolhido, em tela cheia ---------- */
 function tvClock(){ const c=document.getElementById("tvClock");
   if(c) c.textContent=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }
-function renderTV(buckets, ref){
+function renderTV(buckets, ref, atras, volAtraso){
   const i=ETAPAS.findIndex(e=>e.key===TVKEY); if(i<0) return;
   const et=ETAPAS[i], prox=i<4?ETAPAS[i+1]:null;
   // só os lotes DO DIA neste setor (data da etapa = hoje)
@@ -553,11 +638,12 @@ function renderTV(buckets, ref){
     else if(hoje){ const dd=wdBetween(ref,pd(l[prox.key])); st=`Chegou hoje · vai p/ ${prox.nome} em ${dd}d`; }
     else { const dd=wdBetween(ref,pd(l[prox.key])); st=`No setor · próx. ${prox.nome} em ${dd}d (${fmt(pd(l[prox.key]))})`; }
     const pct=l.qtd?Math.round((l.prod||0)/l.qtd*100):0;
+    const pend=temApontamento(l)?pendentes(l):0;
     const itens=(l.itens&&l.itens.length)?`<div class="tv-items">${l.itens.map(it=>
       `<div class="tv-it"><span class="cd">${it.cod||""}</span><span class="d">${it.desc||""}</span><span class="q">${(it.qtd||0).toLocaleString("pt-BR")}</span></div>`).join("")}</div>`:"";
     return `<div class="tv-card${hoje?" today":""}">
       <div class="l"><b>${l.lote}</b>${l.cor?`<span class="cor">${l.cor}</span>`:""}</div>
-      <div class="m">Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b>${l.itens?` · <b>${l.itens.length}</b> itens`:""}${l.prod>0?` · ${pct}%`:""}</div>
+      <div class="m">Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b>${l.itens?` · <b>${l.itens.length}</b> itens`:""}${l.prod>0?` · ${pct}%`:""}${pend>0?` · <b class="pend">falta ${nBR(pend)} vol.</b>`:""}</div>
       <div class="s"><span class="dot"></span>${st}</div>
       ${itens}
     </div>`; };
@@ -570,6 +656,10 @@ function renderTV(buckets, ref){
       <div class="tv-clock" id="tvClock"></div>
       <div class="tv-cnt"><b>${list.length}</b><small>lotes hoje</small></div>
     </div>
+    ${(atras&&atras.length)?`<div class="tv-atraso"><span class="tag">⚠ Em atraso</span>
+      <span class="tot">${nBR(volAtraso)} volumes pendentes</span>
+      <span class="ls">${atras.slice(0,4).map(a=>`${a.l.lote} (${nBR(a.pend)})`).join(" · ")}${atras.length>4?" …":""}</span>
+      </div>`:""}
     <div class="tv-grid">${list.length?cards:`<div class="tv-empty">Nenhum lote entrou hoje neste setor</div>`}</div>
     <div class="tv-foot"><span>PPCP · Patrimar · Lotes em Elaboração</span><span>${pgTxt}</span><span>${fmt(ref)}/${ref.getFullYear()}</span></div>`;
   tvClock();
@@ -588,12 +678,18 @@ function cardEl(l,idx,ref){
   else { stat=`<div class="c-status s-next"><span class="dot"></span>Em embalagem</div>`; }
   const tl=ETAPAS.map((e,i)=>{ const cls=i<idx?"past":(i===idx?"cur":"");
     return `<div class="step ${cls}"><span class="bead"></span><span class="lbl">${e.abrev}</span><span class="dt">${fmt(pd(l[e.key]))}</span></div>`; }).join("");
-  const itensHtml=(l.itens&&l.itens.length)?`<div class="items"><table>${l.itens.map(it=>
-    `<tr><td class="cd">${it.cod||""}</td><td>${it.desc}</td><td class="q">${it.qtd}</td></tr>`).join("")}</table></div>`:"";
+  const temAp=temApontamento(l);
+  const itensHtml=(l.itens&&l.itens.length)?`<div class="items"><table>${l.itens.map(it=>{
+    const p=temAp?pendItem(it):0;
+    return `<tr><td class="cd">${it.cod||""}</td><td>${it.desc}</td><td class="q">${it.qtd}</td>`+
+      (temAp?`<td class="q" style="color:${p>0?"var(--red)":"var(--green)"};width:52px">${p>0?"−"+p.toLocaleString("pt-BR"):"ok"}</td>`:"")+
+      `</tr>`;}).join("")}</table></div>`:"";
   const pct=l.qtd?Math.round((l.prod||0)/l.qtd*100):0;
   const prog=(l.prod>0)?`<span>Prod <b>${(l.prod||0).toLocaleString("pt-BR")}</b> · ${pct}%</span>`:"";
+  const pend=temApontamento(l)?pendentes(l):0;
+  const pendTxt=pend>0?`<span style="color:var(--red)">Pend <b style="color:var(--red)">${pend.toLocaleString("pt-BR")}</b> vol.</span>`:"";
   c.innerHTML=`<div class="c-top"><span class="c-lote">${l.lote}</span>${l.cor?`<span class="cor">${l.cor}</span>`:""}</div>
-    <div class="c-sub"><span>Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b></span>${prog}${l.itens?`<span><b>${l.itens.length}</b> itens</span>`:""}</div>
+    <div class="c-sub"><span>Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b></span>${prog}${pendTxt}${l.itens?`<span><b>${l.itens.length}</b> itens</span>`:""}</div>
     ${stat}<div class="tl">${tl}</div>${itensHtml}`;
   if(itensHtml) c.addEventListener("click",()=>c.classList.toggle("open"));
   return c;
@@ -608,7 +704,7 @@ const nBR = n => (n||0).toLocaleString("pt-BR");
 const dataExt = d => d.toLocaleDateString("pt-BR",{weekday:"long", day:"2-digit", month:"long", year:"numeric"});
 
 function buildPrint(ref, comItens){
-  const {buckets,wait,done,ativos,pecas,mov}=computeBuckets(ref);
+  const {buckets,wait,done,atras,ativos,pecas,mov,volAtraso}=computeBuckets(ref);
   const pecasEt = buckets.map(b=>b.reduce((s,x)=>s+(x.l.qtd||0),0));
   const maxP = Math.max(1,...pecasEt);
   const prodTot = buckets.flat().reduce((s,x)=>s+(x.l.prod||0),0);
@@ -639,6 +735,26 @@ function buildPrint(ref, comItens){
       <span class="q">${nBR(x.l.qtd)} pçs${x.l.itens&&x.l.itens.length?` · ${x.l.itens.length} itens`:""}</span></div>`);}));
   const dest = `<div class="pv-dest"><h3>Movimentação do dia — ${fmt(ref)}</h3>
     ${destaques.length?destaques.join(""):`<div class="pv-vazio">Nenhum lote muda de etapa nesta data.</div>`}</div>`;
+
+  /* 2b. atraso: volumes que passaram da embalagem sem produzir */
+  const atrasoBox = atras.length ? `<div class="pv-atraso">
+    <h3>Em atraso — ${atras.length} lote${atras.length>1?"s":""} · ${nBR(volAtraso)} volumes pendentes</h3>
+    <table class="pv-tab"><thead><tr><th>Lote</th><th>Cor</th><th>Embalagem</th>
+      <th style="text-align:right">Atraso</th><th style="text-align:right">Qtd</th>
+      <th style="text-align:right">Feito</th><th style="text-align:right">Pendente</th></tr></thead>
+    <tbody>${atras.map(a=>{
+      const feito=(a.l.qtd||0)-a.pend, pct=a.l.qtd?Math.round(feito/a.l.qtd*100):0;
+      return `<tr><td class="lt" style="color:#c1121f">${esc(a.l.lote)}</td>
+        <td style="font-size:8pt;color:#555">${esc(a.l.cor||"")}</td>
+        <td class="n" style="text-align:left">${fmt(pd(a.l.emb))}</td>
+        <td class="n">${a.dias}d</td><td class="n">${nBR(a.l.qtd)}</td>
+        <td class="n">${nBR(feito)} · ${pct}%</td>
+        <td class="n" style="color:#c1121f;font-weight:700">${nBR(a.pend)}</td></tr>`
+        + (comItens && itensPend(a.l).length ? `<tr class="pv-its"><td colspan="7"><ul>${
+          itensPend(a.l).map(it=>
+            `<li><span class="cd">${esc(it.cod||"")}</span><span>${esc(it.desc||"")}</span>
+             <span class="dq" style="color:#c1121f">${nBR(pendItem(it))}</span></li>`).join("")}</ul></td></tr>`:"");
+    }).join("")}</tbody></table></div>` : "";
 
   /* 3. detalhamento por etapa */
   const secs = ETAPAS.map((et,i)=>{
@@ -686,9 +802,10 @@ function buildPrint(ref, comItens){
         <div><b>${ativos}</b><small>lotes ativos</small></div>
         <div><b>${nBR(pecas)}</b><small>peças</small></div>
         <div><b>${mov||"–"}</b><small>movim. hoje</small></div>
-        ${prodTot>0?`<div><b>${Math.round(prodTot/pecas*100)}%</b><small>produzido</small></div>`:""}
+        ${volAtraso>0?`<div class="atr"><b>${nBR(volAtraso)}</b><small>vol. em atraso</small></div>`:""}
       </div>
     </div>
+    ${atrasoBox}
     ${resumo}
     ${dest}
     <div class="pv-h2">Detalhamento por etapa</div>
@@ -704,13 +821,23 @@ function buildPrint(ref, comItens){
 /* ================== SAÍDA GERENCIAL: TEXTO DO WHATSAPP ==================
    Resumo curto, na formatação do WhatsApp (*negrito*), pra colar no grupo. */
 function textoWhats(ref, comItens){
-  const {buckets,wait,done,ativos,pecas,mov}=computeBuckets(ref);
+  const {buckets,wait,done,atras,ativos,pecas,mov,volAtraso}=computeBuckets(ref);
   const L=[];
   L.push(`*LOTES EM ELABORAÇÃO*`);
   L.push(`PPCP Patrimar · ref. ${fmt(ref)}/${ref.getFullYear()}`);
   L.push(``);
   L.push(`*${ativos}* lotes ativos · *${nBR(pecas)}* peças · *${mov}* movimentam hoje`);
   L.push(``);
+  if(atras.length){
+    L.push(`⚠️ *EM ATRASO — ${nBR(volAtraso)} volumes pendentes*`);
+    atras.forEach(a=>{
+      L.push(`🔴 ${a.l.lote}${a.l.cor?" "+a.l.cor:""} · *${nBR(a.pend)}* de ${nBR(a.l.qtd)} vol.`);
+      L.push(`   _emb. ${fmt(pd(a.l.emb))} · ${a.dias}d de atraso_`);
+      if(comItens) itensPend(a.l)
+        .forEach(it=>L.push(`   • ${it.desc||it.cod||""} — falta ${nBR(pendItem(it))}`));
+    });
+    L.push(``);
+  }
   ETAPAS.forEach((et,i)=>{
     const b=buckets[i];
     if(!b.length){ L.push(`*${et.nome.toUpperCase()}* — livre`); return; }

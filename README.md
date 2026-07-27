@@ -8,11 +8,32 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
 - Posiciona cada lote na **estação atual** por essas datas: Corte → Furadeira → Coladeira/PU → Linha UV → Embalagem.
 - Mostra o **progresso** do lote (produzido / % ) a partir das colunas `PRODUZIDO` e `PERCENTUAL`.
 - **KPIs**: lotes ativos, peças em elaboração e lotes que movimentam no dia.
-- Faixas **Programados** (ainda não entraram) e **Concluídos** (após embalagem).
+- Faixas **Programados** (ainda não entraram), **Em atraso** (ver abaixo) e **Concluídos**.
 - Navegação por **data de referência** (◀/▶/Hoje) para simular os próximos dias.
 - Card expansível com os itens do lote (código, descrição, quantidade).
 - **Impressão gerencial** e **envio por WhatsApp** (ver abaixo).
 - Recarrega automaticamente a cada 5 minutos.
+
+## Volumes pendentes / atraso
+Antes, quando a data da embalagem passava o lote ia para **Concluídos** mesmo sem ter sido
+produzido — o que ficou para trás sumia do painel. Agora:
+
+- **Volume pendente** de cada produto = coluna `SALDO`/`FALTA` da planilha; quando ela não existe,
+  `Qtd_cx − PRODUZIDO`. O pendente do lote é a soma dos produtos.
+- Um lote só cai em **Concluídos** se não sobrou volume. Se passou da embalagem e ainda falta
+  algo, ele vai para a faixa vermelha **Em atraso**, com dias úteis de atraso, volumes pendentes
+  e % feito. O KPI **volumes em atraso** fica no topo.
+- O card do lote mostra `Pend N vol.` e, ao abrir, o que falta de cada produto.
+- No **modo TV** entra uma tarja vermelha com o total pendente e os lotes atrasados; o card
+  mostra `falta N vol.`.
+- O atraso também sai no **impresso** (bloco vermelho no topo, com os produtos que faltam) e no
+  **texto do WhatsApp**.
+- Uma linha de `STATUS` com "atrasado", "pendente", "parado" ou "falta" também marca o lote.
+
+Sem nenhum apontamento na planilha (nada em `PRODUZIDO` nem em `SALDO`) não dá para afirmar
+atraso — nesse caso o painel se guia só pelas datas, como antes, e o KPI fica oculto. Em
+compensação, um lote que passou da embalagem **sem nenhum apontamento** conta como 100% pendente:
+ou a produção não saiu, ou o apontamento não foi feito — os dois casos merecem aparecer.
 
 ## Impressão / WhatsApp
 Dois botões na barra de controles, sempre referentes à **data de referência** selecionada:
