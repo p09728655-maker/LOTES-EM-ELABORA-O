@@ -27,8 +27,11 @@
   *{box-sizing:border-box} html,body{margin:0}
   body{background:var(--bg); color:var(--ink); font-family:"Inter",system-ui,sans-serif;
     -webkit-font-smoothing:antialiased; padding:10px 22px 40px;}
-  header.top{display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px;
-    border-bottom:2px solid var(--wood); padding-bottom:9px;}
+  /* cabeçalho congelado: fica preso no topo enquanto o quadro rola */
+  header.top{position:sticky; top:0; z-index:50; background:var(--bg);
+    display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px;
+    border-bottom:2px solid var(--wood); padding:10px 0 9px; margin-top:-10px;
+    box-shadow:0 8px 16px -6px rgba(0,0,0,.9)}
   .brand{display:flex; flex-direction:column; gap:2px; flex:1 1 0}
   .brand .eyebrow{font-family:"IBM Plex Mono"; font-size:11px; letter-spacing:.22em;
     text-transform:uppercase; color:var(--mut)}
@@ -350,7 +353,7 @@
   @media(max-width:640px){
     body{padding:6px 10px 26px}
     .logo{height:30px}
-    header.top{gap:8px; padding-bottom:7px}
+    header.top{gap:8px; padding:6px 0 7px; margin-top:-6px}
     .brand .eyebrow{font-size:9.5px; letter-spacing:.16em}
     .brand h1{font-size:23px}
     /* KPIs em quatro colunas, sem espremer */
