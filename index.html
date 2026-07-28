@@ -248,14 +248,14 @@
     body{padding:0 !important; font-family:"Inter",system-ui,sans-serif}
     body > *{display:none !important}
     body > #printview{display:block !important}
-    #printview{font-size:9.5pt; color:#000}
+    #printview{font-size:9.5pt; color:#000; orphans:3; widows:3}
     .pv-head{display:flex; align-items:center; gap:10px; border-bottom:2.5pt solid #ff5a1f; padding-bottom:6pt}
-    .pv-head img{height:30pt; width:auto; flex:none}
+    .pv-head img{height:27pt; width:auto; flex:none}
     .pv-head h1{font-family:"Oswald"; font-size:17pt; margin:0; line-height:1; font-weight:600; white-space:nowrap}
     .pv-head .pv-title{min-width:0}
     .pv-head .pv-sub{font-size:6.8pt; color:#555; margin-top:3pt; letter-spacing:.03em;
-      text-transform:uppercase; line-height:1.3}
-    .pv-kpis{margin-left:auto; display:flex; gap:9pt; text-align:right; flex:none; padding-left:6pt}
+      text-transform:uppercase; line-height:1.3; white-space:nowrap}
+    .pv-kpis{margin-left:auto; display:flex; gap:11pt; text-align:right; flex:none; padding-left:8pt}
     .pv-kpis div b{font-family:"Oswald"; font-size:15pt; display:block; line-height:1}
     .pv-kpis div small{font-size:6pt; letter-spacing:.07em; text-transform:uppercase; color:#666; white-space:nowrap}
     /* quadro gerencial: carga por etapa */
@@ -263,40 +263,52 @@
     .pv-resumo .bar{display:inline-block; height:5pt; background:#ff5a1f; border-radius:2pt;
       vertical-align:middle; min-width:1pt; -webkit-print-color-adjust:exact; print-color-adjust:exact}
     .pv-resumo tfoot td{border-top:.8pt solid #999; border-bottom:none; font-weight:700; padding-top:3pt}
-    .pv-dest{margin-top:9pt; border:.6pt solid #ff5a1f; border-radius:3pt; padding:5pt 8pt;
-      page-break-inside:avoid; break-inside:avoid}
+    .pv-dest{margin-top:9pt; border:.6pt solid #ff5a1f; border-radius:3pt; padding:5pt 8pt}
     .pv-dest h3{font-family:"Oswald"; font-size:10pt; margin:0 0 3pt; text-transform:uppercase;
-      letter-spacing:.05em; color:#d1420b; font-weight:600}
-    .pv-dest .r{font-size:8.5pt; padding:1.5pt 0; display:flex; gap:6pt; border-bottom:.3pt dotted #ddd}
+      letter-spacing:.05em; color:#d1420b; font-weight:600;
+      page-break-after:avoid; break-after:avoid}
+    .pv-dest .r{font-size:8.5pt; padding:1.5pt 0; display:flex; align-items:baseline; gap:6pt; border-bottom:.3pt dotted #ddd}
     .pv-dest .r b{font-family:"IBM Plex Mono"; min-width:44pt}
     .pv-dest .r .et{font-family:"Oswald"; letter-spacing:.03em; min-width:70pt}
     .pv-dest .r .q{margin-left:auto; font-family:"IBM Plex Mono"; white-space:nowrap}
     /* bloco de atraso: volumes pendentes que passaram da embalagem */
     .pv-kpis div.atr b{color:#c1121f}
+    /* o quadro de atraso costuma passar de uma página: quebra livremente,
+       mantendo cada lote (linha + itens) inteiro e o cabeçalho repetido */
     .pv-atraso{margin-top:9pt; border:1pt solid #c1121f; border-radius:3pt; padding:5pt 7pt 3pt;
-      background:#fdf0f0; -webkit-print-color-adjust:exact; print-color-adjust:exact;
-      page-break-inside:avoid; break-inside:avoid}
+      background:#fdf0f0; -webkit-print-color-adjust:exact; print-color-adjust:exact}
     .pv-atraso h3{font-family:"Oswald"; font-size:10.5pt; margin:0 0 3pt; text-transform:uppercase;
-      letter-spacing:.05em; color:#c1121f; font-weight:600}
+      letter-spacing:.05em; color:#c1121f; font-weight:600;
+      page-break-after:avoid; break-after:avoid}
     .pv-atraso .pv-tab td{border-bottom-color:#eecccc}
     .pv-h2{font-family:"Oswald"; font-size:11pt; font-weight:600; letter-spacing:.08em;
-      text-transform:uppercase; color:#333; margin:12pt 0 4pt; border-bottom:.8pt solid #333; padding-bottom:2pt}
-    .pv-sec{margin-top:9pt; page-break-inside:avoid; break-inside:avoid}
+      text-transform:uppercase; color:#333; margin:12pt 0 4pt; border-bottom:.8pt solid #333; padding-bottom:2pt;
+      page-break-after:avoid; break-after:avoid}
+    .pv-sec{margin-top:9pt}
     .pv-sec h2{font-family:"Oswald"; font-size:12pt; font-weight:600; margin:0 0 3pt;
       padding:3pt 6pt; background:#f0f0f0; border-left:3pt solid #ff5a1f;
-      display:flex; align-items:baseline; gap:8pt; letter-spacing:.02em}
+      display:flex; align-items:baseline; gap:8pt; letter-spacing:.02em;
+      page-break-after:avoid; break-after:avoid}
     .pv-sec h2 .fase{font-family:"IBM Plex Mono"; font-size:7pt; color:#666; letter-spacing:.1em}
     .pv-sec h2 .det{font-family:"Inter"; font-size:7.5pt; font-weight:400; color:#777;
       letter-spacing:0; text-transform:none}
     .pv-sec h2 .qt{margin-left:auto; font-family:"IBM Plex Mono"; font-size:8.5pt; color:#444}
     .pv-sec.livre h2{border-left-color:#bbb; color:#777}
     .pv-tab{width:100%; border-collapse:collapse}
+    .pv-tab thead{display:table-header-group}   /* repete o cabeçalho a cada página */
+    .pv-tab tfoot{display:table-footer-group}
     .pv-tab th{font-size:6.8pt; letter-spacing:.1em; text-transform:uppercase; color:#666;
       text-align:left; border-bottom:.6pt solid #ccc; padding:2pt 4pt; font-weight:600}
     .pv-tab td{padding:2.5pt 4pt; border-bottom:.4pt solid #e2e2e2; vertical-align:top}
     .pv-tab tr{page-break-inside:avoid; break-inside:avoid}
-    .pv-tab .lt{font-family:"IBM Plex Mono"; font-weight:600; font-size:11pt; white-space:nowrap}
-    .pv-tab .lt .int{display:block; font-size:8.5pt; font-weight:600; color:#333}
+    /* cada lote é um tbody: a linha do lote nunca se separa dos seus itens */
+    .pv-tab tbody.lote{page-break-inside:avoid; break-inside:avoid}
+    /* título do bloco dentro do thead — repete junto com o cabeçalho */
+    .pv-tab tr.pv-tit td{padding:0 0 3pt; border:none}
+    .pv-tab tr.pv-tit + tr th{padding-top:0}
+    .pv-tab .lt{font-family:"IBM Plex Mono"; font-weight:600; font-size:11pt; white-space:nowrap;
+      line-height:1.05}
+    .pv-tab .lt .int{display:block; font-size:8.5pt; font-weight:600; color:#333; margin-top:1pt}
     .pv-tab .cel-cor{font-size:8pt; color:#333; white-space:nowrap}
     .pv-tab .pchip{display:inline-block; width:7pt; height:7pt; border-radius:50%; margin-right:3pt;
       vertical-align:-.5pt; border:.4pt solid #999;
@@ -311,16 +323,27 @@
       display:flex; gap:4pt; border-bottom:.2pt dotted #ddd}
     .pv-its li .cd{font-family:"IBM Plex Mono"; color:#888; white-space:nowrap}
     .pv-its li .dq{font-family:"IBM Plex Mono"; margin-left:auto; white-space:nowrap; color:#000}
-    .pv-lanes{display:flex; gap:14pt; margin-top:10pt; page-break-inside:avoid}
-    .pv-lane{flex:1; border:.6pt dashed #bbb; border-radius:3pt; padding:5pt 7pt}
+    .pv-lanes{display:flex; gap:14pt; margin-top:10pt}
+    .pv-lane{flex:1; border:.6pt dashed #bbb; border-radius:3pt; padding:5pt 7pt;
+      page-break-inside:avoid; break-inside:avoid}
     .pv-lane h3{font-family:"Oswald"; font-size:9.5pt; margin:0 0 3pt; text-transform:uppercase;
-      letter-spacing:.05em; color:#555; font-weight:500}
-    .pv-lane .r{font-size:8pt; padding:1.5pt 0; display:flex; gap:6pt; border-bottom:.3pt dotted #ddd}
+      letter-spacing:.05em; color:#555; font-weight:500;
+      page-break-after:avoid; break-after:avoid}
+    .pv-lane .r{font-size:8pt; padding:1.5pt 0; display:flex; align-items:baseline; gap:6pt; border-bottom:.3pt dotted #ddd}
     .pv-lane .r b{font-family:"IBM Plex Mono"}
     .pv-lane .r span{margin-left:auto; color:#666; font-family:"IBM Plex Mono"; font-size:7.5pt}
     .pv-vazio{font-size:8pt; color:#999; font-style:italic}
-    .pv-foot{margin-top:10pt; padding-top:5pt; border-top:.6pt solid #ccc;
-      font-family:"IBM Plex Mono"; font-size:7pt; color:#777; display:flex; gap:14pt}
+    /* O relatório inteiro vive numa tabela de página: o <tfoot> vira rodapé
+       corrido — o navegador repete em toda página E reserva o espaço dele,
+       coisa que position:fixed não faz. Assim nenhuma folha sai sem
+       identificação e nada fica escondido atrás do rodapé.
+       table-layout:fixed trava a largura na da página: nenhum texto comprido
+       consegue esticar o relatório para fora do papel. */
+    .pv-page{width:100%; table-layout:fixed; border-collapse:collapse}
+    .pv-page > tfoot{display:table-footer-group}
+    .pv-page > tbody > tr > td, .pv-page > tfoot > tr > td{padding:0; border:none}
+    .pv-foot{margin-top:8pt; padding-top:4pt; border-top:.6pt solid #ccc;
+      font-family:"IBM Plex Mono"; font-size:6.2pt; color:#777; display:flex; gap:8pt}
     .pv-foot span:last-child{margin-left:auto}
   }
   /* ===================== CELULAR ===================== */
@@ -1109,13 +1132,14 @@ function buildPrint(ref, comItens){
 
   /* 2b. atraso: volumes que passaram da embalagem sem produzir */
   const atrasoBox = atras.length ? `<div class="pv-atraso">
-    <h3>Em atraso — ${atras.length} lote${atras.length>1?"s":""} · ${nBR(volAtraso)} volumes pendentes</h3>
-    <table class="pv-tab"><thead><tr><th>Lote</th><th>Cor</th><th>Embalagem</th>
+    <table class="pv-tab"><thead>
+      <tr class="pv-tit"><td colspan="7"><h3>Em atraso — ${atras.length} lote${atras.length>1?"s":""} · ${nBR(volAtraso)} volumes pendentes</h3></td></tr>
+      <tr><th>Lote</th><th>Cor</th><th>Embalagem</th>
       <th style="text-align:right">Atraso</th><th style="text-align:right">Qtd</th>
       <th style="text-align:right">Feito</th><th style="text-align:right">Pendente</th></tr></thead>
-    <tbody>${atras.map(a=>{
+    ${atras.map(a=>{
       const feito=(a.l.qtd||0)-a.pend, pct=a.l.qtd?Math.round(feito/a.l.qtd*100):0;
-      return `<tr><td class="lt" style="color:#c1121f">${esc(a.l.lote)}${a.l.interno?`<span class="int">${esc(a.l.interno)}</span>`:""}</td>
+      return `<tbody class="lote"><tr><td class="lt" style="color:#c1121f">${esc(a.l.lote)}${a.l.interno?`<span class="int">${esc(a.l.interno)}</span>`:""}</td>
         <td class="cel-cor">${chipCor(a.l.cor)}</td>
         <td class="n" style="text-align:left">${fmt(pd(a.l.emb))}</td>
         <td class="n">${a.dias}d</td><td class="n">${nBR(a.l.qtd)}</td>
@@ -1124,8 +1148,9 @@ function buildPrint(ref, comItens){
         + (comItens && itensPend(a.l).length ? `<tr class="pv-its"><td colspan="7"><ul>${
           itensPend(a.l).map(it=>
             `<li><span class="cd">${esc(it.cod||"")}</span><span>${esc(it.desc||"")}</span>
-             <span class="dq" style="color:#c1121f">${nBR(pendItem(it,a.l))}</span></li>`).join("")}</ul></td></tr>`:"");
-    }).join("")}</tbody></table></div>` : "";
+             <span class="dq" style="color:#c1121f">${nBR(pendItem(it,a.l))}</span></li>`).join("")}</ul></td></tr>`:"")
+        + `</tbody>`;
+    }).join("")}</table></div>` : "";
 
   /* 3. detalhamento por etapa */
   const secs = ETAPAS.map((et,i)=>{
@@ -1139,18 +1164,23 @@ function buildPrint(ref, comItens){
         ? `<tr class="pv-its"><td colspan="6"><ul>${l.itens.map(it=>
             `<li><span class="cd">${esc(it.cod||"")}</span><span>${esc(it.desc||"")}</span>
              <span class="dq">${nBR(it.qtd)}</span></li>`).join("")}</ul></td></tr>` : "";
-      return `<tr class="${hoje?"hoje":""}">
+      return `<tbody class="lote"><tr class="${hoje?"hoje":""}">
         <td class="lt">${esc(l.lote)}${l.interno?`<span class="int">${esc(l.interno)}</span>`:""}</td>
         <td class="cel-cor">${chipCor(l.cor)}</td>
         <td class="n">${nBR(l.qtd)}</td>
         <td class="n">${l.itens?l.itens.length:"–"}</td>
         <td class="n">${l.prod>0?pct+"%":"–"}</td>
-        <td class="sit">${esc(situacao(l,i,ref))}</td></tr>${its}`;}).join("");
-    return `<div class="pv-sec"><h2>${esc(et.nome)}<span class="fase">${et.fase}</span>${et.detalhe?`<span class="det">${esc(et.detalhe)}</span>`:""}
-      <span class="qt">${b.length} lote${b.length>1?"s":""} · ${nBR(pecasEt[i])} pçs</span></h2>
-      <table class="pv-tab"><thead><tr><th>Lote</th><th>Cor</th><th style="text-align:right">Qtd</th>
+        <td class="sit">${esc(situacao(l,i,ref))}</td></tr>${its}</tbody>`;}).join("");
+    /* o título da etapa mora no <thead>: assim ele se repete no alto de cada
+       página em que a etapa continua, e nenhuma folha começa com uma tabela
+       de lotes sem dizer de que setor ela é */
+    return `<div class="pv-sec">
+      <table class="pv-tab"><thead>
+        <tr class="pv-tit"><td colspan="6"><h2>${esc(et.nome)}<span class="fase">${et.fase}</span>${et.detalhe?`<span class="det">${esc(et.detalhe)}</span>`:""}
+          <span class="qt">${b.length} lote${b.length>1?"s":""} · ${nBR(pecasEt[i])} pçs</span></h2></td></tr>
+        <tr><th>Lote</th><th>Cor</th><th style="text-align:right">Qtd</th>
         <th style="text-align:right">Itens</th><th style="text-align:right">Prod.</th><th>Situação</th></tr></thead>
-      <tbody>${linhas}</tbody></table></div>`;}).join("");
+      ${linhas}</table></div>`;}).join("");
 
   /* 4. entradas e saídas da esteira */
   const lanes = `<div class="pv-lanes">
@@ -1167,29 +1197,36 @@ function buildPrint(ref, comItens){
         :`<div class="pv-vazio">nenhum</div>`}</div></div>`;
 
   const agora=new Date();
+  /* Tabela de página: o <tfoot> é repetido pelo navegador no pé de TODA folha,
+     então nenhuma página sai sem identificação do relatório e da data. */
   document.getElementById("printview").innerHTML=`
-    <div class="pv-head">
-      <img src="logo-patrimar.png" alt="Patrimar Móveis">
-      <div><h1>Lotes em Elaboração</h1>
-        <div class="pv-sub">Relatório gerencial · PPCP Patrimar · ${dataExt(ref)}</div></div>
-      <div class="pv-kpis">
-        <div><b>${ativos}</b><small>lotes ativos</small></div>
-        <div><b>${nBR(pecas)}</b><small>peças</small></div>
-        <div><b>${mov||"–"}</b><small>movim. hoje</small></div>
-        ${volAtraso>0?`<div class="atr"><b>${nBR(volAtraso)}</b><small>vol. em atraso</small></div>`:""}
+    <table class="pv-page">
+    <tfoot><tr><td>
+      <div class="pv-foot">
+        <span>PPCP Patrimar · Lotes em Elaboração · ref. ${fmt(ref)}/${ref.getFullYear()}</span>
+        <span>Etapas estimadas a partir da embalagem (1 dia útil/etapa)</span>
+        <span>Emitido ${agora.toLocaleDateString("pt-BR")} ${agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span>
       </div>
-    </div>
-    ${atrasoBox}
-    ${resumo}
-    ${dest}
-    <div class="pv-h2">Detalhamento por etapa</div>
-    ${secs}
-    ${lanes}
-    <div class="pv-foot">
-      <span>PPCP · Patrimar Móveis · Esteira de Elaboração</span>
-      <span>Datas das etapas anteriores estimadas a partir da embalagem (1 dia útil/etapa)</span>
-      <span>Emitido ${agora.toLocaleDateString("pt-BR")} ${agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span>
-    </div>`;
+    </td></tr></tfoot>
+    <tbody><tr><td>
+      <div class="pv-head">
+        <img src="logo-patrimar.png" alt="Patrimar Móveis">
+        <div class="pv-title"><h1>Lotes em Elaboração</h1>
+          <div class="pv-sub">Relatório gerencial · ${dataExt(ref)}</div></div>
+        <div class="pv-kpis">
+          <div><b>${ativos}</b><small>lotes ativos</small></div>
+          <div><b>${nBR(pecas)}</b><small>peças</small></div>
+          <div><b>${mov||"–"}</b><small>movim. hoje</small></div>
+          ${volAtraso>0?`<div class="atr"><b>${nBR(volAtraso)}</b><small>vol. em atraso</small></div>`:""}
+        </div>
+      </div>
+      ${atrasoBox}
+      ${resumo}
+      ${dest}
+      <div class="pv-h2">Detalhamento por etapa</div>
+      ${secs}
+      ${lanes}
+    </td></tr></tbody></table>`;
 }
 
 /* ================== SAÍDA GERENCIAL: TEXTO DO WHATSAPP ==================
