@@ -29,12 +29,12 @@
     -webkit-font-smoothing:antialiased; padding:10px 22px 40px;}
   header.top{display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px;
     border-bottom:2px solid var(--wood); padding-bottom:9px;}
-  .brand{display:flex; flex-direction:column; gap:2px}
+  .brand{display:flex; flex-direction:column; gap:2px; flex:1 1 0}
   .brand .eyebrow{font-family:"IBM Plex Mono"; font-size:11px; letter-spacing:.22em;
     text-transform:uppercase; color:var(--mut)}
   .brand h1{font-family:"Oswald"; font-weight:600; font-size:30px; letter-spacing:.02em; margin:0; line-height:1}
   .brand h1 span{color:var(--amber)}
-  .headmeta{margin-left:auto; display:flex; gap:26px; align-items:flex-end}
+  .headmeta{flex:1 1 0; display:flex; justify-content:flex-end; gap:26px; align-items:flex-end}
   .kpi{display:flex; flex-direction:column; align-items:flex-end; line-height:1}
   .kpi b{font-family:"Oswald"; font-size:26px; font-weight:600}
   .kpi small{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut); margin-top:5px}
@@ -148,7 +148,7 @@
   .lane.late .aviso{font-size:11.5px; color:var(--mut2); font-style:italic; padding-top:6px}
   .foot{margin-top:26px; font-size:11.5px; color:var(--mut2); line-height:1.6; max-width:760px}
   .foot code{font-family:"IBM Plex Mono"; color:var(--mut); background:var(--panel); padding:1px 5px; border-radius:4px}
-  @media(max-width:900px){ .board{grid-template-columns:1fr} .headmeta{width:100%; justify-content:flex-start; margin-left:0} .lanes{grid-template-columns:1fr} }
+  @media(max-width:900px){ .board{grid-template-columns:1fr} .headmeta{flex:0 0 100%; width:100%; justify-content:flex-start; margin-left:0} .lanes{grid-template-columns:1fr} }
 
   /* ===================== MODO TV (um setor por tela) ===================== */
   .tvlinks{margin-top:8px}
@@ -156,7 +156,7 @@
   #tv{display:none}
   body.tv{padding:0; overflow:hidden}
   body.tv header.top, body.tv .controls, body.tv .status, body.tv .lanes, body.tv .lane.late,
-  body.tv .cfg, body.tv .foot, body.tv #board, body.tv .logobar{display:none}
+  body.tv .cfg, body.tv .foot, body.tv #board{display:none}
   body.tv #tv{display:flex; flex-direction:column; height:100vh; padding:1vh 2.4vw 1.4vh}
   .tv-head{display:flex; align-items:center; gap:2vw; border-bottom:.4vh solid var(--wood); padding-bottom:1.1vh}
   .tv-head .tv-fase{font-family:"IBM Plex Mono"; font-size:1.5vw; letter-spacing:.2em; color:var(--mut); text-transform:uppercase}
@@ -191,9 +191,9 @@
   .tv-it .cd{font-family:"IBM Plex Mono"; color:var(--mut2); font-size:1.05vw; white-space:nowrap; min-width:6.5vw}
   .tv-it .d{color:var(--ink); flex:1; white-space:normal; word-break:break-word}
   .tv-it .q{font-family:"IBM Plex Mono"; color:var(--amber); margin-left:auto; white-space:nowrap; font-weight:600}
-  /* logomarca */
-  .logobar{display:flex; justify-content:center; padding:0 0 6px}
-  .logo{height:50px; width:auto; display:block}
+  /* logomarca — vai no meio do cabeçalho, entre o título e os KPIs */
+  .logo{height:52px; width:auto; display:block; flex:none; align-self:center}
+  @media(max-width:900px){ .logo{height:42px} }
   .tv-logobar{display:flex; justify-content:center; padding:0 0 .6vh}
   .tv-logo{height:5.6vh; width:auto}
   .tv-card .m b.pend{color:var(--red)}
@@ -349,12 +349,12 @@
   /* ===================== CELULAR ===================== */
   @media(max-width:640px){
     body{padding:6px 10px 26px}
-    .logobar{padding:0 0 4px} .logo{height:34px}
+    .logo{height:30px}
     header.top{gap:8px; padding-bottom:7px}
     .brand .eyebrow{font-size:9.5px; letter-spacing:.16em}
     .brand h1{font-size:23px}
     /* KPIs em quatro colunas, sem espremer */
-    .headmeta{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; width:100%; margin:6px 0 0}
+    .headmeta{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; flex:0 0 100%; width:100%; margin:6px 0 0}
     .kpi{align-items:flex-start} .kpi b{font-size:19px}
     .kpi small{font-size:8px; letter-spacing:.04em; margin-top:3px; line-height:1.2}
 
@@ -417,12 +417,12 @@
 </head>
 <body>
 
-<div class="logobar"><img class="logo" src="logo-patrimar.png" alt="Patrimar Móveis"></div>
 <header class="top">
   <div class="brand">
     <div class="eyebrow">PPCP 2026 · Patrimar</div>
     <h1>Lotes em <span>Elaboração</span></h1>
   </div>
+  <img class="logo" src="logo-patrimar.png" alt="Patrimar Móveis">
   <div class="headmeta">
     <div class="kpi"><b id="kLotes">–</b><small>lotes ativos</small></div>
     <div class="kpi"><b id="kPecas">–</b><small>peças em elaboração</small></div>
