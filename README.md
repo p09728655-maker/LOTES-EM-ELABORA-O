@@ -16,6 +16,11 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   pendência, verde quando está zerado.
 - Faixas **Em atraso** e **Sem baixa** vêm **antes** do quadro de estações — as duas cobram ação
   de alguém e não podem depender de rolagem. **Programados** e **Concluídos** ficam no rodapé.
+- A faixa de atraso mostra os **5 maiores por volume pendente** (`LATE_TOP`) e resume o resto em
+  `+ mais N lotes · X volumes`, que abre no clique. Duas razões: com 18 lotes atrasados a faixa
+  tomava a tela inteira e empurrava o quadro para fora da primeira dobra; e a lista **ordena por
+  volume, não por idade** — metade dos atrasos costuma ser sobra de 5 a 20 volumes em lote 96%
+  feito, que ordenada por dia ocupa o topo e esconde o lote que concentra o volume.
 - Cada estação mostra a carga em **volume**, não só em lote, com barra relativa à etapa mais
   cheia: três lotes podem ser 300 ou 3.000 volumes e a coluna fica igual se só contar lote.
 - Navegação por **data de referência** (◀/▶/Hoje) para simular os próximos dias. Quando a data
