@@ -42,6 +42,37 @@
   .kpi b{font-family:"Oswald"; font-size:26px; font-weight:600}
   .kpi small{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut); margin-top:5px}
 
+  /* ---------- veredito do dia: a resposta que se lê em 2 segundos ----------
+     Ocupa a linha inteira do cabeçalho (que é sticky), então acompanha a
+     rolagem e é a primeira coisa que aparece ao abrir a tela. */
+  .verdict{flex:1 0 100%; display:flex; align-items:center; gap:13px;
+    border-radius:10px; padding:11px 16px; margin-top:2px;
+    font-family:"Oswald"; font-weight:600; font-size:22px; letter-spacing:.03em; line-height:1.1}
+  .verdict .ico{font-size:23px; line-height:1; flex:none}
+  /* base 0 para a frase não ser empurrada para a linha de baixo quando quebra */
+  .verdict .txt{flex:1 1 0; min-width:0}
+  .verdict .sub{margin-left:auto; font-family:"IBM Plex Mono"; font-weight:400; font-size:12px;
+    letter-spacing:.06em; text-transform:uppercase; opacity:.8; text-align:right; line-height:1.35}
+  .verdict.ok{background:rgba(63,209,95,.12); border:1px solid var(--green); color:var(--green)}
+  .verdict.bad{background:rgba(255,59,48,.15); border:1px solid var(--red); color:var(--red);
+    animation:pulseBad 2.4s ease-in-out infinite}
+  .verdict.warn{background:rgba(255,90,31,.13); border:1px solid var(--amber); color:var(--amber)}
+  .verdict.none{background:var(--panel); border:1px solid var(--line); color:var(--mut)}
+  @keyframes pulseBad{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0)} 50%{box-shadow:0 0 0 4px rgba(255,59,48,.14)}}
+  @media(prefers-reduced-motion:reduce){ .verdict.bad{animation:none} }
+
+  /* aviso de data: a tela está mostrando um dia que não é hoje */
+  .refwarn{flex:1 0 100%; display:flex; align-items:center; gap:10px; margin-top:2px;
+    background:rgba(255,90,31,.16); border:1px solid var(--amber); color:var(--amber);
+    border-radius:9px; padding:8px 14px; font-family:"Oswald"; font-weight:600;
+    font-size:16px; letter-spacing:.04em}
+  .refwarn[hidden]{display:none}
+  .refwarn .txt{flex:1 1 0; min-width:0}
+  .refwarn .voltar{margin-left:auto; background:none; border:1px solid var(--amber); color:var(--amber);
+    border-radius:6px; padding:4px 11px; font-family:"Oswald"; font-size:13px;
+    letter-spacing:.04em; cursor:pointer}
+  .refwarn .voltar:hover{background:var(--amber); color:#000}
+
   .controls{display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:10px 0 6px;
     padding:8px 12px; background:var(--panel); border:1px solid var(--line); border-radius:10px}
   .controls .grp{display:flex; align-items:center; gap:8px}
@@ -127,8 +158,16 @@
   .lane.nb h3{color:var(--amber)} .lane.nb .row .tag{color:var(--amber)}
 
   /* faixa de atraso: lotes que passaram da embalagem com volume pendente */
-  .kpi.late b{color:var(--red)} .kpi.late[hidden]{display:none}
-  .lane.late{margin-top:14px; border:1px solid var(--red); border-style:solid;
+  /* o atraso não é um KPI igual aos outros: é o único que cobra ação.
+     Vira caixa vermelha e número maior; os outros três recuam para contexto. */
+  .kpi.late{align-items:flex-end; background:rgba(255,59,48,.12); border:1px solid var(--red);
+    border-radius:9px; padding:7px 13px 8px; margin-bottom:-4px}
+  .kpi.late b{color:var(--red); font-size:34px}
+  .kpi.late small{color:var(--red); opacity:.85}
+  .kpi.late[hidden]{display:none}
+  .kpi.late.zero{background:rgba(63,209,95,.1); border-color:var(--green)}
+  .kpi.late.zero b, .kpi.late.zero small{color:var(--green)}
+  .lane.late{margin:0 0 14px; border:1px solid var(--red); border-style:solid;
     background:linear-gradient(180deg,rgba(255,59,48,.07),transparent)}
   .lane.late h3{color:var(--red)}
   .lane.late h3 .cnt{margin-left:0; color:var(--bg); background:var(--red); border-radius:20px;
@@ -360,6 +399,12 @@
     .headmeta{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; flex:0 0 100%; width:100%; margin:6px 0 0}
     .kpi{align-items:flex-start} .kpi b{font-size:19px}
     .kpi small{font-size:8px; letter-spacing:.04em; margin-top:3px; line-height:1.2}
+    .kpi.late{padding:5px 8px 6px; margin-bottom:0} .kpi.late b{font-size:22px}
+    .verdict{font-size:16px; padding:9px 11px; gap:9px; flex-wrap:wrap; margin-top:6px}
+    .verdict .ico{font-size:18px}
+    .verdict .sub{margin-left:0; width:100%; text-align:left; font-size:10px}
+    .refwarn{font-size:13px; padding:7px 10px; gap:8px; margin-top:6px}
+    .refwarn .voltar{padding:3px 9px; font-size:12px}
 
     /* controles: cada grupo ocupa a linha inteira; nada vaza para fora */
     .controls{flex-direction:column; align-items:stretch; gap:8px; padding:9px 10px; margin:8px 0 6px}
@@ -432,6 +477,11 @@
     <div class="kpi"><b id="kHoje">–</b><small>movimentam hoje</small></div>
     <div class="kpi late" id="kAtrasoBox"><b id="kAtraso">–</b><small>volumes em atraso</small></div>
   </div>
+  <div class="verdict none" id="verdict"><span class="ico">•</span><span class="txt" id="verdictTxt">Carregando…</span></div>
+  <div class="refwarn" id="refWarn" hidden>
+    <span>⚠</span><span class="txt" id="refWarnTxt"></span>
+    <button class="voltar" id="refVoltar">voltar para hoje</button>
+  </div>
 </header>
 
 <div class="controls">
@@ -479,17 +529,18 @@
 <div class="status" id="status"><span class="led"></span><span id="statusTxt">Carregando…</span>
   <button class="mini" id="reload">recarregar</button></div>
 
-<div class="board" id="board"></div>
-
-<div id="tv"></div>
-<div id="printview"></div>
-
+<!-- o atraso vem ANTES do quadro: é o que não pode depender de rolagem -->
 <div class="lane late" id="lateLane" hidden>
   <h3>Em atraso <span class="cnt" id="lateCnt">0</span>
     <span style="font-weight:400;letter-spacing:.06em">· passou a embalagem com volume pendente</span>
     <span class="tot" id="lateTot"></span></h3>
   <div id="lateList"></div>
 </div>
+
+<div class="board" id="board"></div>
+
+<div id="tv"></div>
+<div id="printview"></div>
 
 <div class="lanes">
   <div class="lane wait"><h3>Programados <span class="cnt" id="waitCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram</span></h3><div id="waitList"></div></div>
@@ -944,6 +995,56 @@ function situacao(l,i,ref){
 }
 const ehHoje=(l,i,ref)=>{const d=pd(l[ETAPAS[i].key]); return !!(d&&+d===+ref);};
 
+/* ---------- veredito do dia ----------
+   Uma frase só, com cor, no topo da tela: quem bate o olho precisa sair
+   sabendo se o dia está resolvido ou se tem alguém para cobrar. A ordem é
+   a da gravidade: atraso > reporte faltando > tudo certo. Sem nenhum
+   apontamento não dá para afirmar nada — aí a faixa fica neutra. */
+function pintaVeredito({atras,sbaixa,volAtraso,ativos}, ref){
+  const el=document.getElementById("verdict"), txt=document.getElementById("verdictTxt");
+  const dia = +ref===+pd(isoOf(new Date())) ? "hoje" : "em "+fmt(ref);
+  let cls,ico,frase,sub="";
+  if(!APONTA()){
+    cls="none"; ico="•";
+    frase="Sem apontamento de baixa — situação não confirmada";
+    sub="ligue a aba de baixa para o painel cobrar o que falta";
+  } else if(atras.length){
+    cls="bad"; ico="⚠";
+    frase=`${atras.length} ${atras.length===1?"lote atrasado":"lotes atrasados"} · ${nBR(volAtraso)} ${volAtraso===1?"volume pendente":"volumes pendentes"}`;
+    const pior=atras[0];
+    sub=`mais antigo: ${pior.l.lote} · ${pior.dias}d de atraso`;
+    if(sbaixa.length) sub+=` — e ${sbaixa.length} sem reporte`;
+  } else if(sbaixa.length){
+    cls="warn"; ico="⚠";
+    frase=`${sbaixa.length} ${sbaixa.length===1?"lote embalado sem reporte":"lotes embalados sem reporte"}`;
+    sub="cobrar a baixa no ERP para fechar o dia";
+  } else {
+    cls="ok"; ico="✓";
+    frase=`Dia ok — nenhum lote atrasado`;
+    sub=`${ativos} ${ativos===1?"lote":"lotes"} em elaboração ${dia}`;
+  }
+  el.className="verdict "+cls;
+  txt.textContent=frase;
+  el.querySelector(".ico").textContent=ico;
+  let s=el.querySelector(".sub");
+  if(!s){ s=document.createElement("span"); s.className="sub"; el.appendChild(s); }
+  s.textContent=sub;
+}
+
+/* A tela pode estar simulando outro dia. Numa tela compartilhada isso passa
+   despercebido e vira decisão errada — então avisa em tarja, com a volta. */
+function pintaAvisoData(ref){
+  const box=document.getElementById("refWarn");
+  const hoje=pd(isoOf(new Date()));
+  const dif=Math.round((+ref-+hoje)/86400000);
+  if(dif===0){ box.hidden=true; return; }
+  box.hidden=false;
+  const quando = dif>0 ? `${dif} ${dif===1?"dia à frente":"dias à frente"}`
+                       : `${-dif} ${dif===-1?"dia atrás":"dias atrás"}`;
+  document.getElementById("refWarnTxt").textContent =
+    `Você está vendo ${fmt(ref)}/${ref.getFullYear()} — não é hoje (${quando})`;
+}
+
 function render(){
   if(TVKEY) document.getElementById("ref").value=isoOf(new Date()); // TV: sempre o dia de hoje
   const ref=pd(document.getElementById("ref").value);
@@ -952,6 +1053,8 @@ function render(){
   document.getElementById("kLotes").textContent=ativos;
   document.getElementById("kPecas").textContent=pecas.toLocaleString("pt-BR");
   document.getElementById("kHoje").textContent=mov;
+  pintaVeredito({atras,sbaixa,volAtraso,ativos}, ref);
+  pintaAvisoData(ref);
 
   const board=document.getElementById("board"); board.innerHTML="";
   ETAPAS.forEach((et,i)=>{
@@ -970,7 +1073,10 @@ function render(){
 
   // faixa de atraso — volumes que passaram da embalagem e não foram produzidos
   const lane=document.getElementById("lateLane"), ll=document.getElementById("lateList");
-  document.getElementById("kAtrasoBox").hidden = !APONTA();
+  const kBox=document.getElementById("kAtrasoBox");
+  kBox.hidden = !APONTA();
+  // zerado fica verde: a caixa em destaque não pode parecer alarme quando está tudo certo
+  kBox.classList.toggle("zero", APONTA() && volAtraso===0);
   document.getElementById("kAtraso").textContent = APONTA() ? volAtraso.toLocaleString("pt-BR") : "–";
   lane.hidden = !atras.length;
   document.getElementById("lateCnt").textContent = atras.length;
@@ -1286,7 +1392,9 @@ refInput.value=isoOf(new Date());
 const shift=n=>{const d=pd(refInput.value);d.setDate(d.getDate()+n);refInput.value=isoOf(d);render();};
 document.getElementById("prev").onclick=()=>shift(-1);
 document.getElementById("next").onclick=()=>shift(1);
-document.getElementById("hoje").onclick=()=>{refInput.value=isoOf(new Date());render();};
+const irParaHoje=()=>{refInput.value=isoOf(new Date());render();};
+document.getElementById("hoje").onclick=irParaHoje;
+document.getElementById("refVoltar").onclick=irParaHoje;
 document.getElementById("reload").onclick=carregar;
 refInput.addEventListener("change",render);
 

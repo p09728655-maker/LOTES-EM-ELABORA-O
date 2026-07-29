@@ -7,9 +7,18 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
 - A planilha traz **apenas a data da embalagem** (coluna `Data`). As datas das etapas anteriores (Corte → Furadeira → Coladeira/PU → Linha UV) são **estimadas** voltando 1 dia útil por etapa a partir da embalagem (ajustável em `LEAD`).
 - Posiciona cada lote na **estação atual** por essas datas: Corte → Furadeira → Coladeira/PU → Linha UV → Embalagem.
 - Mostra o **progresso** do lote (produzido / % ) a partir das colunas `PRODUZIDO` e `PERCENTUAL`.
-- **KPIs**: lotes ativos, peças em elaboração e lotes que movimentam no dia.
-- Faixas **Programados** (ainda não entraram), **Em atraso** (ver abaixo) e **Concluídos**.
-- Navegação por **data de referência** (◀/▶/Hoje) para simular os próximos dias.
+- **Veredito do dia**: uma faixa colorida no cabeçalho com a resposta em uma frase — verde
+  (`Dia ok`), laranja (`N lotes embalados sem reporte`) ou vermelha (`N lotes atrasados · X
+  volumes pendentes`, com o lote mais antigo). É o que se lê em dois segundos; o resto da tela é
+  para quem quer investigar.
+- **KPIs**: lotes ativos, peças em elaboração e lotes que movimentam no dia. O de **volumes em
+  atraso** é o único que cobra ação, então vira caixa destacada — vermelha quando há pendência,
+  verde quando está zerado.
+- Faixas **Programados** (ainda não entraram), **Em atraso** (ver abaixo) e **Concluídos**. A de
+  atraso vem **antes** do quadro de estações: não pode depender de rolagem.
+- Navegação por **data de referência** (◀/▶/Hoje) para simular os próximos dias. Quando a data
+  não é hoje, entra uma **tarja laranja** avisando — numa tela compartilhada, um dia simulado
+  esquecido na tela vira decisão errada.
 - Card expansível com os itens do lote (código, descrição, quantidade).
 - **Impressão gerencial** e **envio por WhatsApp** (ver abaixo).
 - Recarrega automaticamente a cada 5 minutos.
