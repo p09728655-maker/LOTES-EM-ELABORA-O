@@ -119,6 +119,24 @@ Cabeçalhos reconhecidos (aceita variações): `Lote`, `Data` (= dia da embalage
 A cor aceita `COR`, `COR GPS`, `COR DO GPS` ou qualquer cabeçalho com "gps", e pode estar em qualquer linha do lote — a primeira preenchida vale para o lote todo.
 Se a planilha já tiver colunas próprias de `corte`/`furar`/`cola`/`uv`, elas são respeitadas (a estimativa só entra quando não existem).
 
+## Ícone (PWA)
+A marca é a **estrela do logotipo Patrimar** (`#d9b412`), recortada do próprio `logo-patrimar.png`,
+sobre o preto do painel (`#121418`). O centro óptico da estrela fica em **56,2% / 46,1%** do quadro
+— o rabo puxa a massa para baixo e para a direita, então centralizar pela caixa delimitadora
+deixa o ícone visivelmente torto.
+
+Um arquivo por finalidade, porque cada sistema recorta de um jeito:
+
+| arquivo | conteúdo | por quê |
+|---|---|---|
+| `icon-192/512.png` | sangra até a borda | o sistema arredonda; desenhar o próprio canto arredondado dá borda dupla |
+| `icon-192/512-maskable.png` | conteúdo a 72% | o Android recorta um círculo de 80% — o que passa disso some |
+| `apple-touch-icon.png` | conteúdo a 92% | o iOS só arredonda os cantos |
+| `favicon-32.png` | conteúdo a 108% | a 32px precisa de massa para não virar borrão |
+
+Trocar os ícones exige subir `CACHE` no `sw.js` (hoje `esteira-v2`), senão quem já instalou
+continua com o ícone antigo em cache.
+
 ## Publicar
 Deploy estático (ex.: Vercel): basta apontar para este repositório; não há build.
 O acesso externo à planilha funciona no servidor/Vercel (o preview local pode bloquear).
