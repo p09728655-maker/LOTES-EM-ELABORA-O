@@ -61,6 +61,8 @@
     animation:pulseBad 2.4s ease-in-out infinite}
   .verdict.warn{background:rgba(255,90,31,.13); border:1px solid var(--amber); color:var(--amber)}
   .verdict.none{background:var(--panel); border:1px solid var(--line); color:var(--mut)}
+  /* dia em aberto: a embalagem ainda não fechou. Nem alarme nem "tudo ok" */
+  .verdict.open{background:rgba(91,139,176,.12); border:1px solid var(--steel); color:var(--steel)}
   @keyframes pulseBad{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0)} 50%{box-shadow:0 0 0 4px rgba(255,59,48,.14)}}
   @media(prefers-reduced-motion:reduce){ .verdict.bad{animation:none} }
 
@@ -1094,7 +1096,7 @@ let LATE_ABERTO=false;   // o "mais N lotes" sobrevive às recargas de 5 min
    sabendo se o dia está resolvido ou se tem alguém para cobrar. A ordem é
    a da gravidade: atraso > reporte faltando > tudo certo. Sem nenhum
    apontamento não dá para afirmar nada — aí a faixa fica neutra. */
-function pintaVeredito({atras,sbaixa,volAtraso,ativos}, ref){
+function pintaVeredito({atras,sbaixa,volAtraso,ativos,faltaHoje,volEmbHoje,loteEmbHoje}, ref){
   const el=document.getElementById("verdict"), txt=document.getElementById("verdictTxt");
   const dia = +ref===+pd(isoOf(new Date())) ? "hoje" : "em "+fmt(ref);
   let cls,ico,frase,sub="";
@@ -1110,15 +1112,27 @@ function pintaVeredito({atras,sbaixa,volAtraso,ativos}, ref){
     const velho=atras.reduce((m,a)=>a.dias>m.dias?a:m, atras[0]);
     sub=`maior: ${maior.l.lote} (${nBR(maior.pend)} vol.)`;
     if(velho!==maior) sub+=` · mais antigo: ${velho.l.lote} (${velho.dias}d)`;
+    // vermelho fala de ontem; se hoje também está curto, precisa aparecer aqui
+    if(faltaHoje>0) sub+=` · faltam ${nBR(faltaHoje)} de hoje`;
     if(sbaixa.length) sub+=` — e ${sbaixa.length} sem reporte`;
   } else if(sbaixa.length){
     cls="warn"; ico="⚠";
     frase=`${sbaixa.length} ${sbaixa.length===1?"lote embalado sem reporte":"lotes embalados sem reporte"}`;
     sub="cobrar a baixa no ERP para fechar o dia";
+  } else if(faltaHoje>0){
+    /* A embalagem do dia ainda não fechou. Não é atraso — atraso só existe a
+       partir do dia seguinte — mas também não é "dia ok": dizer que está tudo
+       bem com a embalagem inteira parada é o pior erro que a faixa pode
+       cometer. Fica em cinza-azulado, sem alarme: de manhã o normal é estar
+       assim, e uma tarja laranja todo dia às 8h ensina todo mundo a ignorá-la. */
+    cls="open"; ico="⏳";
+    frase=`Faltam ${nBR(faltaHoje)} ${faltaHoje===1?"volume":"volumes"} da embalagem de hoje`;
+    sub=`${nBR(volEmbHoje-faltaHoje)} de ${nBR(volEmbHoje)} reportados · ${loteEmbHoje} ${loteEmbHoje===1?"lote":"lotes"}`;
   } else {
     cls="ok"; ico="✓";
-    frase=`Dia ok — nenhum lote atrasado`;
-    sub=`${ativos} ${ativos===1?"lote":"lotes"} em elaboração ${dia}`;
+    frase = volEmbHoje>0 ? `Dia ok — embalagem de hoje fechada` : `Dia ok — nenhum lote atrasado`;
+    sub = volEmbHoje>0 ? `${nBR(volEmbHoje)} ${volEmbHoje===1?"volume":"volumes"} · ${ativos} ${ativos===1?"lote":"lotes"} em elaboração`
+                       : `${ativos} ${ativos===1?"lote":"lotes"} em elaboração ${dia}`;
   }
   el.className="verdict "+cls;
   txt.textContent=frase;
@@ -1147,14 +1161,14 @@ function render(){
   const ref=pd(document.getElementById("ref").value);
   document.getElementById("refTxt").textContent=fmt(ref)+"/"+ref.getFullYear();
   const {buckets,wait,done,atras,sbaixa,ativos,vols,volAtraso,
-         volsEt,pendEt,loteEmbHoje,volEmbHoje}=computeBuckets(ref);
+         volsEt,pendEt,loteEmbHoje,volEmbHoje,faltaHoje}=computeBuckets(ref);
   document.getElementById("kLotes").textContent=ativos;
   document.getElementById("kVols").textContent=vols.toLocaleString("pt-BR");
   document.getElementById("kHoje").textContent=volEmbHoje.toLocaleString("pt-BR");
   document.getElementById("kHojeLbl").textContent =
     loteEmbHoje ? `vol. p/ embalar hoje · ${loteEmbHoje} ${loteEmbHoje===1?"lote":"lotes"}`
                 : "vol. p/ embalar hoje";
-  pintaVeredito({atras,sbaixa,volAtraso,ativos}, ref);
+  pintaVeredito({atras,sbaixa,volAtraso,ativos,faltaHoje,volEmbHoje,loteEmbHoje}, ref);
   pintaAvisoData(ref);
   pintaFrescor();
 

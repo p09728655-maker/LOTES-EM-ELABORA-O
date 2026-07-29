@@ -7,10 +7,22 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
 - A planilha traz **apenas a data da embalagem** (coluna `Data`). As datas das etapas anteriores (Corte → Furadeira → Coladeira/PU → Linha UV) são **estimadas** voltando 1 dia útil por etapa a partir da embalagem (ajustável em `LEAD`).
 - Posiciona cada lote na **estação atual** por essas datas: Corte → Furadeira → Coladeira/PU → Linha UV → Embalagem.
 - Mostra o **progresso** do lote (produzido / % ) a partir das colunas `PRODUZIDO` e `PERCENTUAL`.
-- **Veredito do dia**: uma faixa colorida no cabeçalho com a resposta em uma frase — verde
-  (`Dia ok`), laranja (`N lotes embalados sem reporte`) ou vermelha (`N lotes atrasados · X
-  volumes pendentes`, com o lote mais antigo). É o que se lê em dois segundos; o resto da tela é
-  para quem quer investigar.
+- **Veredito do dia**: uma faixa colorida no cabeçalho com a resposta em uma frase. É o que se lê
+  em dois segundos; o resto da tela é para quem quer investigar. Por ordem de gravidade:
+
+  | cor | quando | frase |
+  |---|---|---|
+  | vermelho | lote passou da embalagem com volume pendente | `N lotes atrasados · X volumes pendentes` |
+  | laranja | embalou e o ERP não reportou | `N lotes embalados sem reporte` |
+  | azul-cinza | a embalagem **de hoje** ainda não fechou | `Faltam X volumes da embalagem de hoje` |
+  | verde | nada atrasado e a embalagem do dia fechou | `Dia ok — embalagem de hoje fechada` |
+  | cinza | sem nenhum apontamento | `situação não confirmada` |
+
+  O estado azul-cinza existe porque **atraso só nasce no dia seguinte** (`atrasoDe` exige
+  `ref > emb`): um lote que embala hoje e não produziu nada não é atraso. Antes disso a faixa
+  dizia `Dia ok` com a embalagem inteira parada. Ele é deliberadamente sem alarme — de manhã o
+  normal é estar assim, e uma tarja laranja todo dia às 8h ensina todo mundo a ignorá-la.
+  Havendo atraso de ontem, o vermelho vence e o que falta de hoje entra na linha de apoio.
 - **KPIs**: lotes ativos, volumes em elaboração, **volumes p/ embalar hoje** e volumes em atraso.
   O de atraso é o único que cobra ação, então vira caixa destacada — vermelha quando há
   pendência, verde quando está zerado.
