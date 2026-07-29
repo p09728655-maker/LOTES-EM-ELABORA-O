@@ -11,17 +11,32 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   (`Dia ok`), laranja (`N lotes embalados sem reporte`) ou vermelha (`N lotes atrasados · X
   volumes pendentes`, com o lote mais antigo). É o que se lê em dois segundos; o resto da tela é
   para quem quer investigar.
-- **KPIs**: lotes ativos, peças em elaboração e lotes que movimentam no dia. O de **volumes em
-  atraso** é o único que cobra ação, então vira caixa destacada — vermelha quando há pendência,
-  verde quando está zerado.
-- Faixas **Programados** (ainda não entraram), **Em atraso** (ver abaixo) e **Concluídos**. A de
-  atraso vem **antes** do quadro de estações: não pode depender de rolagem.
+- **KPIs**: lotes ativos, volumes em elaboração, **volumes p/ embalar hoje** e volumes em atraso.
+  O de atraso é o único que cobra ação, então vira caixa destacada — vermelha quando há
+  pendência, verde quando está zerado.
+- Faixas **Em atraso** e **Sem baixa** vêm **antes** do quadro de estações — as duas cobram ação
+  de alguém e não podem depender de rolagem. **Programados** e **Concluídos** ficam no rodapé.
+- Cada estação mostra a carga em **volume**, não só em lote, com barra relativa à etapa mais
+  cheia: três lotes podem ser 300 ou 3.000 volumes e a coluna fica igual se só contar lote.
 - Navegação por **data de referência** (◀/▶/Hoje) para simular os próximos dias. Quando a data
   não é hoje, entra uma **tarja laranja** avisando — numa tela compartilhada, um dia simulado
   esquecido na tela vira decisão errada.
-- Card expansível com os itens do lote (código, descrição, quantidade).
+- **Dado velho** (15 min sem conseguir ler a planilha, ou seja 3 recargas seguidas falhando) entra
+  como tarja vermelha no cabeçalho e no rodapé do modo TV. Dado velho é pior que dado ausente: a
+  tela continua com cara de tempo real.
+- Card expansível com os itens do lote (código, descrição, quantidade). Lotes seguidos da **mesma
+  OP** mostram OP e cor só no primeiro card — repetir os chips três vezes gasta altura sem
+  informar.
 - **Impressão gerencial** e **envio por WhatsApp** (ver abaixo).
 - Recarrega automaticamente a cada 5 minutos.
+
+### Unidade
+Tudo é **volume**. A coluna `Qtd_cx` da planilha, a baixa do ERP (`Tipo L – VOLUMES`) e o saldo
+falam da mesma coisa, então a tela não usa mais a palavra "peças" — misturar peça, volume e lote
+faz quem lê rápido somar o que não soma.
+
+No card, o que falta produzir no dia é **`falta N vol.`**; **`pendente`/`atraso`** ficam
+reservados para lote que já passou da embalagem. São números diferentes e não devem bater.
 
 ## Baixa: volumes embalados
 A baixa real não está na planilha, está no ERP: relatório **Transação 3 – REPORTE, Tipo L –

@@ -35,12 +35,15 @@
   .brand{display:flex; flex-direction:column; gap:2px; flex:1 1 0}
   .brand .eyebrow{font-family:"IBM Plex Mono"; font-size:11px; letter-spacing:.22em;
     text-transform:uppercase; color:var(--mut)}
-  .brand h1{font-family:"Oswald"; font-weight:600; font-size:30px; letter-spacing:.02em; margin:0; line-height:1}
+  /* o título é a informação menos útil da tela — quem olha já sabe onde está.
+     Encolhe para o maior tipo do cabeçalho ser o número que cobra ação. */
+  .brand h1{font-family:"Oswald"; font-weight:600; font-size:22px; letter-spacing:.02em; margin:0; line-height:1}
   .brand h1 span{color:var(--amber)}
   .headmeta{flex:1 1 0; display:flex; justify-content:flex-end; gap:26px; align-items:flex-end}
   .kpi{display:flex; flex-direction:column; align-items:flex-end; line-height:1}
   .kpi b{font-family:"Oswald"; font-size:26px; font-weight:600}
-  .kpi small{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut); margin-top:5px}
+  .kpi small{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut);
+    margin-top:5px; white-space:nowrap}
 
   /* ---------- veredito do dia: a resposta que se lê em 2 segundos ----------
      Ocupa a linha inteira do cabeçalho (que é sticky), então acompanha a
@@ -68,6 +71,10 @@
     font-size:16px; letter-spacing:.04em}
   .refwarn[hidden]{display:none}
   .refwarn .txt{flex:1 1 0; min-width:0}
+  /* dado velho é pior que dado ausente: a tela continua parecendo viva */
+  .refwarn.stale{background:rgba(255,59,48,.15); border-color:var(--red); color:var(--red)}
+  .refwarn.stale .voltar{border-color:var(--red); color:var(--red)}
+  .refwarn.stale .voltar:hover{background:var(--red); color:#000}
   .refwarn .voltar{margin-left:auto; background:none; border:1px solid var(--amber); color:var(--amber);
     border-radius:6px; padding:4px 11px; font-family:"Oswald"; font-size:13px;
     letter-spacing:.04em; cursor:pointer}
@@ -101,6 +108,15 @@
   .st-head .nm{font-family:"Oswald"; font-weight:600; font-size:16px; letter-spacing:.02em;
     display:flex; align-items:flex-start; gap:8px; margin-top:2px; line-height:1.15}
   .st-head .det{font-size:10.5px; color:var(--mut2); margin-top:3px; line-height:1.3}
+  /* carga da etapa em volume + barra relativa à etapa mais carregada */
+  .st-head .carga{display:flex; align-items:center; gap:7px; margin-top:7px;
+    font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut)}
+  .st-head .carga .v{color:var(--ink); font-weight:600; font-size:12.5px}
+  .st-head .carga .falta{color:var(--red)}
+  .st-head .carga .bar{flex:1; min-width:26px; height:4px; border-radius:3px;
+    background:var(--line); overflow:hidden}
+  .st-head .carga .bar i{display:block; height:100%; background:var(--mut); border-radius:3px}
+  .station.hot .carga .bar i{background:var(--amber)}
   .st-head .nm .cnt{margin-left:auto; font-size:12px; color:var(--bg); background:var(--mut);
     font-family:"IBM Plex Mono"; font-weight:600; min-width:22px; text-align:center; border-radius:20px; padding:1px 7px}
   .station.hot .nm .cnt{background:var(--amber)}
@@ -112,6 +128,13 @@
     border-radius:9px; padding:11px 12px; cursor:pointer; transition:.15s}
   .card:hover{border-color:var(--steel); transform:translateY(-1px)}
   .card.today{border-left-color:var(--amber); box-shadow:0 0 0 1px var(--amber-dim) inset}
+  /* lotes seguidos da mesma OP: a OP e a cor aparecem só no primeiro card.
+     Repetir os dois chips três vezes gasta altura e não informa nada. */
+  .card.cont{margin-top:-6px; position:relative}
+  .card.cont::before{content:""; position:absolute; left:-4px; top:-6px; width:4px; height:6px;
+    background:var(--mut)}
+  .card.cont.today::before{background:var(--amber)}
+  .card.cont .c-lote{font-size:17px}
   .c-top{display:flex; align-items:baseline; gap:8px}
   .c-lote{font-family:"IBM Plex Mono"; font-weight:600; font-size:19px}
   .c-int{font-family:"IBM Plex Mono"; font-size:14px; font-weight:600; color:var(--ink);
@@ -120,8 +143,12 @@
   .lane .row .int{font-family:"IBM Plex Mono"; font-size:12.5px; font-weight:600; color:var(--ink)}
   .cor{margin-left:auto; font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
     padding:3px 9px; border-radius:20px; border:1px solid var(--line); color:var(--mut); white-space:nowrap}
-  .c-sub{display:flex; gap:14px; margin-top:5px; font-size:12px; color:var(--mut)}
+  .c-sub{display:flex; flex-wrap:wrap; gap:5px 12px; margin-top:6px; font-size:12px; color:var(--mut)}
   .c-sub b{color:var(--ink); font-family:"IBM Plex Mono"}
+  /* o que falta produzir no dia: vira pastilha, é o que se procura no card */
+  .c-falta{color:var(--red); background:rgba(255,59,48,.13); border:1px solid rgba(255,59,48,.45);
+    border-radius:20px; padding:1px 9px; margin-left:-4px}
+  .c-falta b{color:var(--red)}
   .c-status{margin-top:9px; font-size:11.5px; display:flex; align-items:center; gap:6px;
     padding-top:8px; border-top:1px solid var(--line)}
   .dot{width:7px; height:7px; border-radius:50%; flex:none}
@@ -156,6 +183,11 @@
   .lane .row .tag{margin-left:auto; font-family:"IBM Plex Mono"; font-size:11px}
   .lane.done h3{color:var(--green)} .lane.wait h3{color:var(--steel)}
   .lane.nb h3{color:var(--amber)} .lane.nb .row .tag{color:var(--amber)}
+  /* sobe para o topo junto com o atraso: as duas faixas cobram ação */
+  .lane.nb{margin:0 0 14px; border-color:var(--amber);
+    background:linear-gradient(180deg,rgba(255,90,31,.06),transparent)}
+  .lane.nb h3 .cnt{margin-left:0; color:var(--bg); background:var(--amber); border-radius:20px;
+    padding:1px 8px; min-width:22px; text-align:center}
 
   /* faixa de atraso: lotes que passaram da embalagem com volume pendente */
   /* o atraso não é um KPI igual aos outros: é o único que cobra ação.
@@ -198,7 +230,7 @@
   #tv{display:none}
   body.tv{padding:0; overflow:hidden}
   body.tv header.top, body.tv .controls, body.tv .status, body.tv .lanes, body.tv .lane.late,
-  body.tv .cfg, body.tv .foot, body.tv #board{display:none}
+  body.tv .lane.nb, body.tv .cfg, body.tv .foot, body.tv #board{display:none}
   body.tv #tv{display:flex; flex-direction:column; height:100vh; padding:1vh 2.4vw 1.4vh}
   .tv-head{display:flex; align-items:center; gap:2vw; border-bottom:.4vh solid var(--wood); padding-bottom:1.1vh}
   .tv-head .tv-fase{font-family:"IBM Plex Mono"; font-size:1.5vw; letter-spacing:.2em; color:var(--mut); text-transform:uppercase}
@@ -251,6 +283,7 @@
   .tv-foot{border-top:1px solid var(--line); margin-top:1.6vh; padding-top:1.1vh;
     font-family:"IBM Plex Mono"; font-size:1vw; color:var(--mut2); display:flex; gap:2.4vw}
   .tv-foot span:last-child{margin-left:auto}
+  .tv-foot .velho{color:var(--red); font-weight:600}
 
   /* ============ IMPRESSÃO / WHATSAPP ============ */
   .controls .chk{display:flex; align-items:center; gap:6px; font-size:11px;
@@ -398,7 +431,8 @@
     /* KPIs em quatro colunas, sem espremer */
     .headmeta{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; flex:0 0 100%; width:100%; margin:6px 0 0}
     .kpi{align-items:flex-start} .kpi b{font-size:19px}
-    .kpi small{font-size:8px; letter-spacing:.04em; margin-top:3px; line-height:1.2}
+    /* no celular a coluna é estreita: aqui o rótulo pode quebrar */
+    .kpi small{font-size:8px; letter-spacing:.04em; margin-top:3px; line-height:1.2; white-space:normal}
     .kpi.late{padding:5px 8px 6px; margin-bottom:0} .kpi.late b{font-size:22px}
     .verdict{font-size:16px; padding:9px 11px; gap:9px; flex-wrap:wrap; margin-top:6px}
     .verdict .ico{font-size:18px}
@@ -473,11 +507,15 @@
   <img class="logo" src="logo-patrimar.png" alt="Patrimar Móveis">
   <div class="headmeta">
     <div class="kpi"><b id="kLotes">–</b><small>lotes ativos</small></div>
-    <div class="kpi"><b id="kPecas">–</b><small>peças em elaboração</small></div>
-    <div class="kpi"><b id="kHoje">–</b><small>movimentam hoje</small></div>
-    <div class="kpi late" id="kAtrasoBox"><b id="kAtraso">–</b><small>volumes em atraso</small></div>
+    <div class="kpi"><b id="kVols">–</b><small>vol. em elaboração</small></div>
+    <div class="kpi"><b id="kHoje">–</b><small id="kHojeLbl">p/ embalar hoje</small></div>
+    <div class="kpi late" id="kAtrasoBox"><b id="kAtraso">–</b><small>vol. em atraso</small></div>
   </div>
   <div class="verdict none" id="verdict"><span class="ico">•</span><span class="txt" id="verdictTxt">Carregando…</span></div>
+  <div class="refwarn stale" id="staleWarn" hidden>
+    <span>⏱</span><span class="txt" id="staleWarnTxt"></span>
+    <button class="voltar" id="staleReload">recarregar</button>
+  </div>
   <div class="refwarn" id="refWarn" hidden>
     <span>⚠</span><span class="txt" id="refWarnTxt"></span>
     <button class="voltar" id="refVoltar">voltar para hoje</button>
@@ -537,6 +575,14 @@
   <div id="lateList"></div>
 </div>
 
+<!-- reporte que falta também é cobrança de gente: fica no topo, não misturado
+     com Programados/Concluídos lá embaixo -->
+<div class="lane nb" id="nbLane" hidden>
+  <h3>Sem baixa <span class="cnt" id="nbCnt">0</span>
+    <span style="font-weight:400;letter-spacing:.06em">· embalou e não foi reportado no ERP</span></h3>
+  <div id="nbList"></div>
+</div>
+
 <div class="board" id="board"></div>
 
 <div id="tv"></div>
@@ -544,7 +590,6 @@
 
 <div class="lanes">
   <div class="lane wait"><h3>Programados <span class="cnt" id="waitCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram</span></h3><div id="waitList"></div></div>
-  <div class="lane nb" id="nbLane" hidden><h3>Sem baixa <span class="cnt" id="nbCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· embalou e não foi reportado</span></h3><div id="nbList"></div></div>
   <div class="lane done"><h3>Concluídos <span class="cnt" id="doneCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· baixa completa</span></h3><div id="doneList"></div></div>
 </div>
 
@@ -902,6 +947,27 @@ function txtBaixa(){
   return ` · baixa <b>${BAIXA.aba}</b>: ${vol.toLocaleString("pt-BR")} vol. (${per})${sobra}${exc}`;
 }
 
+/* ---------- frescor do dado ----------
+   Dado velho é pior que dado ausente: a tela continua com cara de tempo real
+   e ninguém percebe que está decidindo em cima do que era verdade de manhã.
+   Passados 3 ciclos de recarga sem sucesso, avisa em tarja vermelha. */
+let ULTIMA_OK=null;                 // hora da última leitura boa da planilha
+const STALE_MIN=15;                 // 3 × os 5 min do recarregamento automático
+function pintaFrescor(){
+  const box=document.getElementById("staleWarn"); if(!box) return;
+  const min = ULTIMA_OK ? Math.floor((Date.now()-ULTIMA_OK)/60000) : null;
+  if(min===null || min<STALE_MIN){ box.hidden=true; return; }
+  box.hidden=false;
+  document.getElementById("staleWarnTxt").textContent =
+    `Dado de ${min} min atrás — a planilha não responde desde as `+
+    new Date(ULTIMA_OK).toLocaleTimeString("pt-BR");
+}
+// o TV não tem cabeçalho: o aviso vai no rodapé, que já é lido
+const txtFrescorTV = () => {
+  const min = ULTIMA_OK ? Math.floor((Date.now()-ULTIMA_OK)/60000) : null;
+  return (min!==null && min>=STALE_MIN) ? `⏱ dado de ${min} min atrás` : "";
+};
+
 async function carregar(){
   setStatus("","Lendo planilha…");
   try{
@@ -910,7 +976,7 @@ async function carregar(){
     const txt=await res.text();
     if(/<html/i.test(txt)) throw new Error("sem-acesso");
     const lotes=rowsToLotes(parseCSV(txt));
-    if(lotes.length){ LOTES=lotes; await carregarBaixa();
+    if(lotes.length){ LOTES=lotes; ULTIMA_OK=Date.now(); await carregarBaixa();
       setStatus("ok",`Planilha lida — <b>${lotes.length}</b> lotes · atualizado ${new Date().toLocaleTimeString("pt-BR")}${txtBaixa()}`);
     } else { LOTES=DEMO; await carregarBaixa();
       setStatus("warn","Planilha vazia ou cabeçalho não reconhecido — mostrando dados de exemplo. Cole as linhas com o cabeçalho indicado.");
@@ -977,13 +1043,26 @@ function computeBuckets(ref){
     buckets[idx].push({l,idx});
   });
   const ativos=buckets.reduce((s,b)=>s+b.length,0);
-  const pecas=buckets.flat().reduce((s,x)=>s+(x.l.qtd||0),0);
+  const vols=buckets.flat().reduce((s,x)=>s+(x.l.qtd||0),0);
   let mov=0; buckets.forEach((b,i)=>b.forEach(x=>{const d=pd(x.l[ETAPAS[i].key]); if(d&&+d===+ref)mov++;}));
+  /* Carga de cada etapa em volume, não em lote: três lotes podem ser 300 ou
+     3.000 volumes e a coluna fica igual se só contar lote. */
+  const volsEt = buckets.map(b=>b.reduce((s,x)=>s+(x.l.qtd||0),0));
+  const pendEt = buckets.map(b=>b.reduce((s,x)=>s+(temApontamento(x.l)?pendentes(x.l):0),0));
+  /* O que embala na data de referência. "Movimentam hoje" quase sempre é
+     igual a "lotes ativos" — as datas das etapas são estimadas voltando um
+     dia útil, então todo lote muda de etapa todo dia. Quem cobra o dia é a
+     embalagem. */
+  const embDia = buckets[4].filter(x=>{const d=pd(x.l.emb); return d&&+d===+ref;});
+  const loteEmbHoje = embDia.length;
+  const volEmbHoje = embDia.reduce((s,x)=>s+(x.l.qtd||0),0);
+  const faltaHoje = embDia.reduce((s,x)=>s+(temApontamento(x.l)?pendentes(x.l):0),0);
   wait.sort((a,b)=>(a.dias??99)-(b.dias??99)); done.sort((a,b)=>a.dias-b.dias);
   sbaixa.sort((a,b)=>b.dias-a.dias);
   atras.sort((a,b)=>b.dias-a.dias || b.pend-a.pend);              // o mais velho primeiro
   const volAtraso=atras.reduce((s,x)=>s+x.pend,0);
-  return {buckets,wait,done,atras,sbaixa,ativos,pecas,mov,volAtraso};
+  return {buckets,wait,done,atras,sbaixa,ativos,vols,mov,volAtraso,
+          volsEt,pendEt,loteEmbHoje,volEmbHoje,faltaHoje};
 }
 // situação do lote na etapa i, em texto curto (reaproveitada nas 4 saídas)
 function situacao(l,i,ref){
@@ -1049,26 +1128,45 @@ function render(){
   if(TVKEY) document.getElementById("ref").value=isoOf(new Date()); // TV: sempre o dia de hoje
   const ref=pd(document.getElementById("ref").value);
   document.getElementById("refTxt").textContent=fmt(ref)+"/"+ref.getFullYear();
-  const {buckets,wait,done,atras,sbaixa,ativos,pecas,mov,volAtraso}=computeBuckets(ref);
+  const {buckets,wait,done,atras,sbaixa,ativos,vols,volAtraso,
+         volsEt,pendEt,loteEmbHoje,volEmbHoje}=computeBuckets(ref);
   document.getElementById("kLotes").textContent=ativos;
-  document.getElementById("kPecas").textContent=pecas.toLocaleString("pt-BR");
-  document.getElementById("kHoje").textContent=mov;
+  document.getElementById("kVols").textContent=vols.toLocaleString("pt-BR");
+  document.getElementById("kHoje").textContent=volEmbHoje.toLocaleString("pt-BR");
+  document.getElementById("kHojeLbl").textContent =
+    loteEmbHoje ? `vol. p/ embalar hoje · ${loteEmbHoje} ${loteEmbHoje===1?"lote":"lotes"}`
+                : "vol. p/ embalar hoje";
   pintaVeredito({atras,sbaixa,volAtraso,ativos}, ref);
   pintaAvisoData(ref);
+  pintaFrescor();
 
   const board=document.getElementById("board"); board.innerHTML="";
+  const maxEt=Math.max(1,...volsEt);   // a barra é relativa à etapa mais carregada
   ETAPAS.forEach((et,i)=>{
     const hot=buckets[i].some(x=>{const d=pd(x.l[et.key]); return d&&+d===+ref;});
     const st=document.createElement("div");
     st.className="station"+(hot?" hot":"")+(buckets[i].length?"":" vazia");
+    // a carga da etapa é volume, não lote: sem isso duas colunas de 3 lotes
+    // parecem iguais valendo 300 e 3.000 volumes
+    const carga=buckets[i].length?`<div class="carga">
+      <span class="v">${volsEt[i].toLocaleString("pt-BR")}</span> vol.
+      ${pendEt[i]>0?`<span class="falta">falta ${pendEt[i].toLocaleString("pt-BR")}</span>`:""}
+      <span class="bar"><i style="width:${Math.round(volsEt[i]/maxEt*100)}%"></i></span></div>`:"";
     st.innerHTML=`<div class="st-head"><div class="fase">${et.fase}</div>
       <div class="nm">${et.nome}<span class="cnt">${buckets[i].length}</span></div>
-      ${et.detalhe?`<div class="det">${et.detalhe}</div>`:""}</div>
+      ${et.detalhe?`<div class="det">${et.detalhe}</div>`:""}${carga}</div>
       <div class="st-body"></div>`;
     board.appendChild(st);
     const body=st.querySelector(".st-body");
     if(!buckets[i].length){ body.innerHTML=`<div class="empty">livre</div>`; return; }
-    buckets[i].forEach(x=>body.appendChild(cardEl(x.l,x.idx,ref)));
+    // a mesma OP costuma vir quebrada em vários lotes seguidos: só o primeiro
+    // carrega os chips de OP e cor, os de baixo são continuação
+    let opAnt=null;
+    buckets[i].forEach(x=>{
+      const cont = !!x.l.interno && x.l.interno===opAnt;
+      opAnt = x.l.interno||null;
+      body.appendChild(cardEl(x.l,x.idx,ref,cont));
+    });
   });
 
   // faixa de atraso — volumes que passaram da embalagem e não foram produzidos
@@ -1084,7 +1182,7 @@ function render(){
   // uma célula por coluna, sempre todas: assim os números ficam alinhados
   // mesmo quando o lote não tem cor ou o valor tem menos dígitos
   ll.innerHTML = atras.map(a=>{
-    const pct=a.l.qtd?Math.round((a.l.qtd-a.pend)/a.l.qtd*100):0;
+    const pct=a.l.qtd?Math.max(0,Math.min(100,Math.round((a.l.qtd-a.pend)/a.l.qtd*100))):0;
     return `<div class="row"><b class="lt">${a.l.lote}</b>
       <span class="cel-int">${a.l.interno||""}</span>
       <span class="cel-cor">${a.l.cor?`<span class="cor" style="${corGPS(a.l.cor)}">${a.l.cor}</span>`:""}</span>
@@ -1135,7 +1233,7 @@ function renderTV(buckets, ref, atras, volAtraso){
     if(i===4){ st=hoje?"Embalando hoje":"Em embalagem"; }
     else if(hoje){ const dd=wdBetween(ref,pd(l[prox.key])); st=`Chegou hoje · vai p/ ${prox.curto} em ${dd}d`; }
     else { const dd=wdBetween(ref,pd(l[prox.key])); st=`No setor · próx. ${prox.curto} em ${dd}d (${fmt(pd(l[prox.key]))})`; }
-    const pct=l.qtd?Math.round((l.prod||0)/l.qtd*100):0;
+    const pct=l.qtd?Math.max(0,Math.min(100,Math.round((l.prod||0)/l.qtd*100))):0;
     const pend=temApontamento(l)?pendentes(l):0;
     const itens=(l.itens&&l.itens.length)?`<div class="tv-items">${l.itens.map(it=>
       `<div class="tv-it"><span class="cd">${it.cod||""}</span><span class="d">${it.desc||""}</span><span class="q">${(it.qtd||0).toLocaleString("pt-BR")}</span></div>`).join("")}</div>`:"";
@@ -1160,20 +1258,22 @@ function renderTV(buckets, ref, atras, volAtraso){
       <span class="ls">${atras.slice(0,4).map(a=>`${a.l.lote} (${nBR(a.pend)})`).join(" · ")}${atras.length>4?" …":""}</span>
       </div>`:""}
     <div class="tv-grid">${list.length?cards:`<div class="tv-empty">Nenhum lote entrou hoje neste setor</div>`}</div>
-    <div class="tv-foot"><span>PPCP · Patrimar · Lotes em Elaboração</span><span>${pgTxt}</span><span>${fmt(ref)}/${ref.getFullYear()}</span></div>`;
+    <div class="tv-foot"><span>PPCP · Patrimar · Lotes em Elaboração</span><span>${pgTxt}</span>
+      ${txtFrescorTV()?`<span class="velho">${txtFrescorTV()}</span>`:""}
+      <span>${fmt(ref)}/${ref.getFullYear()}</span></div>`;
   tvClock();
 }
 
-function cardEl(l,idx,ref){
+function cardEl(l,idx,ref,cont){
   const et=ETAPAS[idx], hoje=(()=>{const d=pd(l[et.key]);return d&&+d===+ref;})();
   const prox=idx<4?ETAPAS[idx+1]:null;
-  const c=document.createElement("div"); c.className="card"+(hoje?" today":"");
+  const c=document.createElement("div"); c.className="card"+(hoje?" today":"")+(cont?" cont":"");
   let stat;
   if(hoje&&prox){ const d=wdBetween(ref,pd(l[prox.key]));
-    stat=`<div class="c-status s-today"><span class="dot"></span>Chegou hoje · vai p/ ${prox.curto} em ${d}d</div>`; }
+    stat=`<div class="c-status s-today"><span class="dot"></span>Hoje → ${prox.curto} · ${d}d</div>`; }
   else if(hoje&&!prox){ stat=`<div class="c-status s-today"><span class="dot"></span>Embalando hoje</div>`; }
   else if(prox){ const d=wdBetween(ref,pd(l[prox.key]));
-    stat=`<div class="c-status s-next"><span class="dot"></span>No setor · próx. ${prox.curto} em ${d}d (${fmt(pd(l[prox.key]))})</div>`; }
+    stat=`<div class="c-status s-next"><span class="dot"></span>Próx. ${prox.curto} · ${d}d (${fmt(pd(l[prox.key]))})</div>`; }
   else { stat=`<div class="c-status s-next"><span class="dot"></span>Em embalagem</div>`; }
   const tl=ETAPAS.map((e,i)=>{ const cls=i<idx?"past":(i===idx?"cur":"");
     return `<div class="step ${cls}"><span class="bead"></span><span class="lbl">${e.abrev}</span><span class="dt">${fmt(pd(l[e.key]))}</span></div>`; }).join("");
@@ -1183,11 +1283,13 @@ function cardEl(l,idx,ref){
     return `<tr><td class="cd">${it.cod||""}</td><td>${it.desc}</td><td class="q">${it.qtd}</td>`+
       (temAp?`<td class="q" style="color:${p>0?"var(--red)":"var(--green)"};width:52px">${p>0?"−"+p.toLocaleString("pt-BR"):"ok"}</td>`:"")+
       `</tr>`;}).join("")}</table></div>`:"";
-  const pct=l.qtd?Math.round((l.prod||0)/l.qtd*100):0;
+  const pct=l.qtd?Math.max(0,Math.min(100,Math.round((l.prod||0)/l.qtd*100))):0;
   const prog=(l.prod>0)?`<span>Prod <b>${(l.prod||0).toLocaleString("pt-BR")}</b> · ${pct}%</span>`:"";
   const pend=temApontamento(l)?pendentes(l):0;
-  const pendTxt=pend>0?`<span style="color:var(--red)">Pend <b style="color:var(--red)">${pend.toLocaleString("pt-BR")}</b> vol.</span>`:"";
-  c.innerHTML=`<div class="c-top"><span class="c-lote">${l.lote}</span>${l.interno?`<span class="c-int">${l.interno}</span>`:""}${l.cor?`<span class="cor" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
+  /* "Pend" no card era lido como atraso, que é outra coisa: aqui é o que
+     falta produzir no dia. "Falta" é a mesma palavra usada no modo TV. */
+  const pendTxt=pend>0?`<span class="c-falta">falta <b>${pend.toLocaleString("pt-BR")}</b> vol.</span>`:"";
+  c.innerHTML=`<div class="c-top"><span class="c-lote">${l.lote}</span>${(!cont&&l.interno)?`<span class="c-int">${l.interno}</span>`:""}${(!cont&&l.cor)?`<span class="cor" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
     <div class="c-sub"><span>Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b></span>${prog}${pendTxt}${l.itens?`<span><b>${l.itens.length}</b> itens</span>`:""}</div>
     ${stat}<div class="tl">${tl}</div>${itensHtml}`;
   if(itensHtml) c.addEventListener("click",()=>c.classList.toggle("open"));
@@ -1207,27 +1309,27 @@ const nBR = n => (n||0).toLocaleString("pt-BR");
 const dataExt = d => d.toLocaleDateString("pt-BR",{weekday:"long", day:"2-digit", month:"long", year:"numeric"});
 
 function buildPrint(ref, comItens){
-  const {buckets,wait,done,atras,sbaixa,ativos,pecas,mov,volAtraso}=computeBuckets(ref);
-  const pecasEt = buckets.map(b=>b.reduce((s,x)=>s+(x.l.qtd||0),0));
-  const maxP = Math.max(1,...pecasEt);
+  const {buckets,wait,done,atras,sbaixa,ativos,vols,mov,volAtraso,volEmbHoje,loteEmbHoje}=computeBuckets(ref);
+  const volsEt = buckets.map(b=>b.reduce((s,x)=>s+(x.l.qtd||0),0));
+  const maxP = Math.max(1,...volsEt);
   const prodTot = buckets.flat().reduce((s,x)=>s+(x.l.prod||0),0);
 
   /* 1. quadro de carga por etapa */
   const resumo = `<div class="pv-resumo"><div class="pv-h2">Carga por etapa</div>
     <table class="pv-tab">
       <thead><tr><th>Etapa</th><th>Fase</th><th style="text-align:right">Lotes</th>
-        <th style="text-align:right">Peças</th><th style="width:26%">Distribuição</th>
+        <th style="text-align:right">Volumes</th><th style="width:26%">Distribuição</th>
         <th style="text-align:right">Movim. hoje</th></tr></thead>
       <tbody>${ETAPAS.map((et,i)=>{
         const mv=buckets[i].filter(x=>ehHoje(x.l,i,ref)).length;
         return `<tr><td style="font-family:Oswald;font-size:10pt">${et.nome}</td>
           <td style="font-size:7.5pt;color:#666">${et.fase}</td>
           <td class="n">${buckets[i].length||"–"}</td>
-          <td class="n">${pecasEt[i]?nBR(pecasEt[i]):"–"}</td>
-          <td>${pecasEt[i]?`<span class="bar" style="width:${Math.round(pecasEt[i]/maxP*100)}%"></span>`:""}</td>
+          <td class="n">${volsEt[i]?nBR(volsEt[i]):"–"}</td>
+          <td>${volsEt[i]?`<span class="bar" style="width:${Math.round(volsEt[i]/maxP*100)}%"></span>`:""}</td>
           <td class="n">${mv||"–"}</td></tr>`;}).join("")}</tbody>
       <tfoot><tr><td colspan="2">Total em elaboração</td><td class="n">${ativos}</td>
-        <td class="n">${nBR(pecas)}</td><td></td><td class="n">${mov||"–"}</td></tr></tfoot>
+        <td class="n">${nBR(vols)}</td><td></td><td class="n">${mov||"–"}</td></tr></tfoot>
     </table></div>`;
 
   /* 2. destaques: o que muda de setor na data de referência */
@@ -1235,7 +1337,7 @@ function buildPrint(ref, comItens){
   ETAPAS.forEach((et,i)=>buckets[i].forEach(x=>{ if(ehHoje(x.l,i,ref))
     destaques.push(`<div class="r"><span class="et">${esc(et.nome)}</span><b>${esc(x.l.lote)}</b>${x.l.interno?`<span style="color:#777">${esc(x.l.interno)}</span>`:""}
       <span style="color:#555">${esc(x.l.cor||"")}</span>
-      <span class="q">${nBR(x.l.qtd)} pçs${x.l.itens&&x.l.itens.length?` · ${x.l.itens.length} itens`:""}</span></div>`);}));
+      <span class="q">${nBR(x.l.qtd)} vol.${x.l.itens&&x.l.itens.length?` · ${x.l.itens.length} itens`:""}</span></div>`);}));
   const dest = `<div class="pv-dest"><h3>Movimentação do dia — ${fmt(ref)}</h3>
     ${destaques.length?destaques.join(""):`<div class="pv-vazio">Nenhum lote muda de etapa nesta data.</div>`}</div>`;
 
@@ -1268,7 +1370,7 @@ function buildPrint(ref, comItens){
       <span class="fase">${et.fase}</span><span class="qt">sem lote</span></h2></div>`;
     const linhas=b.map(x=>{
       const l=x.l, hoje=ehHoje(l,i,ref);
-      const pct=l.qtd?Math.round((l.prod||0)/l.qtd*100):0;
+      const pct=l.qtd?Math.max(0,Math.min(100,Math.round((l.prod||0)/l.qtd*100))):0;
       const its=(comItens && l.itens && l.itens.length)
         ? `<tr class="pv-its"><td colspan="6"><ul>${l.itens.map(it=>
             `<li><span class="cd">${esc(it.cod||"")}</span><span>${esc(it.desc||"")}</span>
@@ -1286,7 +1388,7 @@ function buildPrint(ref, comItens){
     return `<div class="pv-sec">
       <table class="pv-tab"><thead>
         <tr class="pv-tit"><td colspan="6"><h2>${esc(et.nome)}<span class="fase">${et.fase}</span>${et.detalhe?`<span class="det">${esc(et.detalhe)}</span>`:""}
-          <span class="qt">${b.length} lote${b.length>1?"s":""} · ${nBR(pecasEt[i])} pçs</span></h2></td></tr>
+          <span class="qt">${b.length} lote${b.length>1?"s":""} · ${nBR(volsEt[i])} vol.</span></h2></td></tr>
         <tr><th>Lote</th><th>Cor</th><th style="text-align:right">Qtd</th>
         <th style="text-align:right">Itens</th><th style="text-align:right">Prod.</th><th>Situação</th></tr></thead>
       ${linhas}</table></div>`;}).join("");
@@ -1324,8 +1426,8 @@ function buildPrint(ref, comItens){
           <div class="pv-sub">Relatório gerencial · ${dataExt(ref)}</div></div>
         <div class="pv-kpis">
           <div><b>${ativos}</b><small>lotes ativos</small></div>
-          <div><b>${nBR(pecas)}</b><small>peças</small></div>
-          <div><b>${mov||"–"}</b><small>movim. hoje</small></div>
+          <div><b>${nBR(vols)}</b><small>volumes</small></div>
+          <div><b>${nBR(volEmbHoje)}</b><small>vol. p/ embalar hoje</small></div>
           ${volAtraso>0?`<div class="atr"><b>${nBR(volAtraso)}</b><small>vol. em atraso</small></div>`:""}
         </div>
       </div>
@@ -1341,12 +1443,13 @@ function buildPrint(ref, comItens){
 /* ================== SAÍDA GERENCIAL: TEXTO DO WHATSAPP ==================
    Resumo curto, na formatação do WhatsApp (*negrito*), pra colar no grupo. */
 function textoWhats(ref, comItens){
-  const {buckets,wait,done,atras,sbaixa,ativos,pecas,mov,volAtraso}=computeBuckets(ref);
+  const {buckets,wait,done,atras,sbaixa,ativos,vols,volAtraso,volEmbHoje,loteEmbHoje}=computeBuckets(ref);
   const L=[];
   L.push(`*LOTES EM ELABORAÇÃO*`);
   L.push(`PPCP Patrimar · ref. ${fmt(ref)}/${ref.getFullYear()}`);
   L.push(``);
-  L.push(`*${ativos}* lotes ativos · *${nBR(pecas)}* peças · *${mov}* movimentam hoje`);
+  L.push(`*${ativos}* lotes ativos · *${nBR(vols)}* volumes`);
+  L.push(`*${nBR(volEmbHoje)}* volumes p/ embalar hoje (${loteEmbHoje} lote${loteEmbHoje===1?"":"s"})`);
   L.push(``);
   if(atras.length){
     L.push(`⚠️ *EM ATRASO — ${nBR(volAtraso)} volumes pendentes*`);
@@ -1362,10 +1465,10 @@ function textoWhats(ref, comItens){
     const b=buckets[i];
     if(!b.length){ L.push(`*${et.nome.toUpperCase()}* — livre`); return; }
     const pq=b.reduce((s,x)=>s+(x.l.qtd||0),0);
-    L.push(`*${et.nome.toUpperCase()}* — ${b.length} lote${b.length>1?"s":""} · ${nBR(pq)} pçs`);
+    L.push(`*${et.nome.toUpperCase()}* — ${b.length} lote${b.length>1?"s":""} · ${nBR(pq)} vol.`);
     b.forEach(x=>{
       const hoje=ehHoje(x.l,i,ref);
-      L.push(`${hoje?"🔸":"▫️"} ${x.l.lote}${x.l.interno?" ("+x.l.interno+")":""}${x.l.cor?" "+x.l.cor:""} · ${nBR(x.l.qtd)} pçs`);
+      L.push(`${hoje?"🔸":"▫️"} ${x.l.lote}${x.l.interno?" ("+x.l.interno+")":""}${x.l.cor?" "+x.l.cor:""} · ${nBR(x.l.qtd)} vol.`);
       L.push(`   _${situacao(x.l,i,ref)}_`);
       if(comItens && x.l.itens && x.l.itens.length)
         x.l.itens.forEach(it=>L.push(`   • ${it.desc||it.cod||""} — ${nBR(it.qtd)}`));
@@ -1396,6 +1499,7 @@ const irParaHoje=()=>{refInput.value=isoOf(new Date());render();};
 document.getElementById("hoje").onclick=irParaHoje;
 document.getElementById("refVoltar").onclick=irParaHoje;
 document.getElementById("reload").onclick=carregar;
+document.getElementById("staleReload").onclick=carregar;
 refInput.addEventListener("change",render);
 
 function montarImpresso(){
@@ -1439,6 +1543,7 @@ document.getElementById("whats").onclick=async ()=>{
 };
 carregar();
 setInterval(carregar, 5*60*1000); // recarrega a cada 5 min
+setInterval(pintaFrescor, 30000); // e conta quanto tempo faz que a última deu certo
 if(TVKEY){ setInterval(tvClock, 30000); setInterval(tvRotate, 14000); } // relógio + rotação de páginas
 
 /* PWA: registra o service worker (permite instalar e abrir offline) */
