@@ -272,12 +272,38 @@ function corGPS(nome){
    completa; aqui interessa apenas o que ainda falta produzir. */
 const ALIAS = {
   lote:["lote","numlote","nlote","lotenº","loten"],
+  data:["data","dataprevemb","dataemb","emb","embalagem","previsaoemb"],
   cod:["cod","codigo","cdigo","sku"],
   desc:["desc","descricao","descrio","produto","item"],
   qtd:["qtd","qtde","quantidade","qtdcx","qtcx","caixas"],
   prod:["produzido","prod","feito"], saldo:["saldo","falta"],
   cor:["cor","corgps","cordogps"], interno:["loteinterno","interno","op"]
 };
+
+/* ---------- datas ----------
+   Volume pendente é o que PASSOU da data de embalagem e ainda tem saldo —
+   não é todo lote com saldo. Sem isso a tela mostra os 46 lotes da esteira
+   misturados, e quem está na fábrica tem de garimpar o que interessa entre
+   os que só embalam semana que vem. Mesma regra do painel (atrasoDe). */
+function pd(s){
+  if(!s) return null;
+  s=String(s).trim();
+  let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);        // YYYY-MM-DD
+  if(m) return new Date(+m[1],+m[2]-1,+m[3]);
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);        // DD/MM/YYYY
+  if(m){ let y=+m[3]; if(y<100)y+=2000; return new Date(y,+m[2]-1,+m[1]); }
+  m=s.match(/^(\d{1,2})\/(\d{1,2})$/);                  // DD/MM
+  if(m) return new Date(new Date().getFullYear(),+m[2]-1,+m[1]);
+  m=s.match(/^Date\((\d+),(\d+),(\d+)/);                // Date(y,m,d) do gviz
+  if(m) return new Date(+m[1],+m[2],+m[3]);
+  const d=new Date(s); return isNaN(d)?null:d;
+}
+const hoje0 = () => { const d=new Date(); d.setHours(0,0,0,0); return d; };
+const fmtD = d => d? String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0") : "";
+// dias úteis entre duas datas, como o painel conta o atraso
+function wdBetween(a,b){ if(!a||!b) return 0; const d=new Date(a); let n=0; const dir=b>=a?1:-1;
+  while(+d!==+b){ d.setDate(d.getDate()+dir); const w=d.getDay(); if(w!==0&&w!==6) n+=dir; }
+  return n; }
 function mapHeader(hrow){
   const idx={}; hrow.forEach((h,i)=>{ const n=norm(h);
     for(const k in ALIAS){ if(ALIAS[k].includes(n) && idx[k]===undefined) idx[k]=i; } });
@@ -295,11 +321,13 @@ function rowsToLotes(rows){
   for(let r=h+1;r<rows.length;r++){ const row=rows[r];
     const lote=val(row,idx.lote);
     if(lote && (!cur || cur.lote!==lote)){
-      cur={lote, cor:val(row,idx.cor), interno:val(row,idx.interno), itens:[]}; out.push(cur);
+      cur={lote, cor:val(row,idx.cor), interno:val(row,idx.interno),
+           emb:pd(val(row,idx.data)), itens:[]}; out.push(cur);
     }
     if(!cur) continue;
     if(!cur.cor) cur.cor=val(row,idx.cor);
     if(!cur.interno) cur.interno=val(row,idx.interno);
+    if(!cur.emb) cur.emb=pd(val(row,idx.data));   // a data pode vir só na 1ª linha do lote
     const cod=val(row,idx.cod), desc=val(row,idx.desc), q=num(val(row,idx.qtd));
     if(!cod && !(desc && q>0)) continue;
     const prod=num(val(row,idx.prod));
@@ -307,8 +335,20 @@ function rowsToLotes(rows){
     const saldo = sCol!=="" ? num(sCol) : Math.max(0, q-prod);
     cur.itens.push({cod, desc, qtd:q, saldo});
   }
-  // só lote que ainda tem volume a produzir
-  return out.filter(l=>l.itens.some(it=>it.saldo>0));
+  /* Só lote com volume a produzir. O que passou da data de embalagem e ainda
+     tem saldo é PENDENTE — é isso que cobra ação, e é o que vai primeiro na
+     lista. O resto continua acessível, mas embaixo: um lote que embala daqui
+     a cinco dias não é problema de ninguém hoje. */
+  const hj=hoje0();
+  return out.filter(l=>l.itens.some(it=>it.saldo>0)).map(l=>{
+    l.pend = !!(l.emb && l.emb < hj);
+    l.dias = l.pend ? wdBetween(l.emb, hj) : (l.emb ? -wdBetween(hj, l.emb) : null);
+    l.vol  = l.itens.reduce((s,it)=>s+(it.saldo>0?it.saldo:0),0);
+    return l;
+  }).sort((a,b)=>
+    (b.pend-a.pend) ||                                   // pendentes primeiro
+    (b.pend ? b.vol-a.vol : (a.dias??99)-(b.dias??99))   // maior volume / mais perto
+  );
 }
 
 /* ---------- estrutura (lista técnica) ----------
@@ -444,6 +484,15 @@ function toast(msg,kind=""){
   clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true, kind==="err"?5200:2600);
 }
 
+// título de seção na lista de lotes
+function secao(txt, cor){
+  const d=document.createElement("div");
+  d.style.cssText=`font-family:"IBM Plex Mono";font-size:10.5px;letter-spacing:.14em;`+
+    `text-transform:uppercase;color:${cor};margin:6px 0 -2px`;
+  d.textContent=txt;
+  return d;
+}
+
 function render(){
   const tela=$("tela"); tela.innerHTML="";
   $("btnVoltar").disabled = NIVEL==="lotes";
@@ -453,13 +502,24 @@ function render(){
     $("crumb").textContent="PPCP · Patrimar";
     if(!LOTES.length){ tela.innerHTML=`<div class="vazio">Nenhum lote com volume pendente.</div>`; return; }
     const l=document.createElement("div"); l.className="lista";
+    let cabPend=false, cabProg=false;
     LOTES.forEach(lo=>{
-      const pend=lo.itens.filter(it=>it.saldo>0);
-      const vol=pend.reduce((s,it)=>s+it.saldo,0);
+      // separador: o que venceu cobra ação; o que ainda vai embalar, não
+      if(lo.pend && !cabPend){ cabPend=true;
+        l.appendChild(secao(`Pendentes — passaram da embalagem`, "var(--red)")); }
+      if(!lo.pend && !cabProg){ cabProg=true;
+        l.appendChild(secao(`Ainda no prazo`, "var(--mut)")); }
+      const nv=lo.itens.filter(it=>it.saldo>0).length;
       const d=document.createElement("div"); d.className="item";
+      if(lo.pend) d.style.borderLeftColor="var(--red)";
+      const quando = lo.emb
+        ? (lo.pend ? `emb. ${fmtD(lo.emb)} · ${lo.dias}d de atraso`
+                   : `embala ${fmtD(lo.emb)}${lo.dias===0?" (hoje)":""}`)
+        : "sem data";
       d.innerHTML=`<div class="esq"><span class="lote">${esc(lo.lote)}</span>
         ${lo.cor?`<span class="cor" style="${corGPS(lo.cor)}">${esc(lo.cor)}</span>`:""}
-        <div class="desc">${pend.length} ${pend.length===1?"volume":"volumes"} · ${nBR(vol)} a produzir</div></div>
+        <div class="desc">${nv} ${nv===1?"volume":"volumes"} · ${quando}</div></div>
+        <div class="dir"><b${lo.pend?"":' style="color:var(--mut)"'}>${nBR(lo.vol)}</b>a produzir</div>
         <span class="seta">›</span>`;
       d.onclick=()=>{ loteSel=lo; NIVEL="volumes"; render(); };
       l.appendChild(d);
@@ -688,7 +748,12 @@ async function carregar(){
       ? ` · estrutura <b>${EST.aba}</b>: ${nBR(EST.map.size)} volumes, ${nBR(EST.n)} peças`
       : ` · <span style="color:var(--amber)">sem aba de estrutura — lançamento por código</span>`;
     const semUrl = CFG.url ? "" : ` · <span style="color:var(--red)">falta a URL do Apps Script (⚙)</span>`;
-    setStatus(CFG.url?"ok":"warn", `<b>${LOTES.length}</b> lotes com pendência${est}${semUrl}`);
+    // o número que interessa é o que venceu, não o total da esteira
+    const np=LOTES.filter(l=>l.pend).length;
+    const resumo = np
+      ? `<b style="color:var(--red)">${np}</b> ${np===1?"lote pendente":"lotes pendentes"} de ${LOTES.length}`
+      : `nenhum lote vencido · ${LOTES.length} na esteira`;
+    setStatus(CFG.url?"ok":"warn", `${resumo}${est}${semUrl}`);
   }catch(e){
     LOTES=[];
     setStatus("err", String(e.message).includes("sem-acesso")
