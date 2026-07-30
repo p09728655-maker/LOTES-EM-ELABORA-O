@@ -330,11 +330,17 @@ function parseEstrutura(rows){
   for(let r=h+1;r<rows.length;r++){ const row=rows[r];
     const vol=normCod(val(row,idx.cod)), pc=normCod(val(row,idx.peca));
     if(vol.length<6 || pc.length<6) continue;
-    const q=idx.qtd!==undefined ? num(val(row,idx.qtd)) : 1;
+    /* A quantidade por unidade só existe quando a planilha diz. Sem a coluna
+       QTD — caso de uma estrutura semeada a partir do histórico de faltas —
+       a tela NÃO mostra "N por volume": inventar 1 ali seria apresentar
+       palpite como fato, e é em cima desse número que o operador decide
+       quanto pedir. */
+    const temQtd = idx.qtd!==undefined && val(row,idx.qtd)!=="";
+    const q = temQtd ? num(val(row,idx.qtd)) : 0;
     const d=idx.desc!==undefined ? val(row,idx.desc) : "";
     if(!map.has(vol)) map.set(vol,[]);
     const lst=map.get(vol);
-    if(!lst.some(x=>x.cod===pc)) lst.push({cod:pc, desc:d, porUn:q>0?q:1});
+    if(!lst.some(x=>x.cod===pc)) lst.push({cod:pc, desc:d, porUn:(temQtd&&q>0)?q:0});
   }
   return map;
 }
@@ -455,7 +461,7 @@ function render(){
     d.innerHTML=`<div class="esq">
         <div class="pd">${esc(p.desc||"(sem descrição)")}</div>
         <div class="pc">${esc(p.cod)}</div>
-        <div class="un">${p.porUn} por volume · ${nBR(p.porUn*volSel.saldo)} p/ fechar</div>
+        ${p.porUn>0?`<div class="un">${p.porUn} por volume · ${nBR(p.porUn*volSel.saldo)} p/ fechar</div>`:""}
       </div>
       <div class="cnt">
         <button data-a="-">−</button>
