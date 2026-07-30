@@ -617,7 +617,46 @@ function render(){
     return;
   }
 
-  pecas.forEach(p=>{
+  /* A estrutura real tem ~28 peças por volume. Rolar isso no celular para
+     achar uma é pior que digitar. Acima de 12 entra um filtro; abaixo, ele
+     só ocuparia espaço. */
+  let filtro="";
+  if(pecas.length>12){
+    const cx=document.createElement("div");
+    cx.innerHTML=`<input id="filtro" type="search" autocomplete="off"
+      placeholder="filtrar ${pecas.length} peças — ex.: gav"
+      style="width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+      border-radius:9px;padding:12px;font-size:16px;min-height:48px;margin-bottom:2px">`;
+    tela.appendChild(cx);
+    let t=null;
+    cx.querySelector("input").oninput=e=>{
+      filtro=e.target.value; clearTimeout(t); t=setTimeout(pinta,140);
+    };
+  }
+  tela.appendChild(l);
+  pinta();
+  pintaResumo();
+  return;
+
+  /* Redesenha só a lista, preservando o campo de filtro e o foco do teclado.
+     Peça já marcada aparece SEMPRE, mesmo fora do filtro: sumir com o que a
+     pessoa acabou de marcar parece perda de lançamento. */
+  function pinta(){
+    const t=chave(filtro).split(" ").filter(Boolean);
+    const vis = !t.length ? pecas : pecas.filter(p=>{
+      if(marcadas.has(p.cod)) return true;
+      const k=chave(p.cod+" "+(p.desc||""));
+      return t.every(x=>k.indexOf(x)>=0);
+    });
+    l.innerHTML="";
+    if(!vis.length){
+      l.innerHTML=`<div class="vazio">nenhuma peça com “${esc(filtro)}”</div>`;
+      return;
+    }
+    vis.forEach(item);
+  }
+
+  function item(p){
     const d=document.createElement("div"); d.className="peca";
     const qt=(marcadas.get(p.cod)||{}).qtd||0;
     if(qt>0) d.classList.add("on");
@@ -641,9 +680,7 @@ function render(){
     });
     inp.onchange=sync; inp.oninput=sync;
     l.appendChild(d);
-  });
-  tela.appendChild(l);
-  pintaResumo();
+  }
 }
 
 /* Lista do que já foi marcado na busca, com contador e remoção. Fica abaixo
