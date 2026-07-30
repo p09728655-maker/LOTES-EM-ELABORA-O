@@ -1,74 +1,57 @@
-/* ============================================================================
-   Gravação das faltas — Web App da planilha LOTES EM ELABORAÇÃO
-   ----------------------------------------------------------------------------
-   O painel só lê (CSV via gviz). Para o operador registrar o que falta é
-   preciso um caminho de escrita: este script.
+// ===========================================================================
+// Gravacao das faltas - Web App da planilha LOTES EM ELABORACAO
+// ===========================================================================
+//
+// PUBLIQUE COMO PROJETO SEPARADO. Nao cole dentro do script que ja existe na
+// planilha: o Apps Script admite UM doGet e UM doPost por projeto, e juntar
+// os dois faz um sobrescrever o outro em silencio.
+//
+// COMO PUBLICAR:
+//   1. script.google.com/home/projects/create   (projeto novo, em branco)
+//   2. no editor: Ctrl+A e Delete para esvaziar, depois cole este arquivo
+//   3. Ctrl+S para salvar
+//   4. Executar -> faltas_diagnostico_ -> autorize quando pedir
+//   5. Implantar -> Nova implantacao -> App da Web
+//        Executar como:     Eu
+//        Quem pode acessar: Qualquer pessoa
+//   6. copie a URL /exec e cole em engrenagem na tela falta.html
+//
+// AO ALTERAR DEPOIS: Implantar -> Gerenciar implantacoes -> editar -> Nova
+// versao. Criar implantacao nova gera outra URL e a tela para de gravar.
+//
+// A aba FALTAS e append-only: nunca reescreve linha existente. Dois celulares
+// gravando ao mesmo tempo nao se atropelam e fica o historico de quem lancou
+// o que. O relatorio usa o lancamento mais recente de cada lote+volume+peca.
+//
+// Nomes prefixados com faltas_ para nunca colidirem com outro script. doGet e
+// doPost sao nomes obrigatorios do Apps Script e nao podem ser prefixados - e
+// por isso que o projeto precisa ser separado.
+// ===========================================================================
 
-   >>> PUBLIQUE COMO PROJETO SEPARADO. NÃO cole dentro do script que já existe
-   >>> na planilha.
-   >>>
-   >>> Um projeto Apps Script admite UM doGet e UM doPost. Se o script atual já
-   >>> tiver esses — e ele tem, é o que responde ao seu app hoje — juntar os
-   >>> dois faz um sobrescrever o outro EM SILÊNCIO: sem erro, sem aviso, e o
-   >>> app que está rodando simplesmente para de responder.
-   >>>
-   >>> Projeto separado tem URL própria e implantação própria. Nada do que está
-   >>> no ar é tocado.
-
-   COMO PUBLICAR (uma vez só):
-     1. abra  https://script.google.com/home/projects/create
-        (NÃO use Extensões → Apps Script da planilha: aquilo abre o projeto
-         que já existe)
-     2. dê um nome ao projeto — ex.: "FALTAS — lotes em elaboração"
-     3. apague o conteúdo do Codigo.gs NOVO e cole este arquivo
-     4. confira o SHEET_ID abaixo se a planilha não for a de sempre
-     5. Executar → escolha  faltas_testar_  → autorize quando pedir
-        (cria a aba FALTAS e prova que a escrita funciona)
-     6. Implantar → Nova implantação → tipo "App da Web"
-          · Executar como:     Eu
-          · Quem pode acessar: Qualquer pessoa
-     7. copie a URL /exec e cole em ⚙ na tela falta.html
-     8. apague a linha de teste (lote 000000) da aba FALTAS
-
-   AO ALTERAR ESTE CÓDIGO DEPOIS:
-     Implantar → Gerenciar implantações → editar (lápis) → Nova versão.
-     Criar uma implantação nova gera outra URL e a tela para de gravar sem
-     avisar.
-
-   A aba FALTAS é APPEND-ONLY: nunca reescreve linha existente. Dois celulares
-   gravando ao mesmo tempo não se atropelam e fica o histórico de quem lançou
-   o quê. O relatório usa o lançamento mais recente de cada (lote, volume,
-   peça).
-
-   Os nomes daqui são prefixados com faltas_ / FALTAS_ para nunca colidirem
-   com outro script, caso um dia este código seja mesclado a outro projeto.
-   ========================================================================== */
-
-/* ID da planilha (o trecho entre /d/ e /edit na URL).
-   Projeto separado não tem planilha "ativa", então precisa abrir pelo ID. */
+// ID da planilha: o trecho entre /d/ e /edit na URL dela.
 var FALTAS_SHEET_ID = '1W9bK_IoWknk8eKFbSWCMxILAQcaXuWD2gG7B0jcwFzg';
 
-var FALTAS_ABA       = 'FALTAS';
-var FALTAS_CABECALHO = ['DATA_HORA','LOTE','COD_VOLUME','COD_PECA','QTD','OPERADOR','OBS'];
+var FALTAS_ABA = 'FALTAS';
+var FALTAS_CABECALHO = ['DATA_HORA', 'LOTE', 'COD_VOLUME', 'COD_PECA', 'QTD', 'OPERADOR', 'OBS'];
 
-/* ---------- utilidades ---------- */
 
-// código sem pontuação: 778.005.108 e 778005108 são a mesma peça.
-// Mesma regra do painel (normCod); divergir aqui faz o relatório não casar.
+// --- utilidades ------------------------------------------------------------
+
+// Codigo sem pontuacao: 778.005.108 e 778005108 sao a mesma peca.
+// Mesma regra do painel; divergir aqui faz o relatorio nao casar.
 function faltas_normCod_(v) {
   return String(v == null ? '' : v).toUpperCase().replace(/[^0-9A-Z]/g, '');
 }
 
-/* Funciona tanto em projeto separado (openById) quanto vinculado à planilha.
-   As mensagens são explícitas porque o erro cru do Apps Script ("Exception:
-   ...") não diz o que fazer, e quem lê está no meio do expediente. */
+// Funciona em projeto separado (openById) e tambem vinculado a planilha.
+// A mensagem e explicita porque a excecao crua nao diz o que fazer.
 function faltas_planilha_() {
   if (FALTAS_SHEET_ID) {
     try {
       return SpreadsheetApp.openById(FALTAS_SHEET_ID);
     } catch (e) {
-      throw new Error('não abri a planilha ' + FALTAS_SHEET_ID +
-        ' — confira o FALTAS_SHEET_ID no topo do script e se esta conta tem acesso a ela. (' +
+      throw new Error('nao abri a planilha ' + FALTAS_SHEET_ID +
+        ' - confira o FALTAS_SHEET_ID no topo e se esta conta tem acesso. (' +
         (e && e.message ? e.message : e) + ')');
     }
   }
@@ -77,9 +60,9 @@ function faltas_planilha_() {
   return ss;
 }
 
-/* Cria a aba na primeira chamada. O insertSheet pode falhar por autorização
-   ainda não concedida ou por outra execução ter criado a aba no mesmo
-   instante — nos dois casos vale reconsultar pelo nome antes de desistir. */
+// Cria a aba na primeira chamada. O insertSheet pode falhar por autorizacao
+// ainda nao concedida ou porque outra execucao criou a aba no mesmo instante:
+// nos dois casos vale reconsultar pelo nome antes de desistir.
 function faltas_aba_() {
   var ss = faltas_planilha_();
   var sh = ss.getSheetByName(FALTAS_ABA);
@@ -88,13 +71,14 @@ function faltas_aba_() {
   try {
     sh = ss.insertSheet(FALTAS_ABA);
   } catch (e) {
-    sh = ss.getSheetByName(FALTAS_ABA);   // alguém criou enquanto isso?
+    sh = ss.getSheetByName(FALTAS_ABA);
     if (!sh) {
-      throw new Error('não consegui criar a aba ' + FALTAS_ABA + ' em "' + ss.getName() +
-        '". Rode faltas_testar_ pelo editor uma vez para conceder a autorização de escrita. (' +
+      throw new Error('nao consegui criar a aba ' + FALTAS_ABA + ' em "' + ss.getName() +
+        '". Rode faltas_diagnostico_ pelo editor para conceder a autorizacao. (' +
         (e && e.message ? e.message : e) + ')');
     }
   }
+  // so escreve o cabecalho quando a aba esta vazia: reprocessar nao duplica
   if (sh.getLastRow() === 0) {
     sh.appendRow(FALTAS_CABECALHO);
     sh.setFrozenRows(1);
@@ -103,32 +87,9 @@ function faltas_aba_() {
   return sh;
 }
 
-/* ---------- diagnóstico ----------
-   Rode pelo editor quando algo falhar: diz em qual etapa parou, em vez de
-   apontar um número de linha. */
-function faltas_diagnostico_() {
-  var passos = [];
-  try {
-    passos.push('ID configurado: ' + (FALTAS_SHEET_ID || '(vazio — usaria a planilha vinculada)'));
-    var ss = faltas_planilha_();
-    passos.push('abriu a planilha: "' + ss.getName() + '"');
-    var nomes = ss.getSheets().map(function (s) { return s.getName(); });
-    passos.push('abas existentes (' + nomes.length + '): ' + nomes.join(', '));
-    passos.push('aba ' + FALTAS_ABA + ' já existe? ' + (ss.getSheetByName(FALTAS_ABA) ? 'sim' : 'não'));
-    var sh = faltas_aba_();
-    passos.push('aba pronta, linhas hoje: ' + Math.max(0, sh.getLastRow() - 1));
-    passos.push('OK — escrita liberada');
-  } catch (e) {
-    passos.push('FALHOU: ' + (e && e.message ? e.message : e));
-  }
-  var txt = passos.join('\n');
-  Logger.log(txt);
-  return txt;
-}
-
+// JSONP quando o cliente pede callback: atravessa qualquer politica de CORS.
 function faltas_resposta_(obj, callback) {
   var txt = JSON.stringify(obj);
-  // JSONP quando o cliente pede callback: atravessa qualquer política de CORS
   if (callback) {
     return ContentService
       .createTextOutput(callback + '(' + txt + ')')
@@ -138,27 +99,31 @@ function faltas_resposta_(obj, callback) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-/* ---------- validação ----------
-   Recusar aqui é barato; lixo na planilha custa caro depois, porque o
-   relatório soma sem reclamar. */
+
+// --- validacao -------------------------------------------------------------
+// Recusar aqui e barato; lixo na planilha custa caro depois, porque o
+// relatorio soma sem reclamar.
+
 function faltas_valida_(p) {
   if (!p || typeof p !== 'object')    return 'payload ausente';
-  if (!String(p.lote   || '').trim()) return 'lote não informado';
-  if (!String(p.volume || '').trim()) return 'volume não informado';
-  if (!p.pecas || !p.pecas.length)    return 'nenhuma peça informada';
+  if (!String(p.lote   || '').trim()) return 'lote nao informado';
+  if (!String(p.volume || '').trim()) return 'volume nao informado';
+  if (!p.pecas || !p.pecas.length)    return 'nenhuma peca informada';
 
   for (var i = 0; i < p.pecas.length; i++) {
     var it  = p.pecas[i] || {};
     var cod = faltas_normCod_(it.cod);
     var qtd = Number(it.qtd);
-    if (cod.length < 9)          return 'peça ' + (i + 1) + ': código inválido (' + (it.cod || 'vazio') + ')';
-    if (!(qtd > 0))              return 'peça ' + (i + 1) + ' (' + cod + '): quantidade deve ser maior que zero';
-    if (qtd !== Math.floor(qtd)) return 'peça ' + (i + 1) + ' (' + cod + '): quantidade deve ser inteira';
+    if (cod.length < 9)          return 'peca ' + (i + 1) + ': codigo invalido (' + (it.cod || 'vazio') + ')';
+    if (!(qtd > 0))              return 'peca ' + (i + 1) + ' (' + cod + '): quantidade deve ser maior que zero';
+    if (qtd !== Math.floor(qtd)) return 'peca ' + (i + 1) + ' (' + cod + '): quantidade deve ser inteira';
   }
   return '';
 }
 
-/* ---------- gravação ---------- */
+
+// --- gravacao --------------------------------------------------------------
+
 function faltas_gravar_(p) {
   var erro = faltas_valida_(p);
   if (erro) return { ok: false, erro: erro };
@@ -183,7 +148,7 @@ function faltas_gravar_(p) {
       return [agora, lote, vol, faltas_normCod_(it.cod), Number(it.qtd), oper, obs];
     });
 
-    // uma escrita só, em bloco: mais rápido e atômico o bastante sob a trava
+    // uma escrita so, em bloco: mais rapido e atomico o bastante sob a trava
     sh.getRange(sh.getLastRow() + 1, 1, linhas.length, FALTAS_CABECALHO.length)
       .setValues(linhas);
 
@@ -195,28 +160,25 @@ function faltas_gravar_(p) {
   }
 }
 
-/* ---------- entradas ----------
-   doPost e doGet são nomes obrigatórios do Apps Script e por isso NÃO podem
-   ser prefixados. É exatamente por isso que este código pede projeto
-   separado: num projeto compartilhado eles colidiriam com os do outro app. */
 
-/* POST com Content-Type text/plain: evita o preflight OPTIONS, que o Apps
-   Script não responde. Enviar como application/json quebra no navegador. */
+// --- entradas --------------------------------------------------------------
+
+// POST com Content-Type text/plain: evita o preflight OPTIONS, que o Apps
+// Script nao responde. Enviar como application/json quebra no navegador.
 function doPost(e) {
   var cb = (e && e.parameter) ? e.parameter.callback : '';
   var p;
   try {
     p = JSON.parse(e.postData.contents);
   } catch (err) {
-    return faltas_resposta_({ ok: false, erro: 'JSON inválido' }, cb);
+    return faltas_resposta_({ ok: false, erro: 'JSON invalido' }, cb);
   }
   return faltas_resposta_(faltas_gravar_(p), cb);
 }
 
-/* GET serve a dois propósitos:
-   - sem parâmetro: abrir a URL no navegador confirma que a implantação subiu
-   - ?callback=cb&payload=<json>: gravação por JSONP, caso o POST esbarre em
-     CORS no navegador do celular */
+// GET serve a dois propositos:
+//   sem parametro ................ abrir a URL confirma que a implantacao subiu
+//   callback=cb&payload=<json> ... gravacao por JSONP, se o POST esbarrar em CORS
 function doGet(e) {
   var par = (e && e.parameter) || {};
   var cb  = par.callback || '';
@@ -234,21 +196,43 @@ function doGet(e) {
   try {
     p = JSON.parse(par.payload);
   } catch (err) {
-    return faltas_resposta_({ ok: false, erro: 'payload inválido' }, cb);
+    return faltas_resposta_({ ok: false, erro: 'payload invalido' }, cb);
   }
   return faltas_resposta_(faltas_gravar_(p), cb);
 }
 
-/* ---------- teste manual ----------
-   Rode pelo editor ANTES de publicar: cria a aba FALTAS, dispara o pedido de
-   autorização e prova que a escrita funciona. Se falhar aqui, falharia na
-   tela também — melhor descobrir agora. Apague a linha depois. */
+
+// --- diagnostico -----------------------------------------------------------
+// Rode pelo editor quando algo falhar: diz em qual etapa parou, com nome, em
+// vez de apontar um numero de linha. Tambem dispara o pedido de autorizacao.
+
+function faltas_diagnostico_() {
+  var passos = [];
+  try {
+    passos.push('ID configurado: ' + (FALTAS_SHEET_ID || '(vazio)'));
+    var ss = faltas_planilha_();
+    passos.push('abriu a planilha: "' + ss.getName() + '"');
+    var nomes = ss.getSheets().map(function (s) { return s.getName(); });
+    passos.push('abas (' + nomes.length + '): ' + nomes.join(', '));
+    passos.push('aba ' + FALTAS_ABA + ' ja existe? ' + (ss.getSheetByName(FALTAS_ABA) ? 'sim' : 'nao'));
+    var sh = faltas_aba_();
+    passos.push('aba pronta, lancamentos hoje: ' + Math.max(0, sh.getLastRow() - 1));
+    passos.push('OK - escrita liberada');
+  } catch (e) {
+    passos.push('FALHOU: ' + (e && e.message ? e.message : e));
+  }
+  var txt = passos.join('\n');
+  Logger.log(txt);
+  return txt;
+}
+
+// Grava uma linha de teste (lote 000000). Apague-a da aba depois.
 function faltas_testar_() {
   var r = faltas_gravar_({
     lote: '000000',
     volume: '501.000.000',
     operador: 'TESTE',
-    obs: 'linha de teste — pode apagar',
+    obs: 'linha de teste - pode apagar',
     pecas: [{ cod: '778005108', qtd: 1 }]
   });
   Logger.log(r);
