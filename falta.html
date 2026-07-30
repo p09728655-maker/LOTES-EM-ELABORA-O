@@ -361,7 +361,7 @@ const ALIAS_EST = {
   qtd:["qtd","qtde","quantidade","qt","qtdpeca","porunidade"],
   desc:["descricao","descrio","desc","descricaopeca","descpeca"]
 };
-const EST = { map:new Map(), ativa:false, aba:"", n:0 };
+const EST = { map:new Map(), ativa:false, aba:"", n:0, col:null, tudo:false };
 function parseEstrutura(rows){
   const map=new Map();
   let h=-1, idx={};
@@ -388,22 +388,112 @@ function parseEstrutura(rows){
   }
   return map;
 }
+/* Baixar a estrutura inteira não escala: o catálogo completo passa de 28 mil
+   linhas e 1,7 MB, e isso viria na rede da fábrica a cada abertura da tela,
+   para no fim o operador usar 28 linhas de um volume só.
+
+   O gviz aceita consulta, então a tela pede só o volume aberto — algumas
+   dezenas de linhas, alguns KB. Na abertura vai um único pedido curto, só
+   para achar a aba e mapear as colunas.
+
+   Se a consulta não for aceita (aba achada por nome antiga, formato
+   inesperado), cai para o caminho antigo de baixar tudo: lento, mas
+   funciona. */
+const estURL = (aba, tq) => abaURL(aba) + (tq ? "&tq=" + encodeURIComponent(tq) : "");
+
 async function carregarEstrutura(){
-  EST.map=new Map(); EST.ativa=false; EST.aba="";
+  EST.map=new Map(); EST.ativa=false; EST.aba=""; EST.col=null; EST.tudo=false; EST.n=0;
   const abas=[...new Set([CFG.estrutura,...ABAS_EST].filter(Boolean))];
   for(const aba of abas){
     try{
-      const res=await fetch(abaURL(aba),{cache:"no-store"});
+      // pedido mínimo: cabeçalho + 1 linha, só para reconhecer a aba
+      const res=await fetch(estURL(aba,"select * limit 1"),{cache:"no-store"});
       if(!res.ok) continue;
       const txt=await res.text();
       if(/<html/i.test(txt)) continue;
-      const map=parseEstrutura(parseCSV(txt));
-      if(!map.size) continue;
-      EST.map=map; EST.ativa=true; EST.aba=aba;
-      EST.n=[...map.values()].reduce((s,a)=>s+a.length,0);
-      break;
+      const rows=parseCSV(txt);
+      const idx=cabecalhoEstrutura(rows);
+      if(!idx) continue;
+      EST.ativa=true; EST.aba=aba; EST.col=idx;
+      return;
     }catch(e){ /* tenta a próxima */ }
   }
+}
+
+// acha a linha de cabeçalho e devolve o índice de cada coluna
+function cabecalhoEstrutura(rows){
+  for(let i=0;i<Math.min(rows.length,25);i++){
+    const c={}; rows[i].forEach((v,j)=>{ const n=norm(v);
+      for(const k in ALIAS_EST){ if(ALIAS_EST[k].includes(n) && c[k]===undefined) c[k]=j; } });
+    if(c.cod!==undefined && c.peca!==undefined) return c;
+  }
+  return null;
+}
+const letra = i => String.fromCharCode(65+i);   // 0 -> "A"
+
+/* Peças de um volume, buscadas sob demanda e guardadas para não repetir o
+   pedido se a pessoa entrar e sair do mesmo volume. */
+async function pecasDoVolume(codVol){
+  const k=normCod(codVol);
+  if(EST.map.has(k)) return EST.map.get(k);
+  if(!EST.ativa) return [];
+
+  // o código pode estar com ou sem ponto na planilha: pergunta pelos dois
+  const comPonto = k.length===9 ? `${k.slice(0,3)}.${k.slice(3,6)}.${k.slice(6)}` : k;
+  const col = letra(EST.col.cod);
+  const tq  = `select * where ${col} = '${k}' or ${col} = '${comPonto}'`;
+
+  let lista=[];
+  try{
+    const res=await fetch(estURL(EST.aba,tq),{cache:"no-store"});
+    if(res.ok){
+      const txt=await res.text();
+      if(!/<html/i.test(txt)){
+        // a resposta da consulta vem sem cabeçalho reconhecível: usa o mapa já conhecido
+        lista = linhasParaPecas(parseCSV(txt), EST.col, k);
+      }
+    }
+  }catch(e){ /* cai no plano B abaixo */ }
+
+  // plano B: consulta recusada — baixa tudo uma vez e serve daí em diante
+  if(!lista.length && !EST.tudo){
+    try{
+      const res=await fetch(abaURL(EST.aba),{cache:"no-store"});
+      if(res.ok){
+        const txt=await res.text();
+        if(!/<html/i.test(txt)){
+          const mapa=parseEstrutura(parseCSV(txt));
+          EST.tudo=true;
+          EST.n=[...mapa.values()].reduce((s,a)=>s+a.length,0);
+          mapa.forEach((v,kk)=>EST.map.set(kk,v));
+          return EST.map.get(k)||[];
+        }
+      }
+    }catch(e){ /* desiste: o volume cai no modo de busca */ }
+  }
+
+  EST.map.set(k,lista);
+  EST.n+=lista.length;
+  return lista;
+}
+
+/* Converte linhas cruas em peças. `esperado` confere o código do volume em
+   cada linha: a consulta já filtra no servidor, mas se ela for ignorada por
+   qualquer motivo a resposta vem com a planilha inteira — e aí o operador
+   veria peças de outro produto sem nada indicar erro. */
+function linhasParaPecas(rows, idx, esperado){
+  const out=[];
+  for(const row of rows){
+    const pc=normCod(val(row,idx.peca));
+    if(pc.length<6) continue;
+    if(esperado && normCod(val(row,idx.cod))!==esperado) continue;
+    if(norm(val(row,idx.peca))===norm("peca")) continue;   // cabeçalho repetido
+    const temQtd = idx.qtd!==undefined && val(row,idx.qtd)!=="";
+    const q = temQtd ? num(val(row,idx.qtd)) : 0;
+    const d = idx.desc!==undefined ? val(row,idx.desc) : "";
+    if(!out.some(x=>x.cod===pc)) out.push({cod:pc, desc:d, porUn:(temQtd&&q>0)?q:0});
+  }
+  return out;
 }
 
 /* ---------- catálogo de peças (aba SEMIACABADO) ----------
@@ -473,6 +563,7 @@ function buscarPecas(termo, limite){
 /* ---------- estado da navegação ---------- */
 let NIVEL="lotes";      // lotes → volumes → pecas
 let loteSel=null, volSel=null;
+let PECAS=null;         // peças do volume aberto; null = ainda buscando
 let marcadas=new Map(); // cod da peça → {qtd, desc}
 
 /* ---------- telas ---------- */
@@ -533,13 +624,16 @@ function render(){
     const pend=loteSel.itens.filter(it=>it.saldo>0);
     const l=document.createElement("div"); l.className="lista";
     pend.forEach(it=>{
-      const temEst = EST.ativa && EST.map.has(normCod(it.cod));
       const d=document.createElement("div"); d.className="item";
       d.innerHTML=`<div class="esq"><span class="cod">${esc(it.cod)}</span>
         <div class="desc">${esc(it.desc||"")}</div></div>
-        <div class="dir"><b>${nBR(it.saldo)}</b>a produzir${temEst?"":`<br><span style="color:var(--amber)">sem estrutura</span>`}</div>
+        <div class="dir"><b>${nBR(it.saldo)}</b>a produzir</div>
         <span class="seta">›</span>`;
-      d.onclick=()=>{ volSel=it; marcadas=new Map(); NIVEL="pecas"; render(); };
+      d.onclick=async ()=>{
+        volSel=it; marcadas=new Map(); PECAS=null; NIVEL="pecas"; render();
+        const p=await pecasDoVolume(it.cod);
+        if(NIVEL==="pecas" && volSel===it){ PECAS=p; render(); }
+      };
       l.appendChild(d);
     });
     tela.appendChild(l);
@@ -548,7 +642,11 @@ function render(){
 
   // ---- peças ----
   $("crumb").textContent=`${loteSel.lote} · ${volSel.cod}`;
-  const pecas = EST.ativa ? (EST.map.get(normCod(volSel.cod))||[]) : [];
+  if(PECAS===null && EST.ativa){
+    tela.innerHTML=`<div class="vazio">buscando as peças deste volume…</div>`;
+    return;
+  }
+  const pecas = PECAS || [];
   const l=document.createElement("div"); l.className="lista";
 
   if(!pecas.length){
@@ -782,7 +880,7 @@ async function carregar(){
     LOTES=rowsToLotes(parseCSV(txt));
     await carregarEstrutura();
     const est = EST.ativa
-      ? ` · estrutura <b>${EST.aba}</b>: ${nBR(EST.map.size)} volumes, ${nBR(EST.n)} peças`
+      ? ` · estrutura <b>${EST.aba}</b> ligada`
       : ` · <span style="color:var(--amber)">sem aba de estrutura — lançamento por código</span>`;
     const semUrl = CFG.url ? "" : ` · <span style="color:var(--red)">falta a URL do Apps Script (⚙)</span>`;
     // o número que interessa é o que venceu, não o total da esteira

@@ -4,9 +4,9 @@
      da rede (o painel precisa estar online para atualizar os lotes).
    - Estratégia network-first no mesmo domínio: online pega sempre a versão
      nova; offline cai para o cache. */
-const CACHE = 'esteira-v4';   // subiu ao entrar o manifest próprio das faltas
+const CACHE = 'esteira-v5';   // subiu ao entrar o conversor de estrutura
 const SHELL = [
-  './', './index.html', './falta.html',
+  './', './index.html', './falta.html', './estrutura.html',
   './manifest.webmanifest', './manifest-falta.webmanifest',
   './icon-192.png', './icon-512.png',
   './icon-192-maskable.png', './icon-512-maskable.png',

@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Converter estrutura — PPCP Patrimar</title>
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000; --panel:#111316; --panel2:#17191d; --line:#2b2f36;
+    --ink:#f2f4f7; --mut:#8a929c; --mut2:#5b636e;
+    --amber:#ff5a1f; --green:#3fd15f; --steel:#5b8bb0; --red:#ff3b30;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg); color:var(--ink); font-family:"Inter",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; padding:0 0 60px}
+  .wrap{max-width:840px; margin:0 auto; padding:0 16px}
+
+  header.top{border-bottom:2px solid var(--amber); padding:14px 0 12px; margin-bottom:20px}
+  .eyebrow{font-family:"IBM Plex Mono"; font-size:10px; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--mut)}
+  h1{font-family:"Oswald"; font-weight:600; font-size:26px; margin:2px 0 0; line-height:1}
+  h1 span{color:var(--amber)}
+  .sub{color:var(--mut); font-size:13px; margin-top:8px; line-height:1.5}
+
+  /* área de arrastar: o alvo é a página inteira, mas o retângulo diz onde */
+  .drop{border:2px dashed var(--line); border-radius:14px; padding:44px 22px; text-align:center;
+    cursor:pointer; transition:.15s; background:var(--panel)}
+  .drop:hover,.drop.over{border-color:var(--amber); background:rgba(255,90,31,.06)}
+  .drop .ico{font-size:38px; line-height:1}
+  .drop .t1{font-family:"Oswald"; font-size:19px; margin-top:12px}
+  .drop .t2{color:var(--mut); font-size:12.5px; margin-top:6px; line-height:1.5}
+  input[type=file]{display:none}
+
+  .msg{margin-top:16px; border-radius:10px; padding:12px 14px; font-size:13.5px; line-height:1.5}
+  .msg.err{background:rgba(255,59,48,.12); border:1px solid var(--red); color:var(--red)}
+  .msg.ok{background:rgba(63,209,95,.1); border:1px solid var(--green); color:var(--green)}
+  .msg.info{background:var(--panel); border:1px solid var(--line); color:var(--mut)}
+  .msg[hidden]{display:none}
+
+  .res{margin-top:22px} .res[hidden]{display:none}
+  h2{font-family:"Oswald"; font-weight:500; font-size:16px; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--mut); margin:24px 0 10px}
+
+  .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px}
+  .kpi{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px}
+  .kpi b{display:block; font-family:"Oswald"; font-size:26px; line-height:1}
+  .kpi small{display:block; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--mut); margin-top:6px; line-height:1.3}
+
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  th{text-align:left; font-family:"IBM Plex Mono"; font-size:10.5px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--mut); padding:8px 10px; border-bottom:1px solid var(--line)}
+  td{padding:9px 10px; border-bottom:1px solid var(--line); color:var(--ink)}
+  td.n{text-align:right; font-family:"IBM Plex Mono"}
+  td.d{color:var(--mut); font-size:12px}
+  tr.ign td{opacity:.4}
+  .grp{font-family:"IBM Plex Mono"; font-weight:600}
+  /* checkbox grande: é clicado com o mouse, mas o alvo pequeno erra igual */
+  input[type=checkbox]{width:19px; height:19px; accent-color:var(--amber); cursor:pointer}
+
+  .acoes{display:flex; gap:12px; flex-wrap:wrap; margin-top:22px; align-items:center}
+  button.b{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:9px; padding:13px 20px; font-family:"Oswald"; font-size:15.5px;
+    letter-spacing:.04em; cursor:pointer; transition:.14s}
+  button.b:hover{border-color:var(--amber); color:var(--amber)}
+  button.b.go{background:var(--amber); color:#000; border-color:var(--amber); font-weight:600}
+  button.b.go:hover{filter:brightness(1.1); color:#000}
+  .nota{color:var(--mut2); font-size:12px; line-height:1.6; margin-top:18px}
+  code{font-family:"IBM Plex Mono"; background:var(--panel2); padding:1px 6px;
+    border-radius:4px; font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">PPCP · Patrimar</div>
+  <h1>Converter <span>estrutura</span></h1>
+  <div class="sub">Transforma o <b>Relatório Estrutura Nível</b> do ERP na aba
+    <code>ESTRUTURA</code> que a tela de faltas lê. Roda inteiro no seu navegador —
+    o arquivo não sai daqui.</div>
+</header>
+
+<div class="drop" id="drop">
+  <div class="ico">📄</div>
+  <div class="t1">Arraste o arquivo aqui</div>
+  <div class="t2">ou clique para escolher · aceita <code>.xlsx</code> e <code>.csv</code></div>
+</div>
+<input type="file" id="file" accept=".xlsx,.csv">
+
+<div class="msg" id="msg" hidden></div>
+
+<div class="res" id="res" hidden>
+  <div class="kpis" id="kpis"></div>
+
+  <h2>Grupos encontrados</h2>
+  <div class="sub" style="margin:-4px 0 12px">Desmarque o que o operador <b>não</b> deve ver.
+    Insumo medido — cola, chapa — entra fracionado e ninguém reporta “falta 0,04 de cola”
+    para fechar um lote. Peça, embalagem e acessório ficam: faltando, travam o volume igual.</div>
+  <table><thead><tr>
+    <th style="width:42px">usar</th><th>grupo</th><th style="text-align:right">linhas</th>
+    <th style="text-align:right">qtd. típica</th><th>exemplo</th>
+  </tr></thead><tbody id="grupos"></tbody></table>
+
+  <div class="acoes">
+    <button class="b go" id="baixar">Baixar ESTRUTURA.csv</button>
+    <button class="b" id="copiar">Copiar para colar no Sheets</button>
+  </div>
+
+  <div class="nota" id="nota"></div>
+</div>
+
+<div class="nota">
+  Depois de baixar: na planilha, <b>+</b> para nova aba → nomeie <code>ESTRUTURA</code> →
+  clique em <code>A1</code> → <i>Arquivo → Importar → Fazer upload</i>, ou use o botão de
+  copiar e cole direto. A tela de faltas acha a aba pelo nome, não precisa configurar gid.
+</div>
+
+</div>
+
+<script>
+/* ================== LEITURA DE XLSX SEM BIBLIOTECA ==================
+   Um .xlsx é um ZIP com XML dentro. O navegador já sabe descompactar
+   (DecompressionStream) e já sabe ler XML (DOMParser) — então não precisa de
+   biblioteca externa, que aqui custaria ~800 KB e uma dependência a manter.
+
+   Lê só o necessário: a primeira planilha e a tabela de textos. */
+
+const dv = b => new DataView(b);
+const u16 = (b,o) => dv(b).getUint16(o,true);
+const u32 = (b,o) => dv(b).getUint32(o,true);
+
+async function inflar(buf, metodo){
+  if(metodo === 0) return buf;                       // guardado sem compressão
+  if(metodo !== 8) throw new Error("compressão não suportada no zip ("+metodo+")");
+  const ds = new DecompressionStream("deflate-raw");
+  const st = new Blob([buf]).stream().pipeThrough(ds);
+  return await new Response(st).arrayBuffer();
+}
+
+/* Percorre o diretório central do zip. É o caminho confiável: os cabeçalhos
+   locais podem ter tamanho zerado quando o arquivo foi escrito em streaming. */
+async function lerZip(buf){
+  const n = buf.byteLength;
+  let eocd = -1;
+  for(let i = n - 22; i >= Math.max(0, n - 66000); i--){
+    if(u32(buf,i) === 0x06054b50){ eocd = i; break; }
+  }
+  if(eocd < 0) throw new Error("não parece um arquivo .xlsx (zip não encontrado)");
+
+  const total = u16(buf, eocd + 10);
+  let p = u32(buf, eocd + 16);
+  const arq = {};
+
+  for(let i = 0; i < total; i++){
+    if(u32(buf,p) !== 0x02014b50) break;
+    const metodo = u16(buf, p + 10);
+    const compSz = u32(buf, p + 20);
+    const nomeSz = u16(buf, p + 28);
+    const extraSz= u16(buf, p + 30);
+    const cmtSz  = u16(buf, p + 32);
+    const off    = u32(buf, p + 42);
+    const nome   = new TextDecoder().decode(new Uint8Array(buf, p + 46, nomeSz));
+
+    // no cabeçalho local os tamanhos de nome/extra podem diferir: releia
+    const lNome  = u16(buf, off + 26);
+    const lExtra = u16(buf, off + 28);
+    const ini    = off + 30 + lNome + lExtra;
+    arq[nome] = { metodo, dados: buf.slice(ini, ini + compSz) };
+
+    p += 46 + nomeSz + extraSz + cmtSz;
+  }
+  return arq;
+}
+
+const colDe = ref => {           // "BC12" -> 55  (índice 0)
+  let n = 0;
+  for(const ch of ref){ const c = ch.charCodeAt(0);
+    if(c < 65 || c > 90) break;
+    n = n * 26 + (c - 64); }
+  return n - 1;
+};
+
+async function xlsxParaGrade(buf){
+  const arq = await lerZip(buf);
+  const dec = new TextDecoder();
+  const ler = async nome => arq[nome]
+    ? dec.decode(await inflar(arq[nome].dados, arq[nome].metodo)) : "";
+
+  // textos compartilhados: as células de texto guardam só o índice
+  const compart = [];
+  const sxml = await ler("xl/sharedStrings.xml");
+  if(sxml){
+    const doc = new DOMParser().parseFromString(sxml, "application/xml");
+    for(const si of doc.getElementsByTagName("si")){
+      // <si> pode vir quebrado em vários <t> quando há formatação no meio
+      let t = "";
+      for(const el of si.getElementsByTagName("t")) t += el.textContent;
+      compart.push(t);
+    }
+  }
+
+  const nomeAba = Object.keys(arq).find(k => /^xl\/worksheets\/sheet1\.xml$/.test(k))
+               || Object.keys(arq).find(k => /^xl\/worksheets\/.*\.xml$/.test(k));
+  if(!nomeAba) throw new Error("não achei nenhuma planilha dentro do arquivo");
+
+  const doc = new DOMParser().parseFromString(await ler(nomeAba), "application/xml");
+  const grade = [];
+  for(const row of doc.getElementsByTagName("row")){
+    const linha = [];
+    for(const c of row.getElementsByTagName("c")){
+      const i = colDe(c.getAttribute("r") || "");
+      const t = c.getAttribute("t");
+      let v = "";
+      if(t === "inlineStr"){
+        for(const el of c.getElementsByTagName("t")) v += el.textContent;
+      } else {
+        const el = c.getElementsByTagName("v")[0];
+        v = el ? el.textContent : "";
+        if(t === "s") v = compart[+v] ?? "";
+      }
+      if(i >= 0) linha[i] = v;
+    }
+    grade.push(linha);
+  }
+  return grade;
+}
+
+/* CSV: caminho alternativo para quem salvar o relatório como CSV no Excel */
+function csvParaGrade(txt){
+  const rows=[]; let row=[],f="",q=false;
+  for(let i=0;i<txt.length;i++){ const c=txt[i];
+    if(q){ if(c=='"'){ if(txt[i+1]=='"'){f+='"';i++;} else q=false;} else f+=c; }
+    else{ if(c=='"')q=true;
+      else if(c==','||c==';'){row.push(f);f="";}
+      else if(c=='\n'){row.push(f);rows.push(row);row=[];f="";}
+      else if(c!='\r') f+=c; } }
+  row.push(f); rows.push(row); return rows;
+}
+
+/* ================== CONVERSÃO ==================
+   Mesma lógica do converter-estrutura.py. O relatório do ERP é feito para
+   ler no papel: o pai vem numa linha solta e os filhos abaixo, sem repetir a
+   chave, e o cabeçalho impresso está desalinhado dos dados — então vale a
+   posição da coluna, não o título.
+     A=Nível  E=código do pai  F=código do filho  G=descrição
+     H=Qtd. Est.  J=Qtd. Eng. */
+const COL = { nivel:0, pai:4, filho:5, desc:6, qtdEst:7, qtdEng:9 };
+const cod = v => String(v ?? "").toUpperCase().replace(/[^0-9A-Z]/g,"");
+const nnum = v => { const s=String(v ?? "").trim().replace(",", ".");
+  const n = parseFloat(s); return isNaN(n) ? null : n; };
+
+function converter(grade){
+  let pai = null;
+  const pares = [], avisos = [];
+  const vistos = new Set();
+
+  for(const l of grade){
+    const e = cod(l[COL.pai]);
+    const nivel = String(l[COL.nivel] ?? "").trim();
+    const f = cod(l[COL.filho]);
+
+    // linha de pai: código em E e sem nível. Exige 9 dígitos para não
+    // confundir com as linhas de título do relatório.
+    if(/^\d{9}$/.test(e) && !nivel){ pai = e; continue; }
+    if(!pai || nivel !== "1" || !/^\d{9}$/.test(f)) continue;
+
+    const est = nnum(l[COL.qtdEst]), eng = nnum(l[COL.qtdEng]);
+    if(est !== null && eng !== null && est !== eng)
+      avisos.push(`${pai} → ${f}: Est=${est} ≠ Eng=${eng}`);
+
+    const q = est !== null ? est : eng;
+    if(q === null) continue;
+
+    const k = pai + "|" + f;
+    if(vistos.has(k)) continue;      // mesma peça repetida no relatório
+    vistos.add(k);
+
+    pares.push({ pai, peca:f, qtd:q, desc:String(l[COL.desc] ?? "").trim() });
+  }
+  return { pares, avisos };
+}
+
+/* ================== TELA ================== */
+const $ = id => document.getElementById(id);
+let PARES = [], AVISOS = [], IGNORA = new Set(["600","611"]);
+const nBR = n => (n||0).toLocaleString("pt-BR");
+
+function msg(kind, html){ const m=$("msg"); m.className="msg "+kind; m.innerHTML=html; m.hidden=false; }
+
+async function receber(file){
+  $("res").hidden = true;
+  msg("info", "Lendo <b>"+file.name+"</b>…");
+  try{
+    const grade = /\.csv$/i.test(file.name)
+      ? csvParaGrade(await file.text())
+      : await xlsxParaGrade(await file.arrayBuffer());
+
+    const r = converter(grade);
+    if(!r.pares.length){
+      msg("err","Não achei nenhum par volume→peça. Confira se é o <b>Relatório "+
+        "Estrutura Nível</b> — o pai numa linha e os filhos com nível 1 abaixo.");
+      return;
+    }
+    PARES = r.pares; AVISOS = r.avisos;
+    msg("ok", `<b>${file.name}</b> lido — ${nBR(PARES.length)} pares encontrados.`);
+    pinta();
+  }catch(e){
+    msg("err","Não consegui ler: "+(e.message||e));
+  }
+}
+
+function pinta(){
+  // agrupa por prefixo de 3 dígitos, que é como o ERP separa família de item
+  const g = {};
+  for(const p of PARES){
+    const k = p.peca.slice(0,3);
+    (g[k] = g[k] || {n:0, qtds:[], ex:""}).n++;
+    g[k].qtds.push(p.qtd);
+    if(!g[k].ex && p.desc) g[k].ex = p.desc;
+  }
+  $("grupos").innerHTML = Object.keys(g).sort((a,b)=>g[b].n-g[a].n).map(k=>{
+    const q = [...new Set(g[k].qtds)].sort((a,b)=>a-b);
+    const frac = q.some(x=>x!==Math.floor(x));
+    const mostra = q.length<=3 ? q.join(" · ") : `${q[0]} … ${q[q.length-1]}`;
+    return `<tr class="${IGNORA.has(k)?"ign":""}" data-g="${k}">
+      <td><input type="checkbox" ${IGNORA.has(k)?"":"checked"} data-g="${k}"></td>
+      <td class="grp">${k}</td>
+      <td class="n">${nBR(g[k].n)}</td>
+      <td class="n" style="color:${frac?"var(--amber)":"var(--mut)"}">${mostra}</td>
+      <td class="d">${g[k].ex.slice(0,46)}</td></tr>`;
+  }).join("");
+
+  $("grupos").querySelectorAll("input").forEach(cb=>{
+    cb.onchange = () => {
+      if(cb.checked) IGNORA.delete(cb.dataset.g); else IGNORA.add(cb.dataset.g);
+      pinta();
+    };
+  });
+
+  const usa = PARES.filter(p=>!IGNORA.has(p.peca.slice(0,3)));
+  const vols = new Set(usa.map(p=>p.pai)).size;
+  const pecas = new Set(usa.map(p=>p.peca));
+  const uso = {}; usa.forEach(p=>uso[p.peca]=(uso[p.peca]||0)+1);
+  const compart = Object.values(uso).filter(v=>v>1).length;
+
+  $("kpis").innerHTML = `
+    <div class="kpi"><b>${nBR(usa.length)}</b><small>linhas na aba</small></div>
+    <div class="kpi"><b>${nBR(vols)}</b><small>volumes</small></div>
+    <div class="kpi"><b>${nBR(pecas.size)}</b><small>peças distintas</small></div>
+    <div class="kpi"><b>${vols?(usa.length/vols).toFixed(1):"–"}</b><small>peças por volume</small></div>
+    <div class="kpi"><b style="color:var(--steel)">${nBR(compart)}</b><small>peças em mais de um volume</small></div>`;
+
+  const fora = PARES.length - usa.length;
+  $("nota").innerHTML =
+    (fora?`<b>${nBR(fora)}</b> linhas ficam de fora (grupos ${[...IGNORA].sort().join(", ")}). `:"") +
+    (AVISOS.length
+      ? `<span style="color:var(--amber)">${AVISOS.length} linha(s) com Qtd.Est diferente de Qtd.Eng — usei a Est.:<br>`
+        + AVISOS.slice(0,5).map(a=>"· "+a).join("<br>") + `</span>`
+      : `Qtd.Est e Qtd.Eng batem em todas as linhas.`);
+
+  $("res").hidden = false;
+}
+
+function montarCSV(){
+  const usa = PARES.filter(p=>!IGNORA.has(p.peca.slice(0,3)));
+  const esc = s => /[",\n]/.test(s) ? '"'+String(s).replace(/"/g,'""')+'"' : s;
+  return "CODIGO,PECA,QTD,DESCRICAO\n" +
+    usa.map(p=>[p.pai,p.peca,p.qtd,esc(p.desc)].join(",")).join("\n") + "\n";
+}
+
+$("baixar").onclick = () => {
+  // BOM no início: sem ele o Excel abre os acentos errados
+  const blob = new Blob(["﻿"+montarCSV()], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "ESTRUTURA.csv";
+  a.click(); URL.revokeObjectURL(a.href);
+};
+
+$("copiar").onclick = async () => {
+  // TAB separa colunas ao colar no Sheets; vírgula cairia tudo numa célula só
+  const txt = montarCSV().split("\n").map(l=>{
+    const c=[]; let f="",q=false;
+    for(const ch of l){ if(ch=='"')q=!q; else if(ch==','&&!q){c.push(f);f="";} else f+=ch; }
+    c.push(f); return c.join("\t");
+  }).join("\n");
+  try{ await navigator.clipboard.writeText(txt); msg("ok","Copiado. Cole em <code>A1</code> da aba <code>ESTRUTURA</code>."); }
+  catch(e){ msg("err","Não consegui copiar — use o botão de baixar."); }
+};
+
+/* entrada do arquivo: clique e arrastar */
+$("drop").onclick = () => $("file").click();
+$("file").onchange = e => e.target.files[0] && receber(e.target.files[0]);
+["dragenter","dragover"].forEach(ev=>document.addEventListener(ev, e=>{
+  e.preventDefault(); $("drop").classList.add("over"); }));
+["dragleave","drop"].forEach(ev=>document.addEventListener(ev, e=>{
+  e.preventDefault(); if(ev==="drop"||e.target===$("drop")) $("drop").classList.remove("over"); }));
+document.addEventListener("drop", e=>{
+  const f = e.dataTransfer && e.dataTransfer.files[0];
+  if(f) receber(f);
+});
+</script>
+</body>
+</html>

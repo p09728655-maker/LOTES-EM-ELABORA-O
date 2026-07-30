@@ -131,6 +131,32 @@ A aba é procurada pelo gid configurado e depois pelos nomes `ESTRUTURA`, `LISTA
 inventar 1 ali seria apresentar palpite como fato, e é nesse número que o operador se baseia
 para pedir.
 
+O catálogo completo passa de **28 mil linhas e 1,7 MB**. Baixar isso na rede da fábrica a cada
+abertura, para o operador usar as 28 linhas de um volume, não escala — então a tela **consulta
+só o volume aberto** (`gviz` aceita `tq=select * where …`). Na abertura vai um único pedido
+curto, só para achar a aba e mapear as colunas; cada volume vira alguns KB, guardados para não
+repetir. Se a consulta não for aceita, cai para baixar tudo uma vez: lento, mas funciona.
+
+A resposta é conferida linha a linha contra o código pedido. A consulta já filtra no servidor,
+mas se ela fosse ignorada a resposta viria com a planilha inteira — e o operador veria peças de
+outro produto sem nada indicar erro.
+
+### Converter o export do ERP (`estrutura.html`)
+O ERP exporta o **Relatório Estrutura Nível**, feito para ler no papel: o pai numa linha solta,
+os filhos abaixo, e o cabeçalho impresso desalinhado dos dados. `estrutura.html` recebe o
+`.xlsx` arrastado e devolve a aba pronta — **roda inteiro no navegador**, o arquivo não sai da
+máquina. Lê `.xlsx` sem biblioteca externa: um `.xlsx` é um ZIP com XML, e o navegador já
+descompacta (`DecompressionStream`) e já lê XML (`DOMParser`).
+
+A tela lista os grupos encontrados com a quantidade típica de cada um e deixa desmarcar os que
+o operador não deve ver. Vêm desmarcados **`600` (chapa HDF)** e **`611` (cola)**: entram
+fracionados — 0,3845 e 0,04 por volume — porque são consumo medido, não peça contada, e ninguém
+reporta "falta 0,04 de cola" para fechar um lote. Embalagem (`607`) e acessórios (`603`)
+**ficam**: caixa ou corrediça faltando trava o volume igual.
+
+`converter-estrutura.py` faz o mesmo pela linha de comando, para quando o arquivo for grande
+demais para o navegador.
+
 ### Busca por descrição (aba `SEMIACABADO`)
 Volume que não está na estrutura **não trava a tela**: o operador procura a peça pela descrição
 ("tampo 680") numa aba de catálogo — `CODIGO` + `DESCRICAO`, uma linha por peça — e toca no
