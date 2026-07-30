@@ -197,6 +197,31 @@ let CFG = lerCfg();
 const extraiId = s => { const t=String(s||"").trim();
   const m=t.match(/\/d\/([a-zA-Z0-9_-]{20,})/); return m?m[1]:t; };
 
+/* ---------- configuração por link ----------
+   Digitar uma URL de 100 caracteres num campo de celular, uma vez por
+   aparelho, é o tipo de passo que faz a ferramenta não ser adotada. Aqui o
+   PCP manda um link pronto no WhatsApp — falta.html?url=...&op=NOME — e o
+   celular se configura sozinho no primeiro acesso.
+
+   A URL some da barra de endereço logo depois (replaceState): se ficasse
+   ali, o operador compartilharia o endereço de gravação sem perceber. É
+   também por isso que ela não está fixa no código: este repositório é
+   público, e a URL é a única coisa entre o endpoint e a internet. */
+(function bootstrapPorLink(){
+  const q=new URLSearchParams(location.search);
+  const de={url:"url", op:"operador", est:"estrutura", sheet:"sheet", gid:"gid"};
+  let mudou=false;
+  for(const k in de){
+    let v=q.get(k); if(v===null) continue;
+    v=v.trim(); if(!v) continue;
+    CFG[de[k]] = k==="sheet" ? extraiId(v) : v;
+    mudou=true;
+  }
+  if(!mudou) return;
+  try{ localStorage.setItem(CFG_KEY,JSON.stringify(CFG)); }catch(e){}
+  history.replaceState(null,"",location.pathname);
+})();
+
 // numérico é gid; o resto é nome de aba — mesma regra do painel
 const abaURL = aba => /^\d+$/.test(aba)
   ? `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&gid=${aba}`

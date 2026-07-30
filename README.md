@@ -142,9 +142,25 @@ DATA_HORA | LOTE | COD_VOLUME | COD_PECA | QTD | OPERADOR | OBS
 `QTD` é **quantas peças faltam de fato**, não multiplicador por volume — há lote com 2 volumes
 pendentes e `QT=1`, e outro com 3 volumes e `QT=14`. É o número que a pessoa sabe de cabeça.
 
-A URL do Apps Script, o gid da estrutura e o nome de quem lança ficam em **⚙**, salvos naquele
-celular. A página é autossuficiente como o painel: nenhum arquivo `.js` externo, porque um
-script que falhe ao carregar derrubaria a tela inteira.
+### Configurar um celular
+Digitar uma URL de 100 caracteres num campo de celular, uma vez por aparelho, é o tipo de passo
+que faz a ferramenta não ser adotada. Então o PCP manda **um link pronto** no WhatsApp e o
+aparelho se configura sozinho no primeiro acesso:
+
+```
+falta.html?url=<URL /exec do Apps Script>&op=NOME
+```
+
+Aceita ainda `est=` (gid da estrutura), `sheet=` e `gid=`. O que não vier no link fica como
+estava — dá para mandar só `?op=JOAO` para trocar o nome sem mexer no resto. Depois de aplicar,
+a página **limpa os parâmetros da barra de endereço**: se ficassem ali, o operador compartilharia
+o endereço de gravação sem perceber.
+
+Pelo mesmo motivo a URL **não está fixa no código** — este repositório é público, e ela é a única
+coisa entre o endpoint de gravação e a internet. Quem preferir configurar na mão usa o **⚙**.
+
+A página é autossuficiente como o painel: nenhum arquivo `.js` externo, porque um script que
+falhe ao carregar derrubaria a tela inteira.
 
 ## Impressão / WhatsApp
 Dois botões na barra de controles, sempre referentes à **data de referência** selecionada:
