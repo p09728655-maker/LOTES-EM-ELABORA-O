@@ -59,24 +59,71 @@ function faltas_normCod_(v) {
   return String(v == null ? '' : v).toUpperCase().replace(/[^0-9A-Z]/g, '');
 }
 
-// funciona tanto em projeto separado (openById) quanto vinculado à planilha
+/* Funciona tanto em projeto separado (openById) quanto vinculado à planilha.
+   As mensagens são explícitas porque o erro cru do Apps Script ("Exception:
+   ...") não diz o que fazer, e quem lê está no meio do expediente. */
 function faltas_planilha_() {
-  if (FALTAS_SHEET_ID) return SpreadsheetApp.openById(FALTAS_SHEET_ID);
+  if (FALTAS_SHEET_ID) {
+    try {
+      return SpreadsheetApp.openById(FALTAS_SHEET_ID);
+    } catch (e) {
+      throw new Error('não abri a planilha ' + FALTAS_SHEET_ID +
+        ' — confira o FALTAS_SHEET_ID no topo do script e se esta conta tem acesso a ela. (' +
+        (e && e.message ? e.message : e) + ')');
+    }
+  }
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   if (!ss) throw new Error('defina FALTAS_SHEET_ID no topo do script');
   return ss;
 }
 
+/* Cria a aba na primeira chamada. O insertSheet pode falhar por autorização
+   ainda não concedida ou por outra execução ter criado a aba no mesmo
+   instante — nos dois casos vale reconsultar pelo nome antes de desistir. */
 function faltas_aba_() {
   var ss = faltas_planilha_();
   var sh = ss.getSheetByName(FALTAS_ABA);
-  if (!sh) {
+  if (sh) return sh;
+
+  try {
     sh = ss.insertSheet(FALTAS_ABA);
+  } catch (e) {
+    sh = ss.getSheetByName(FALTAS_ABA);   // alguém criou enquanto isso?
+    if (!sh) {
+      throw new Error('não consegui criar a aba ' + FALTAS_ABA + ' em "' + ss.getName() +
+        '". Rode faltas_testar_ pelo editor uma vez para conceder a autorização de escrita. (' +
+        (e && e.message ? e.message : e) + ')');
+    }
+  }
+  if (sh.getLastRow() === 0) {
     sh.appendRow(FALTAS_CABECALHO);
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, FALTAS_CABECALHO.length).setFontWeight('bold');
   }
   return sh;
+}
+
+/* ---------- diagnóstico ----------
+   Rode pelo editor quando algo falhar: diz em qual etapa parou, em vez de
+   apontar um número de linha. */
+function faltas_diagnostico_() {
+  var passos = [];
+  try {
+    passos.push('ID configurado: ' + (FALTAS_SHEET_ID || '(vazio — usaria a planilha vinculada)'));
+    var ss = faltas_planilha_();
+    passos.push('abriu a planilha: "' + ss.getName() + '"');
+    var nomes = ss.getSheets().map(function (s) { return s.getName(); });
+    passos.push('abas existentes (' + nomes.length + '): ' + nomes.join(', '));
+    passos.push('aba ' + FALTAS_ABA + ' já existe? ' + (ss.getSheetByName(FALTAS_ABA) ? 'sim' : 'não'));
+    var sh = faltas_aba_();
+    passos.push('aba pronta, linhas hoje: ' + Math.max(0, sh.getLastRow() - 1));
+    passos.push('OK — escrita liberada');
+  } catch (e) {
+    passos.push('FALHOU: ' + (e && e.message ? e.message : e));
+  }
+  var txt = passos.join('\n');
+  Logger.log(txt);
+  return txt;
 }
 
 function faltas_resposta_(obj, callback) {
