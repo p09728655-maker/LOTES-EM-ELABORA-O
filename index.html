@@ -40,7 +40,10 @@
      Encolhe para o maior tipo do cabeçalho ser o número que cobra ação. */
   .brand h1{font-family:"Oswald"; font-weight:600; font-size:22px; letter-spacing:.02em; margin:0; line-height:1}
   .brand h1 span{color:var(--amber)}
-  .headmeta{flex:1 1 0; display:flex; justify-content:flex-end; gap:26px; align-items:flex-end}
+  /* seis KPIs no desktop: o gap cai de 26 para 18 e eles podem quebrar para a
+     segunda linha antes de espremer o número, que é o que se lê de longe */
+  .headmeta{flex:1 1 0; display:flex; flex-wrap:wrap; justify-content:flex-end;
+    gap:10px 18px; align-items:flex-end}
   .kpi{display:flex; flex-direction:column; align-items:flex-end; line-height:1}
   .kpi b{font-family:"Oswald"; font-size:26px; font-weight:600}
   .kpi small{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut);
@@ -440,8 +443,9 @@
     header.top{gap:8px; padding:6px 0 7px; margin-top:-6px}
     .brand .eyebrow{font-size:9.5px; letter-spacing:.16em}
     .brand h1{font-size:23px}
-    /* KPIs em quatro colunas, sem espremer */
-    .headmeta{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; flex:0 0 100%; width:100%; margin:6px 0 0}
+    /* KPIs em três colunas: com seis deles, quatro por linha deixa a última
+       com dois órfãos e espreme os rótulos longos */
+    .headmeta{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; flex:0 0 100%; width:100%; margin:6px 0 0}
     .kpi{align-items:flex-start} .kpi b{font-size:19px}
     /* no celular a coluna é estreita: aqui o rótulo pode quebrar */
     .kpi small{font-size:8px; letter-spacing:.04em; margin-top:3px; line-height:1.2; white-space:normal}
@@ -520,8 +524,8 @@
   <div class="headmeta">
     <div class="kpi"><b id="kLotes">–</b><small>lotes ativos</small></div>
     <div class="kpi"><b id="kVols">–</b><small>vol. em elaboração</small></div>
-    <div class="kpi"><b id="kPontos">–</b><small>pontos</small></div>
-    <div class="kpi"><b id="kPeso">–</b><small>peso (kg)</small></div>
+    <div class="kpi"><b id="kPontos">–</b><small>pontos em elaboração</small></div>
+    <div class="kpi"><b id="kPeso">–</b><small>peso em elaboração</small></div>
     <div class="kpi"><b id="kHoje">–</b><small id="kHojeLbl">p/ embalar hoje</small></div>
     <div class="kpi late" id="kAtrasoBox"><b id="kAtraso">–</b><small>vol. em atraso</small></div>
   </div>
@@ -567,6 +571,10 @@
     <div class="cfg-row">
       <label for="cfgBaixa">Aba da baixa (gid) <span class="opc">opcional</span></label>
       <input type="text" id="cfgBaixa" spellcheck="false" placeholder="1353172751">
+    </div>
+    <div class="cfg-row">
+      <label for="cfgCad">Aba do cadastro (gid) <span class="opc">pontos e peso</span></label>
+      <input type="text" id="cfgCad" spellcheck="false" placeholder="399284148">
     </div>
   </div>
   <div class="cfg-acoes">
@@ -632,7 +640,8 @@
 const CFG_PADRAO = {
   sheet:"1W9bK_IoWknk8eKFbSWCMxILAQcaXuWD2gG7B0jcwFzg",
   gid:"1540822534",                     // aba de programação (Lote/Data/.../STATUS)
-  baixa:"1353172751"                    // aba BAIXA (reserva; a baixa vem pelo app)
+  baixa:"1353172751",                   // aba BAIXA (reserva; a baixa vem pelo app)
+  cadastro:"905587643"                  // aba de cadastro (CODIGO · P B · PONTOS)
 };
 const CFG_KEY = "lotesElaboracaoCfg";
 function lerCfg(){
@@ -773,8 +782,7 @@ const ALIASES={
   cod:["cod","codigo","cdigo","sku"], desc:["desc","descricao","descrio","descricaocor","descriocor","produto","item"],
   qtd:["qtd","qtde","quantidade","qtditem","qtdcx","qtcx","caixas"],
   prod:["produzido","prod","feito"], saldo:["saldo","falta"],
-  perc:["percentual","percent","perc","pct"], status:["status","situacao"],
-  pontos:["pontos","pts","ponto"], peso:["peso","kg","pesokilo","pesokg"]
+  perc:["percentual","percent","perc","pct"], status:["status","situacao"]
 };
 function mapHeader(hrow){
   const idx={}; hrow.forEach((h,i)=>{ const n=norm(h);
@@ -823,14 +831,12 @@ function rowsToLotes(rows){
     if(!cur.interno) cur.interno=val(row,idx.interno);
     const cod=val(row,idx.cod), desc=val(row,idx.desc), q=num(val(row,idx.qtd));
     const prod=num(val(row,idx.prod)), perc=num(val(row,idx.perc)), status=val(row,idx.status);
-    const pontos=num(val(row,idx.pontos)), peso=num(val(row,idx.peso));
     // volumes pendentes: usa a coluna SALDO/FALTA quando existe; senão, Qtd − PRODUZIDO
     const sCol=val(row,idx.saldo), saldo = sCol!=="" ? num(sCol) : Math.max(0, q-prod);
     // só produto de verdade (tem código, ou descrição com quantidade);
     // pula subtotais (só números) e linhas de assistência/observação
-    if(cod || (desc && q>0)){ cur.itens.push({cod,desc,qtd:q,prod,perc,saldo,status,pontos,peso});
+    if(cod || (desc && q>0)){ cur.itens.push({cod,desc,qtd:q,prod,perc,saldo,status});
       cur.qtd+=q; cur.prod+=prod; cur.saldo+=saldo;
-      cur.pontosTot=(cur.pontosTot||0)+pontos*q; cur.pesoTot=(cur.pesoTot||0)+peso*q;
       if(sCol!=="") cur.temSaldo=true;                 // saldo veio da planilha, não estimado
       // só marca atraso por status quando a planilha diz isso explicitamente.
       // "PENDENTE" aqui significa "ainda não começou", não atraso.
@@ -950,6 +956,85 @@ async function carregarBaixa(){
   aplicarBaixa();
 }
 
+/* ================== CADASTRO: PONTOS E PESO POR PRODUTO ==================
+   Pontos e peso são atributos do PRODUTO, não do lote: moram na aba de
+   cadastro (uma linha por código, com `P B` em kg e `PONTOS` por volume) e
+   são casados com os itens do lote pelo código, do mesmo jeito que a baixa.
+   Sem essa aba o painel funciona como antes — as métricas só não aparecem. */
+const CADASTRO = { map:new Map(), ativa:false, aba:"", erro:"",
+                   itens:0, casados:0, semCad:new Set() };
+/* Candidatas em ordem: o gid configurado, os gids conhecidos da planilha e,
+   por último, os nomes usuais. Vale a primeira que tiver CODIGO + PONTOS/P B —
+   assim renomear ou recriar a aba não quebra o painel. */
+const GIDS_CAD = ["905587643","399284148"];
+const ABAS_CAD = ["CADASTRO","PRODUTOS","PONTOS","MODELO_HORA_A_HORA","HORA A HORA"];
+// numérico é gid; o resto é nome de aba
+const cadastroURL = aba => /^\d+$/.test(aba)
+  ? `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&gid=${aba}`
+  : `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(aba)}`;
+
+/* "P B" (peso bruto, kg por volume) normaliza para "pb". Os demais nomes são
+   rede de segurança para quando a coluna for renomeada. */
+const ALIAS_CAD = { cod:["codigo","cod","cdigo","sku","produto","item"],
+  peso:["pb","peso","pesobruto","pesokg","kg","pesoliquido","pl"],
+  pontos:["pontos","pts","ponto","pontuacao"] };
+function mapHeaderCad(hrow){ const idx={};
+  hrow.forEach((h,i)=>{ const n=norm(h);
+    for(const k in ALIAS_CAD){ if(ALIAS_CAD[k].includes(n) && idx[k]===undefined) idx[k]=i; } });
+  return idx;
+}
+function parseCadastro(rows){
+  const map=new Map();
+  let h=-1, idx={};
+  // exige código + ao menos uma das duas métricas: com só o código não há o que ler
+  for(let i=0;i<Math.min(rows.length,25);i++){ const c=mapHeaderCad(rows[i]);
+    if(c.cod!==undefined && (c.pontos!==undefined || c.peso!==undefined)){ h=i; idx=c; break; } }
+  if(h<0) return map;
+  for(let r=h+1;r<rows.length;r++){ const row=rows[r];
+    const cod=normCod(val(row,idx.cod)); if(!/^\d{9}/.test(cod)) continue;
+    const pontos=num(val(row,idx.pontos)), peso=num(val(row,idx.peso));
+    if(!pontos && !peso) continue;
+    if(!map.has(cod)) map.set(cod,{pontos,peso});   // primeira linha do código vale
+  }
+  return map;
+}
+
+/* Soma pontos e peso do lote a partir do cadastro. Item sem código no
+   cadastro entra como zero e é contado à parte — número baixo por falta de
+   cadastro não pode passar por número baixo de verdade. */
+function aplicarCadastro(){
+  CADASTRO.itens=0; CADASTRO.casados=0; CADASTRO.semCad=new Set();
+  LOTES.forEach(l=>{
+    l.pontosTot=0; l.pesoTot=0;
+    (l.itens||[]).forEach(it=>{
+      const c=CADASTRO.map.get(normCod(it.cod));
+      it.pontos=c?c.pontos:0; it.peso=c?c.peso:0;
+      CADASTRO.itens++;
+      if(c) CADASTRO.casados++; else if(it.cod) CADASTRO.semCad.add(normCod(it.cod));
+      l.pontosTot+=it.pontos*(it.qtd||0);
+      l.pesoTot  +=it.peso  *(it.qtd||0);
+    });
+  });
+}
+
+async function carregarCadastro(){
+  CADASTRO.map=new Map(); CADASTRO.ativa=false; CADASTRO.aba=""; CADASTRO.erro="";
+  const abas=[...new Set([CFG.cadastro,...GIDS_CAD,...ABAS_CAD].filter(Boolean))];
+  for(const aba of abas){
+    try{
+      const res=await fetch(cadastroURL(aba),{cache:"no-store"});
+      if(!res.ok) continue;
+      const txt=await res.text();
+      if(/<html/i.test(txt)) continue;
+      const map=parseCadastro(parseCSV(txt));
+      if(!map.size){ CADASTRO.erro="nenhuma aba com CODIGO + PONTOS/P B"; continue; }
+      CADASTRO.map=map; CADASTRO.ativa=true; CADASTRO.erro=""; CADASTRO.aba=aba;
+      break;
+    }catch(e){ /* tenta a próxima candidata */ }
+  }
+  aplicarCadastro();
+}
+
 /* ---------- carregar ---------- */
 function setStatus(kind,txt){ const el=document.getElementById("status");
   el.className="status "+kind; document.getElementById("statusTxt").innerHTML=txt; }
@@ -964,6 +1049,19 @@ function txtBaixa(){
   const sobra=BAIXA.semLote?` · <span style="color:var(--amber)">${BAIXA.semLote.toLocaleString("pt-BR")} sem lote</span>`:"";
   const exc=BAIXA.excedente?` · <span style="color:var(--amber)">${BAIXA.excedente.toLocaleString("pt-BR")} acima do programado</span>`:"";
   return ` · baixa <b>${BAIXA.aba}</b>: ${vol.toLocaleString("pt-BR")} vol. (${per})${sobra}${exc}`;
+}
+
+/* Cobertura do cadastro. Item sem código lá vale zero ponto e zero quilo, e
+   um total baixo por falta de cadastro é indistinguível de um total baixo de
+   verdade — então a cobertura fica dita, não subentendida. */
+function txtCadastro(){
+  if(!CADASTRO.ativa)
+    return CADASTRO.erro ? ` · <span style="color:var(--amber)">cadastro: ${CADASTRO.erro}</span>` : "";
+  const fora=CADASTRO.itens-CADASTRO.casados;
+  const aviso = fora
+    ? ` · <span style="color:var(--amber)">${fora} ${fora===1?"item sem":"itens sem"} cadastro (${CADASTRO.semCad.size} ${CADASTRO.semCad.size===1?"código":"códigos"})</span>`
+    : "";
+  return ` · cadastro <b>${CADASTRO.aba}</b>: ${CADASTRO.map.size.toLocaleString("pt-BR")} códigos${aviso}`;
 }
 
 /* ---------- frescor do dado ----------
@@ -995,12 +1093,12 @@ async function carregar(){
     const txt=await res.text();
     if(/<html/i.test(txt)) throw new Error("sem-acesso");
     const lotes=rowsToLotes(parseCSV(txt));
-    if(lotes.length){ LOTES=lotes; ULTIMA_OK=Date.now(); await carregarBaixa();
-      setStatus("ok",`Planilha lida — <b>${lotes.length}</b> lotes · atualizado ${new Date().toLocaleTimeString("pt-BR")}${txtBaixa()}`);
-    } else { LOTES=DEMO; await carregarBaixa();
+    if(lotes.length){ LOTES=lotes; ULTIMA_OK=Date.now(); await carregarBaixa(); await carregarCadastro();
+      setStatus("ok",`Planilha lida — <b>${lotes.length}</b> lotes · atualizado ${new Date().toLocaleTimeString("pt-BR")}${txtBaixa()}${txtCadastro()}`);
+    } else { LOTES=DEMO; await carregarBaixa(); await carregarCadastro();
       setStatus("warn","Planilha vazia ou cabeçalho não reconhecido — mostrando dados de exemplo. Cole as linhas com o cabeçalho indicado.");
     }
-  }catch(e){ LOTES=DEMO;
+  }catch(e){ LOTES=DEMO; aplicarCadastro();
     if(String(e.message).includes("sem-acesso"))
       setStatus("err","Sem acesso à planilha — deixe o compartilhamento como “qualquer pessoa com o link: leitor”. Mostrando dados de exemplo.");
     else setStatus("warn","Não consegui ler agora (preview local bloqueia acesso externo). No servidor/Vercel funciona. Mostrando dados de exemplo.");
@@ -1176,8 +1274,8 @@ function render(){
   const pesoTot = pesoEt.reduce((s,p)=>s+p,0);
   document.getElementById("kLotes").textContent=ativos;
   document.getElementById("kVols").textContent=vols.toLocaleString("pt-BR");
-  document.getElementById("kPontos").textContent=(pontosTot||0).toLocaleString("pt-BR");
-  document.getElementById("kPeso").textContent=((pesoTot||0)/1000).toFixed(1);
+  document.getElementById("kPontos").textContent=pontosTot?nBR(pontosTot):"–";
+  document.getElementById("kPeso").textContent=pesoTxt(pesoTot);
   document.getElementById("kHoje").textContent=volEmbHoje.toLocaleString("pt-BR");
   document.getElementById("kHojeLbl").textContent =
     loteEmbHoje ? `vol. p/ embalar hoje · ${loteEmbHoje} ${loteEmbHoje===1?"lote":"lotes"}`
@@ -1196,8 +1294,8 @@ function render(){
     // parecem iguais valendo 300 e 3.000 volumes
     const carga=buckets[i].length?`<div class="carga">
       <span class="v">${volsEt[i].toLocaleString("pt-BR")}</span> vol.
-      ${pontosEt[i]>0?`<span class="pts">${(pontosEt[i]||0).toLocaleString("pt-BR")} pts</span>`:""}
-      ${pesoEt[i]>0?`<span class="kg">${(pesoEt[i]/1000).toFixed(1)} kg</span>`:""}
+      ${pontosEt[i]>0?`<span class="pts">${nBR(pontosEt[i])} pts</span>`:""}
+      ${pesoEt[i]>0?`<span class="kg">${pesoTxt(pesoEt[i])}</span>`:""}
       ${pendEt[i]>0?`<span class="falta">falta ${pendEt[i].toLocaleString("pt-BR")}</span>`:""}
       <span class="bar"><i style="width:${Math.round(volsEt[i]/maxEt*100)}%"></i></span></div>`:"";
     st.innerHTML=`<div class="st-head"><div class="fase">${et.fase}</div>
@@ -1354,7 +1452,7 @@ function cardEl(l,idx,ref,cont){
      falta produzir no dia. "Falta" é a mesma palavra usada no modo TV. */
   const pendTxt=pend>0?`<span class="c-falta">falta <b>${pend.toLocaleString("pt-BR")}</b> vol.</span>`:"";
   c.innerHTML=`<div class="c-top"><span class="c-lote">${l.lote}</span>${(!cont&&l.interno)?`<span class="c-int">${l.interno}</span>`:""}${(!cont&&l.cor)?`<span class="cor" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
-    <div class="c-sub"><span>Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b></span>${prog}${pendTxt}${l.itens?`<span><b>${l.itens.length}</b> itens</span>`:""}${l.pontosTot?`<span>Pts <b>${(l.pontosTot||0).toLocaleString("pt-BR")}</b></span>`:""} ${l.pesoTot?`<span>${((l.pesoTot||0)/1000).toFixed(1)} kg</span>`:""}</div>
+    <div class="c-sub"><span>Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b></span>${prog}${pendTxt}${l.itens?`<span><b>${l.itens.length}</b> itens</span>`:""}${l.pontosTot?`<span>Pts <b>${nBR(l.pontosTot)}</b></span>`:""}${l.pesoTot?`<span><b>${pesoTxt(l.pesoTot)}</b></span>`:""}</div>
     ${stat}<div class="tl">${tl}</div>${itensHtml}`;
   if(itensHtml) c.addEventListener("click",()=>c.classList.toggle("open"));
   return c;
@@ -1370,6 +1468,11 @@ const chipCor = c => { if(!c) return "";
   const hex=CORES_GPS[norm(c)];
   return (hex?`<span class="pchip" style="background:${hex}"></span>`:"")+esc(c); };
 const nBR = n => (n||0).toLocaleString("pt-BR");
+/* O cadastro traz kg por volume. Um lote de 850 volumes a 34 kg dá 29 t, e
+   "28.900 kg" não se lê de relance — acima de 1.000 kg a unidade vira t. */
+const pesoTxt = kg => !kg ? "–"
+  : kg>=1000 ? (kg/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" t"
+             : Math.round(kg).toLocaleString("pt-BR")+" kg";
 const dataExt = d => d.toLocaleDateString("pt-BR",{weekday:"long", day:"2-digit", month:"long", year:"numeric"});
 
 function buildPrint(ref, comItens){
@@ -1385,7 +1488,7 @@ function buildPrint(ref, comItens){
     <table class="pv-tab">
       <thead><tr><th>Etapa</th><th>Fase</th><th style="text-align:right">Lotes</th>
         <th style="text-align:right">Volumes</th><th style="text-align:right">Pontos</th>
-        <th style="text-align:right">Peso (kg)</th><th style="width:26%">Distribuição</th>
+        <th style="text-align:right">Peso</th><th style="width:26%">Distribuição</th>
         <th style="text-align:right">Movim. hoje</th></tr></thead>
       <tbody>${ETAPAS.map((et,i)=>{
         const mv=buckets[i].filter(x=>ehHoje(x.l,i,ref)).length;
@@ -1394,12 +1497,12 @@ function buildPrint(ref, comItens){
           <td class="n">${buckets[i].length||"–"}</td>
           <td class="n">${volsEt[i]?nBR(volsEt[i]):"–"}</td>
           <td class="n">${pontosEt[i]?nBR(pontosEt[i]):"–"}</td>
-          <td class="n">${pesoEt[i]?(pesoEt[i]/1000).toFixed(1):"–"}</td>
+          <td class="n">${pesoTxt(pesoEt[i])}</td>
           <td>${volsEt[i]?`<span class="bar" style="width:${Math.round(volsEt[i]/maxP*100)}%"></span>`:""}</td>
           <td class="n">${mv||"–"}</td></tr>`;}).join("")}</tbody>
       <tfoot><tr><td colspan="2">Total em elaboração</td><td class="n">${ativos}</td>
-        <td class="n">${nBR(vols)}</td><td class="n">${nBR(pontosTot)}</td>
-        <td class="n">${(pesoTot/1000).toFixed(1)}</td><td></td><td class="n">${mov||"–"}</td></tr></tfoot>
+        <td class="n">${nBR(vols)}</td><td class="n">${pontosTot?nBR(pontosTot):"–"}</td>
+        <td class="n">${pesoTxt(pesoTot)}</td><td></td><td class="n">${mov||"–"}</td></tr></tfoot>
     </table></div>`;
 
   /* 2. destaques: o que muda de setor na data de referência */
@@ -1407,7 +1510,7 @@ function buildPrint(ref, comItens){
   ETAPAS.forEach((et,i)=>buckets[i].forEach(x=>{ if(ehHoje(x.l,i,ref))
     destaques.push(`<div class="r"><span class="et">${esc(et.nome)}</span><b>${esc(x.l.lote)}</b>${x.l.interno?`<span style="color:#777">${esc(x.l.interno)}</span>`:""}
       <span style="color:#555">${esc(x.l.cor||"")}</span>
-      <span class="q">${nBR(x.l.qtd)} vol.${x.l.pontosTot?` · ${nBR(x.l.pontosTot)} pts`:""}${x.l.pesoTot?` · ${(x.l.pesoTot/1000).toFixed(1)} kg`:""}${x.l.itens&&x.l.itens.length?` · ${x.l.itens.length} itens`:""}</span></div>`);}));
+      <span class="q">${nBR(x.l.qtd)} vol.${x.l.pontosTot?` · ${nBR(x.l.pontosTot)} pts`:""}${x.l.pesoTot?` · ${pesoTxt(x.l.pesoTot)}`:""}${x.l.itens&&x.l.itens.length?` · ${x.l.itens.length} itens`:""}</span></div>`);}));
   const dest = `<div class="pv-dest"><h3>Movimentação do dia — ${fmt(ref)}</h3>
     ${destaques.length?destaques.join(""):`<div class="pv-vazio">Nenhum lote muda de etapa nesta data.</div>`}</div>`;
 
@@ -1442,7 +1545,7 @@ function buildPrint(ref, comItens){
       const l=x.l, hoje=ehHoje(l,i,ref);
       const pct=l.qtd?Math.max(0,Math.min(100,Math.round((l.prod||0)/l.qtd*100))):0;
       const its=(comItens && l.itens && l.itens.length)
-        ? `<tr class="pv-its"><td colspan="7"><ul>${l.itens.map(it=>
+        ? `<tr class="pv-its"><td colspan="8"><ul>${l.itens.map(it=>
             `<li><span class="cd">${esc(it.cod||"")}</span><span>${esc(it.desc||"")}</span>
              <span class="dq">${nBR(it.qtd)}</span></li>`).join("")}</ul></td></tr>` : "";
       return `<tbody class="lote"><tr class="${hoje?"hoje":""}">
@@ -1450,7 +1553,7 @@ function buildPrint(ref, comItens){
         <td class="cel-cor">${chipCor(l.cor)}</td>
         <td class="n">${nBR(l.qtd)}</td>
         <td class="n">${l.pontosTot?nBR(l.pontosTot):"–"}</td>
-        <td class="n">${l.pesoTot?(l.pesoTot/1000).toFixed(1):"–"}</td>
+        <td class="n">${pesoTxt(l.pesoTot)}</td>
         <td class="n">${l.itens?l.itens.length:"–"}</td>
         <td class="n">${l.prod>0?pct+"%":"–"}</td>
         <td class="sit">${esc(situacao(l,i,ref))}</td></tr>${its}</tbody>`;}).join("");
@@ -1460,9 +1563,9 @@ function buildPrint(ref, comItens){
     return `<div class="pv-sec">
       <table class="pv-tab"><thead>
         <tr class="pv-tit"><td colspan="8"><h2>${esc(et.nome)}<span class="fase">${et.fase}</span>${et.detalhe?`<span class="det">${esc(et.detalhe)}</span>`:""}
-          <span class="qt">${b.length} lote${b.length>1?"s":""} · ${nBR(volsEt[i])} vol. · ${nBR(pontosEt[i])} pts · ${(pesoEt[i]/1000).toFixed(1)} kg</span></h2></td></tr>
+          <span class="qt">${b.length} lote${b.length>1?"s":""} · ${nBR(volsEt[i])} vol.${pontosEt[i]?` · ${nBR(pontosEt[i])} pts`:""}${pesoEt[i]?` · ${pesoTxt(pesoEt[i])}`:""}</span></h2></td></tr>
         <tr><th>Lote</th><th>Cor</th><th style="text-align:right">Qtd</th>
-        <th style="text-align:right">Pontos</th><th style="text-align:right">Peso (kg)</th>
+        <th style="text-align:right">Pontos</th><th style="text-align:right">Peso</th>
         <th style="text-align:right">Itens</th><th style="text-align:right">Prod.</th><th>Situação</th></tr></thead>
       ${linhas}</table></div>`;}).join("");
 
@@ -1585,6 +1688,7 @@ function pintaCfg(){
   document.getElementById("cfgSheet").value=CFG.sheet;
   document.getElementById("cfgGid").value=CFG.gid;
   document.getElementById("cfgBaixa").value=CFG.baixa||"";
+  document.getElementById("cfgCad").value=CFG.cadastro||"";
   document.getElementById("srcUrl").textContent=csvURL();
   document.getElementById("cfgAbrir").href=linkPlanilha();
 }
@@ -1594,7 +1698,8 @@ document.getElementById("cfgSalvar").onclick=()=>{
   const sheet=extraiId(document.getElementById("cfgSheet").value);
   if(!sheet){ toast("Informe o endereço da planilha"); return; }
   CFG={ sheet, gid:document.getElementById("cfgGid").value.trim()||CFG_PADRAO.gid,
-        baixa:document.getElementById("cfgBaixa").value.trim() };
+        baixa:document.getElementById("cfgBaixa").value.trim(),
+        cadastro:document.getElementById("cfgCad").value.trim() };
   try{ localStorage.setItem(CFG_KEY,JSON.stringify(CFG)); }catch(e){}
   pintaCfg(); toast("Configuração salva — recarregando a planilha"); carregar();
 };

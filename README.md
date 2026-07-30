@@ -75,6 +75,26 @@ está mais perto da data do lançamento. Volume reportado no dia X nunca entra e
 **depois** de X (seria baixa de lote antigo); o que não acha lote aparece como `N sem lote` na
 linha de status, junto com o que foi reportado acima do programado.
 
+## Pontos e peso
+Pontos e peso são atributos do **produto**, não do lote: moram na aba de **cadastro**
+(`GID_CADASTRO`, hoje `905587643`), uma linha por código, com `P B` (peso bruto, **kg por
+volume**) e `PONTOS` (por volume). O painel casa cada item do lote pelo **código**, do mesmo
+jeito que a baixa — `501.041.001` e `501041001` são o mesmo produto.
+
+Se a aba for recriada e mudar de `gid`, o painel tenta os gids conhecidos e depois os nomes
+`CADASTRO`, `PRODUTOS`, `PONTOS`; vale a primeira que tiver `CODIGO` + `PONTOS`/`P B`. Dá para
+fixar outro gid em Configurações (⚙).
+
+Onde aparecem: KPI de pontos e de peso no cabeçalho, carga por etapa junto do volume, e no card
+de cada lote. No impresso entram como colunas no quadro de carga e no detalhamento por etapa.
+
+Acima de 1.000 kg a unidade vira **t** — um lote de 850 volumes a 34 kg dá 29 t, e `28.900 kg`
+não se lê de relance.
+
+**Cobertura**: item cujo código não está no cadastro vale zero ponto e zero quilo. Um total baixo
+por falta de cadastro é indistinguível de um total baixo de verdade, então a linha de status diz
+quantos itens ficaram de fora — se o número parecer pequeno, é o primeiro lugar para olhar.
+
 ## Volumes pendentes / atraso
 - **Volume pendente** = programado − baixa. Sem a aba de baixa, cai para a coluna `SALDO`/`FALTA`
   e, na falta dela, `Qtd_cx − PRODUZIDO`.
@@ -112,6 +132,7 @@ quantidade — nas duas saídas. Desmarque para o resumo curto, só com os lotes
 No topo do `<script>` em `index.html`:
 - `SHEET_ID` — ID da planilha do Google Sheets (atual: `MODELO_HORA_A_HORA`).
 - `GID` — aba (a de programação, `gid=1540822534`).
+- `GID_CADASTRO` — aba de pontos e peso por produto (`gid=905587643`).
 - `LEAD` — dias úteis que cada etapa fica antes da embalagem (padrão 1 por etapa).
 
 A planilha precisa estar compartilhada como **“qualquer pessoa com o link: leitor”**.
