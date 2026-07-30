@@ -112,6 +112,40 @@ quantos itens ficaram de fora — se o número parecer pequeno, é o primeiro lu
 A baixa só responde pelos dias que ela cobre: um lote com embalagem fora do período carregado
 nunca é acusado de atraso.
 
+## Lançar faltas (`falta.html`)
+Tela separada, feita para **celular no chão de fábrica**: registra o que falta para fechar
+cada volume. Fluxo em três toques — **lote → volume → peças** — e o operador **não digita
+código**: marca numa lista e ajusta a quantidade no `−`/`+`.
+
+A lista das peças vem da aba **`ESTRUTURA`** (lista técnica), uma linha por peça do volume:
+
+| coluna | conteúdo | obrigatória |
+|---|---|---|
+| `CODIGO` | código do **volume** (`501.xxx.xxx`) | sim |
+| `PECA` | código da peça | sim |
+| `QTD` | quantas peças por **1 volume** | não (assume 1) |
+| `DESCRICAO` | descrição da peça | não |
+
+A aba é procurada pelo gid configurado e depois pelos nomes `ESTRUTURA`, `LISTA TECNICA`,
+`BOM`, `COMPOSICAO`. Volume que não estiver lá **não trava a tela**: cai no modo de digitação
+de código, com aviso. Travar seria pior — o lote continua parado e ninguém registra nada.
+
+A gravação vai para a aba **`FALTAS`** por um **Apps Script** publicado na própria planilha
+(`apps-script/Codigo.gs`, com o passo a passo no cabeçalho do arquivo). O painel só lê; sem
+esse Web App não há como escrever. A `FALTAS` é **append-only**: nunca reescreve linha, então
+dois celulares gravando juntos não se atropelam e fica o histórico de quem lançou o quê.
+
+```
+DATA_HORA | LOTE | COD_VOLUME | COD_PECA | QTD | OPERADOR | OBS
+```
+
+`QTD` é **quantas peças faltam de fato**, não multiplicador por volume — há lote com 2 volumes
+pendentes e `QT=1`, e outro com 3 volumes e `QT=14`. É o número que a pessoa sabe de cabeça.
+
+A URL do Apps Script, o gid da estrutura e o nome de quem lança ficam em **⚙**, salvos naquele
+celular. A página é autossuficiente como o painel: nenhum arquivo `.js` externo, porque um
+script que falhe ao carregar derrubaria a tela inteira.
+
 ## Impressão / WhatsApp
 Dois botões na barra de controles, sempre referentes à **data de referência** selecionada:
 

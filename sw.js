@@ -4,9 +4,9 @@
      da rede (o painel precisa estar online para atualizar os lotes).
    - Estratégia network-first no mesmo domínio: online pega sempre a versão
      nova; offline cai para o cache. */
-const CACHE = 'esteira-v2';   // subiu na troca dos ícones
+const CACHE = 'esteira-v3';   // subiu ao entrar a tela de lançamento de faltas
 const SHELL = [
-  './', './index.html',
+  './', './index.html', './falta.html',
   './manifest.webmanifest',
   './icon-192.png', './icon-512.png',
   './icon-192-maskable.png', './icon-512-maskable.png',

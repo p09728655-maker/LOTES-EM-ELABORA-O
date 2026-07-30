@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lançar faltas — PPCP Patrimar</title>
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* mesma paleta do painel: quem usa os dois não percebe troca de app */
+  :root{
+    --bg:#000; --panel:#111316; --panel2:#17191d; --line:#2b2f36;
+    --ink:#f2f4f7; --mut:#8a929c; --mut2:#5b636e;
+    --amber:#ff5a1f; --green:#3fd15f; --steel:#5b8bb0; --red:#ff3b30;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg); color:var(--ink); font-family:"Inter",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; padding:0 0 96px;
+    /* o dedo é impreciso: nada de alvo pequeno nesta tela */
+    -webkit-tap-highlight-color:transparent}
+
+  header.top{position:sticky; top:0; z-index:40; background:var(--bg);
+    border-bottom:2px solid var(--amber); padding:10px 14px 9px;
+    display:flex; align-items:center; gap:10px}
+  .voltar{background:none; border:1px solid var(--line); color:var(--ink);
+    border-radius:8px; padding:8px 12px; font-family:"Oswald"; font-size:15px;
+    cursor:pointer; flex:none; min-height:40px}
+  .voltar:disabled{opacity:.25}
+  .tit{flex:1 1 0; min-width:0}
+  .tit .eyebrow{font-family:"IBM Plex Mono"; font-size:9.5px; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--mut)}
+  .tit h1{font-family:"Oswald"; font-weight:600; font-size:19px; margin:1px 0 0;
+    line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .tit h1 span{color:var(--amber)}
+  .cfgbtn{background:none; border:1px solid var(--line); color:var(--mut);
+    border-radius:8px; padding:8px 11px; font-size:15px; cursor:pointer; flex:none; min-height:40px}
+
+  .status{display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--mut);
+    padding:8px 14px; line-height:1.35}
+  .status .led{width:8px; height:8px; border-radius:50%; background:var(--mut2); flex:none}
+  .status.ok .led{background:var(--green)} .status.warn .led{background:var(--amber)}
+  .status.err .led{background:var(--red)}
+
+  .wrap{padding:2px 12px}
+  .lista{display:flex; flex-direction:column; gap:9px}
+
+  /* alvo de toque: 60px de altura mínima. Menos que isso erra na fábrica,
+     com a mão suja e o celular na horizontal. */
+  .item{background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--mut);
+    border-radius:10px; padding:12px 13px; cursor:pointer; min-height:60px;
+    display:flex; align-items:center; gap:11px; transition:.12s}
+  .item:active{background:var(--panel2); transform:scale(.99)}
+  .item .esq{flex:1 1 0; min-width:0}
+  .item .lote{font-family:"IBM Plex Mono"; font-weight:600; font-size:19px}
+  .item .cod{font-family:"IBM Plex Mono"; font-weight:600; font-size:15px}
+  .item .desc{font-size:12px; color:var(--mut); margin-top:3px; line-height:1.3}
+  .item .dir{flex:none; text-align:right; font-family:"IBM Plex Mono"; font-size:12px; color:var(--mut)}
+  .item .dir b{display:block; color:var(--red); font-size:17px}
+  .item .seta{flex:none; color:var(--mut2); font-size:19px}
+  .cor{font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    padding:3px 9px; border-radius:20px; border:1px solid var(--line); color:var(--mut);
+    white-space:nowrap; margin-left:8px}
+
+  /* ---- peça: linha com contador. O operador não digita código, só quantidade ---- */
+  .peca{background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:11px 12px; display:flex; align-items:center; gap:10px; min-height:64px}
+  .peca.on{border-color:var(--amber); background:rgba(255,90,31,.07)}
+  .peca .esq{flex:1 1 0; min-width:0}
+  .peca .pd{font-size:13.5px; font-weight:500; line-height:1.25}
+  .peca .pc{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2); margin-top:3px}
+  .peca .un{font-family:"IBM Plex Mono"; font-size:10.5px; color:var(--mut); margin-top:2px}
+  .cnt{display:flex; align-items:center; gap:2px; flex:none}
+  .cnt button{width:44px; height:44px; border-radius:9px; border:1px solid var(--line);
+    background:var(--panel2); color:var(--ink); font-size:22px; font-family:"Oswald";
+    cursor:pointer; line-height:1; padding:0}
+  .cnt button:active{background:var(--amber); color:#000}
+  .cnt input{width:56px; height:44px; text-align:center; background:var(--panel2);
+    color:var(--ink); border:1px solid var(--line); border-radius:9px;
+    font-family:"IBM Plex Mono"; font-weight:600; font-size:17px; -moz-appearance:textfield}
+  .cnt input::-webkit-outer-spin-button,.cnt input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+  .peca.on .cnt input{border-color:var(--amber); color:var(--amber)}
+
+  .vazio{color:var(--mut2); font-size:13px; font-style:italic; text-align:center;
+    padding:26px 16px; border:1px dashed var(--line); border-radius:10px; line-height:1.5}
+  .aviso{background:rgba(255,90,31,.1); border:1px solid var(--amber); color:var(--amber);
+    border-radius:9px; padding:10px 12px; font-size:12.5px; margin-bottom:10px; line-height:1.45}
+
+  /* barra de envio: fixa no rodapé, o polegar alcança sem rolar */
+  .barra{position:fixed; left:0; right:0; bottom:0; z-index:45;
+    background:linear-gradient(180deg,transparent,rgba(0,0,0,.92) 22%);
+    padding:14px 12px calc(14px + env(safe-area-inset-bottom)); display:flex; gap:10px; align-items:center}
+  .barra[hidden]{display:none}
+  .barra .resumo{flex:1 1 0; font-family:"IBM Plex Mono"; font-size:12px; color:var(--mut); line-height:1.35}
+  .barra .resumo b{color:var(--ink); font-size:14px}
+  .enviar{background:var(--amber); color:#000; border:none; border-radius:11px;
+    padding:15px 24px; font-family:"Oswald"; font-weight:600; font-size:17px;
+    letter-spacing:.04em; cursor:pointer; min-height:54px; flex:none}
+  .enviar:disabled{background:var(--line); color:var(--mut2)}
+
+  .toast{position:fixed; left:50%; bottom:96px; transform:translateX(-50%);
+    background:var(--panel2); border:1px solid var(--line); color:var(--ink);
+    padding:12px 18px; border-radius:11px; font-size:13.5px; z-index:60;
+    max-width:86vw; text-align:center; line-height:1.4; box-shadow:0 8px 24px rgba(0,0,0,.6)}
+  .toast.ok{border-color:var(--green); color:var(--green)}
+  .toast.err{border-color:var(--red); color:var(--red)}
+  .toast[hidden]{display:none}
+
+  .cfg{background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:13px; margin:10px 12px}
+  .cfg[hidden]{display:none}
+  .cfg h3{font-family:"Oswald"; font-size:15px; margin:0 0 11px; letter-spacing:.04em}
+  .cfg label{display:block; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--mut); margin:9px 0 4px}
+  .cfg input{width:100%; background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:8px; padding:11px; font-family:"IBM Plex Mono"; font-size:13px; min-height:44px}
+  .cfg .obs{font-size:11px; color:var(--mut2); margin-top:5px; line-height:1.45}
+  .cfg .acoes{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
+  .cfg .acoes button{flex:1 1 auto; min-height:46px; border-radius:9px; border:1px solid var(--line);
+    background:var(--panel2); color:var(--ink); font-family:"Oswald"; font-size:15px; cursor:pointer}
+  .cfg .acoes .go{background:var(--amber); color:#000; border-color:var(--amber)}
+
+  @media(min-width:760px){
+    .wrap{max-width:720px; margin:0 auto}
+    header.top,.status,.cfg{max-width:720px; margin-left:auto; margin-right:auto}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <button class="voltar" id="btnVoltar" disabled>‹</button>
+  <div class="tit">
+    <div class="eyebrow" id="crumb">PPCP · Patrimar</div>
+    <h1>Lançar <span>faltas</span></h1>
+  </div>
+  <button class="cfgbtn" id="btnCfg">⚙</button>
+</header>
+
+<div class="status" id="status"><span class="led"></span><span id="statusTxt">Carregando…</span></div>
+
+<div class="cfg" id="cfgBox" hidden>
+  <h3>Configurações</h3>
+  <label for="cfgOper">Seu nome</label>
+  <input type="text" id="cfgOper" placeholder="quem está lançando" autocomplete="name">
+  <label for="cfgUrl">URL do Apps Script</label>
+  <input type="text" id="cfgUrl" spellcheck="false" placeholder="https://script.google.com/macros/s/.../exec">
+  <div class="obs">Sem essa URL o lançamento não grava. Publique o <code>apps-script/Codigo.gs</code>
+    na planilha (Extensões → Apps Script → Implantar como app da web) e cole aqui.</div>
+  <label for="cfgSheet">Planilha</label>
+  <input type="text" id="cfgSheet" spellcheck="false" placeholder="ID ou link do Google Sheets">
+  <label for="cfgGid">Aba da programação (gid)</label>
+  <input type="text" id="cfgGid" spellcheck="false" placeholder="1540822534">
+  <label for="cfgEst">Aba da estrutura (gid)</label>
+  <input type="text" id="cfgEst" spellcheck="false" placeholder="gid da aba ESTRUTURA">
+  <div class="obs">Sem a estrutura a tela ainda funciona, mas o operador precisa digitar o
+    código da peça em vez de marcar numa lista.</div>
+  <div class="acoes">
+    <button class="go" id="cfgSalvar">Salvar</button>
+    <button id="cfgFechar">Fechar</button>
+  </div>
+</div>
+
+<div class="wrap" id="tela"></div>
+
+<div class="barra" id="barra" hidden>
+  <div class="resumo" id="resumo"></div>
+  <button class="enviar" id="btnEnviar">Enviar</button>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ================== CONFIGURAÇÃO ==================
+   Mesmo padrão do painel: padrão de fábrica no código, o que valer na tela de
+   Configurações fica salvo neste navegador e tem precedência. Cada celular
+   guarda o nome de quem lança. */
+const CFG_PADRAO = {
+  sheet:"1W9bK_IoWknk8eKFbSWCMxILAQcaXuWD2gG7B0jcwFzg",
+  gid:"1540822534",   // aba de programação (Lote/Data/Codigo/Qtd_cx/SALDO)
+  estrutura:"",       // aba ESTRUTURA — preencher depois de criada
+  url:"",             // Web App do Apps Script
+  operador:""
+};
+const CFG_KEY = "faltasCfg";
+function lerCfg(){
+  try{ return Object.assign({},CFG_PADRAO,JSON.parse(localStorage.getItem(CFG_KEY)||"{}")); }
+  catch(e){ return Object.assign({},CFG_PADRAO); }
+}
+let CFG = lerCfg();
+const extraiId = s => { const t=String(s||"").trim();
+  const m=t.match(/\/d\/([a-zA-Z0-9_-]{20,})/); return m?m[1]:t; };
+
+// numérico é gid; o resto é nome de aba — mesma regra do painel
+const abaURL = aba => /^\d+$/.test(aba)
+  ? `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&gid=${aba}`
+  : `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(aba)}`;
+const ABAS_EST = ["ESTRUTURA","LISTA TECNICA","LISTA TÉCNICA","BOM","COMPOSICAO","COMPOSIÇÃO"];
+
+/* ---------- utilidades (mesmas regras do painel; divergir aqui faz o
+   lançamento não casar com o relatório) ---------- */
+function parseCSV(txt){
+  const rows=[]; let row=[],f="",q=false;
+  for(let i=0;i<txt.length;i++){ const c=txt[i];
+    if(q){ if(c=='"'){ if(txt[i+1]=='"'){f+='"';i++;} else q=false;} else f+=c; }
+    else{ if(c=='"')q=true; else if(c==','){row.push(f);f="";}
+      else if(c=='\n'){row.push(f);rows.push(row);row=[];f="";}
+      else if(c!='\r') f+=c; } }
+  row.push(f); rows.push(row); return rows;
+}
+const norm = s => String(s||"").trim().toLowerCase().replace(/[^a-z0-9]/g,"");
+const normCod = s => String(s||"").toUpperCase().replace(/[^0-9A-Z]/g,"");
+const num = x => parseFloat(String(x||"0").replace(/\./g,"").replace(",","."))||0;
+const val = (row,i) => i===undefined?"":(row[i]||"").trim();
+const nBR = n => (n||0).toLocaleString("pt-BR");
+const esc = s => String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+const CORES_GPS = { verde:"#2fbf4f", azul:"#2f7fe0", vermelho:"#e8342a", amarelo:"#f5c518",
+  laranja:"#ff6a1f", preto:"#0d0f12", branco:"#f2f4f7", cinza:"#9aa2ac", rosa:"#f06fae",
+  roxo:"#9a5cf0", lilas:"#c0a8f5", marrom:"#8a5a2b", bege:"#e2d3ae", dourado:"#d4af37",
+  prata:"#c6cbd1", azulclaro:"#5cc5f0", verdeclaro:"#7ede8a", verdeescuro:"#1c7a35", azulescuro:"#1c3f8a" };
+function corGPS(nome){
+  const hex=CORES_GPS[norm(nome)]; if(!hex) return "";
+  const r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);
+  const lum=(0.299*r+0.587*g+0.114*b)/255;
+  return `background:${hex};border-color:${lum<0.18?"#6b7280":hex};color:${lum>0.6?"#000":"#fff"}`;
+}
+
+/* ---------- leitura da programação ----------
+   Só o necessário para achar lote → volumes com saldo. O painel faz a conta
+   completa; aqui interessa apenas o que ainda falta produzir. */
+const ALIAS = {
+  lote:["lote","numlote","nlote","lotenº","loten"],
+  cod:["cod","codigo","cdigo","sku"],
+  desc:["desc","descricao","descrio","produto","item"],
+  qtd:["qtd","qtde","quantidade","qtdcx","qtcx","caixas"],
+  prod:["produzido","prod","feito"], saldo:["saldo","falta"],
+  cor:["cor","corgps","cordogps"], interno:["loteinterno","interno","op"]
+};
+function mapHeader(hrow){
+  const idx={}; hrow.forEach((h,i)=>{ const n=norm(h);
+    for(const k in ALIAS){ if(ALIAS[k].includes(n) && idx[k]===undefined) idx[k]=i; } });
+  if(idx.cor===undefined) hrow.forEach((h,i)=>{ const n=norm(h);
+    if(idx.cor===undefined && n && (n.includes("gps")||(n.startsWith("cor")&&!n.includes("descri")))) idx.cor=i; });
+  return idx;
+}
+let LOTES=[];
+function rowsToLotes(rows){
+  let h=-1, idx={};
+  for(let i=0;i<Math.min(rows.length,20);i++){ const c=mapHeader(rows[i]);
+    if(c.lote!==undefined && c.cod!==undefined){ h=i; idx=c; break; } }
+  if(h<0) return [];
+  const out=[]; let cur=null;
+  for(let r=h+1;r<rows.length;r++){ const row=rows[r];
+    const lote=val(row,idx.lote);
+    if(lote && (!cur || cur.lote!==lote)){
+      cur={lote, cor:val(row,idx.cor), interno:val(row,idx.interno), itens:[]}; out.push(cur);
+    }
+    if(!cur) continue;
+    if(!cur.cor) cur.cor=val(row,idx.cor);
+    if(!cur.interno) cur.interno=val(row,idx.interno);
+    const cod=val(row,idx.cod), desc=val(row,idx.desc), q=num(val(row,idx.qtd));
+    if(!cod && !(desc && q>0)) continue;
+    const prod=num(val(row,idx.prod));
+    const sCol=val(row,idx.saldo);
+    const saldo = sCol!=="" ? num(sCol) : Math.max(0, q-prod);
+    cur.itens.push({cod, desc, qtd:q, saldo});
+  }
+  // só lote que ainda tem volume a produzir
+  return out.filter(l=>l.itens.some(it=>it.saldo>0));
+}
+
+/* ---------- estrutura (lista técnica) ----------
+   Uma linha por peça do volume. É o que transforma "digite o código" em
+   "marque na lista" — a diferença entre um app que se usa e um que se
+   abandona. Sem ela o lançamento continua possível, só mais lento. */
+const ALIAS_EST = {
+  cod:["codigo","cod","cdigo","volume","codvolume","produto","sku"],
+  peca:["peca","pea","codpeca","codigopeca","componente","semiacabado","filho"],
+  qtd:["qtd","qtde","quantidade","qt","qtdpeca","porunidade"],
+  desc:["descricao","descrio","desc","descricaopeca","descpeca"]
+};
+const EST = { map:new Map(), ativa:false, aba:"", n:0 };
+function parseEstrutura(rows){
+  const map=new Map();
+  let h=-1, idx={};
+  for(let i=0;i<Math.min(rows.length,25);i++){
+    const c={}; rows[i].forEach((v,j)=>{ const n=norm(v);
+      for(const k in ALIAS_EST){ if(ALIAS_EST[k].includes(n) && c[k]===undefined) c[k]=j; } });
+    if(c.cod!==undefined && c.peca!==undefined){ h=i; idx=c; break; }
+  }
+  if(h<0) return map;
+  for(let r=h+1;r<rows.length;r++){ const row=rows[r];
+    const vol=normCod(val(row,idx.cod)), pc=normCod(val(row,idx.peca));
+    if(vol.length<6 || pc.length<6) continue;
+    const q=idx.qtd!==undefined ? num(val(row,idx.qtd)) : 1;
+    const d=idx.desc!==undefined ? val(row,idx.desc) : "";
+    if(!map.has(vol)) map.set(vol,[]);
+    const lst=map.get(vol);
+    if(!lst.some(x=>x.cod===pc)) lst.push({cod:pc, desc:d, porUn:q>0?q:1});
+  }
+  return map;
+}
+async function carregarEstrutura(){
+  EST.map=new Map(); EST.ativa=false; EST.aba="";
+  const abas=[...new Set([CFG.estrutura,...ABAS_EST].filter(Boolean))];
+  for(const aba of abas){
+    try{
+      const res=await fetch(abaURL(aba),{cache:"no-store"});
+      if(!res.ok) continue;
+      const txt=await res.text();
+      if(/<html/i.test(txt)) continue;
+      const map=parseEstrutura(parseCSV(txt));
+      if(!map.size) continue;
+      EST.map=map; EST.ativa=true; EST.aba=aba;
+      EST.n=[...map.values()].reduce((s,a)=>s+a.length,0);
+      break;
+    }catch(e){ /* tenta a próxima */ }
+  }
+}
+
+/* ---------- estado da navegação ---------- */
+let NIVEL="lotes";      // lotes → volumes → pecas
+let loteSel=null, volSel=null;
+let marcadas=new Map(); // cod da peça → qtd
+
+/* ---------- telas ---------- */
+const $ = id => document.getElementById(id);
+function setStatus(kind,txt){ $("status").className="status "+kind; $("statusTxt").innerHTML=txt; }
+let toastT=null;
+function toast(msg,kind=""){
+  const t=$("toast"); t.className="toast "+kind; t.textContent=msg; t.hidden=false;
+  clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true, kind==="err"?5200:2600);
+}
+
+function render(){
+  const tela=$("tela"); tela.innerHTML="";
+  $("btnVoltar").disabled = NIVEL==="lotes";
+  $("barra").hidden = NIVEL!=="pecas";
+
+  if(NIVEL==="lotes"){
+    $("crumb").textContent="PPCP · Patrimar";
+    if(!LOTES.length){ tela.innerHTML=`<div class="vazio">Nenhum lote com volume pendente.</div>`; return; }
+    const l=document.createElement("div"); l.className="lista";
+    LOTES.forEach(lo=>{
+      const pend=lo.itens.filter(it=>it.saldo>0);
+      const vol=pend.reduce((s,it)=>s+it.saldo,0);
+      const d=document.createElement("div"); d.className="item";
+      d.innerHTML=`<div class="esq"><span class="lote">${esc(lo.lote)}</span>
+        ${lo.cor?`<span class="cor" style="${corGPS(lo.cor)}">${esc(lo.cor)}</span>`:""}
+        <div class="desc">${pend.length} ${pend.length===1?"volume":"volumes"} · ${nBR(vol)} a produzir</div></div>
+        <span class="seta">›</span>`;
+      d.onclick=()=>{ loteSel=lo; NIVEL="volumes"; render(); };
+      l.appendChild(d);
+    });
+    tela.appendChild(l);
+    return;
+  }
+
+  if(NIVEL==="volumes"){
+    $("crumb").textContent=`Lote ${loteSel.lote}`;
+    const pend=loteSel.itens.filter(it=>it.saldo>0);
+    const l=document.createElement("div"); l.className="lista";
+    pend.forEach(it=>{
+      const temEst = EST.ativa && EST.map.has(normCod(it.cod));
+      const d=document.createElement("div"); d.className="item";
+      d.innerHTML=`<div class="esq"><span class="cod">${esc(it.cod)}</span>
+        <div class="desc">${esc(it.desc||"")}</div></div>
+        <div class="dir"><b>${nBR(it.saldo)}</b>a produzir${temEst?"":`<br><span style="color:var(--amber)">sem estrutura</span>`}</div>
+        <span class="seta">›</span>`;
+      d.onclick=()=>{ volSel=it; marcadas=new Map(); NIVEL="pecas"; render(); };
+      l.appendChild(d);
+    });
+    tela.appendChild(l);
+    return;
+  }
+
+  // ---- peças ----
+  $("crumb").textContent=`${loteSel.lote} · ${volSel.cod}`;
+  const pecas = EST.ativa ? (EST.map.get(normCod(volSel.cod))||[]) : [];
+  const l=document.createElement("div"); l.className="lista";
+
+  if(!pecas.length){
+    /* Sem estrutura o operador volta a digitar código. É pior, mas travar a
+       tela seria pior ainda: o lote continua parado e ninguém registra nada. */
+    const a=document.createElement("div"); a.className="aviso";
+    a.innerHTML = EST.ativa
+      ? `Este volume não está na aba de estrutura. Digite o código da peça que falta — 9 dígitos.`
+      : `Aba de estrutura não encontrada. Digite o código da peça que falta — 9 dígitos. Configure o gid em ⚙ para marcar numa lista.`;
+    tela.appendChild(a);
+    const box=document.createElement("div"); box.className="peca";
+    box.innerHTML=`<div class="esq"><input id="codLivre" inputmode="numeric" placeholder="código da peça"
+      style="width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+      border-radius:8px;padding:11px;font-family:'IBM Plex Mono';font-size:15px;min-height:44px"></div>
+      <div class="cnt"><input id="qtdLivre" type="number" inputmode="numeric" min="1" value="1"></div>`;
+    tela.appendChild(box);
+    const add=document.createElement("button"); add.className="voltar";
+    add.style.cssText="width:100%;margin-top:10px;min-height:48px";
+    add.textContent="+ adicionar peça";
+    add.onclick=()=>{
+      const c=normCod($("codLivre").value), q=parseInt($("qtdLivre").value,10);
+      if(c.length<9) return toast("Código precisa ter 9 dígitos","err");
+      if(!(q>0))     return toast("Quantidade deve ser maior que zero","err");
+      marcadas.set(c,q); $("codLivre").value=""; $("qtdLivre").value="1";
+      toast(`${c} · ${q}`,"ok"); pintaResumo(); listaLivres();
+    };
+    tela.appendChild(add);
+    const ul=document.createElement("div"); ul.className="lista"; ul.id="livres"; ul.style.marginTop="10px";
+    tela.appendChild(ul);
+    listaLivres(); pintaResumo();
+    return;
+  }
+
+  pecas.forEach(p=>{
+    const d=document.createElement("div"); d.className="peca";
+    const qt=marcadas.get(p.cod)||0;
+    if(qt>0) d.classList.add("on");
+    d.innerHTML=`<div class="esq">
+        <div class="pd">${esc(p.desc||"(sem descrição)")}</div>
+        <div class="pc">${esc(p.cod)}</div>
+        <div class="un">${p.porUn} por volume · ${nBR(p.porUn*volSel.saldo)} p/ fechar</div>
+      </div>
+      <div class="cnt">
+        <button data-a="-">−</button>
+        <input type="number" inputmode="numeric" min="0" value="${qt}">
+        <button data-a="+">+</button>
+      </div>`;
+    const inp=d.querySelector("input");
+    const sync=()=>{ const v=Math.max(0,parseInt(inp.value,10)||0);
+      inp.value=v; if(v>0) marcadas.set(p.cod,v); else marcadas.delete(p.cod);
+      d.classList.toggle("on", v>0); pintaResumo(); };
+    d.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      const v=Math.max(0,(parseInt(inp.value,10)||0) + (b.dataset.a==="+"?1:-1));
+      inp.value=v; sync();
+    });
+    inp.onchange=sync; inp.oninput=sync;
+    l.appendChild(d);
+  });
+  tela.appendChild(l);
+  pintaResumo();
+}
+
+function listaLivres(){
+  const ul=$("livres"); if(!ul) return;
+  ul.innerHTML="";
+  marcadas.forEach((q,c)=>{
+    const d=document.createElement("div"); d.className="peca on";
+    d.innerHTML=`<div class="esq"><div class="pd">${esc(c)}</div><div class="pc">lançado à mão</div></div>
+      <div class="cnt"><input type="number" value="${q}" readonly>
+      <button data-x="1">×</button></div>`;
+    d.querySelector("[data-x]").onclick=()=>{ marcadas.delete(c); listaLivres(); pintaResumo(); };
+    ul.appendChild(d);
+  });
+}
+
+function pintaResumo(){
+  const n=marcadas.size;
+  const tot=[...marcadas.values()].reduce((s,q)=>s+q,0);
+  $("resumo").innerHTML = n
+    ? `<b>${n}</b> ${n===1?"peça":"peças"} · ${nBR(tot)} no total`
+    : `marque o que falta`;
+  $("btnEnviar").disabled = !n;
+}
+
+/* ---------- envio ----------
+   POST com text/plain evita o preflight OPTIONS, que o Apps Script não
+   responde. Se ainda assim o navegador barrar, cai para JSONP — caminho que
+   o app da Embalagem já usa e atravessa qualquer política de CORS. */
+function enviarJSONP(url, payload){
+  return new Promise((ok,err)=>{
+    const cb="cb"+Date.now();
+    const t=setTimeout(()=>{ limpa(); err(new Error("sem resposta do Apps Script")); }, 20000);
+    function limpa(){ clearTimeout(t); delete window[cb]; s.remove(); }
+    window[cb]=r=>{ limpa(); ok(r); };
+    const s=document.createElement("script");
+    s.src=url+(url.includes("?")?"&":"?")+"callback="+cb+"&payload="+encodeURIComponent(JSON.stringify(payload));
+    s.onerror=()=>{ limpa(); err(new Error("falha de rede")); };
+    document.body.appendChild(s);
+  });
+}
+async function enviar(){
+  if(!CFG.url){ toast("Configure a URL do Apps Script em ⚙","err"); return; }
+  const btn=$("btnEnviar"); btn.disabled=true; const antes=btn.textContent; btn.textContent="Enviando…";
+  const payload={
+    lote: loteSel.lote, volume: volSel.cod,
+    operador: CFG.operador||"", obs:"",
+    pecas: [...marcadas].map(([cod,qtd])=>({cod,qtd}))
+  };
+  try{
+    let r;
+    try{
+      const res=await fetch(CFG.url,{method:"POST",
+        headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload)});
+      r=await res.json();
+    }catch(e){ r=await enviarJSONP(CFG.url,payload); }
+
+    if(r && r.ok){
+      toast(`Gravado — ${r.gravadas} ${r.gravadas===1?"peça":"peças"} do lote ${payload.lote}`,"ok");
+      marcadas=new Map(); NIVEL="volumes"; render();
+    } else {
+      toast("Não gravou: "+((r&&r.erro)||"resposta inesperada"),"err");
+    }
+  }catch(e){
+    toast("Não gravou: "+e.message,"err");
+  }finally{
+    btn.textContent=antes; pintaResumo();
+  }
+}
+
+/* ---------- carga ---------- */
+async function carregar(){
+  setStatus("","Lendo planilha…");
+  try{
+    const res=await fetch(abaURL(CFG.gid),{cache:"no-store"});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const txt=await res.text();
+    if(/<html/i.test(txt)) throw new Error("sem-acesso");
+    LOTES=rowsToLotes(parseCSV(txt));
+    await carregarEstrutura();
+    const est = EST.ativa
+      ? ` · estrutura <b>${EST.aba}</b>: ${nBR(EST.map.size)} volumes, ${nBR(EST.n)} peças`
+      : ` · <span style="color:var(--amber)">sem aba de estrutura — lançamento por código</span>`;
+    const semUrl = CFG.url ? "" : ` · <span style="color:var(--red)">falta a URL do Apps Script (⚙)</span>`;
+    setStatus(CFG.url?"ok":"warn", `<b>${LOTES.length}</b> lotes com pendência${est}${semUrl}`);
+  }catch(e){
+    LOTES=[];
+    setStatus("err", String(e.message).includes("sem-acesso")
+      ? "Sem acesso à planilha — compartilhe como “qualquer pessoa com o link: leitor”."
+      : "Não consegui ler a planilha agora ("+e.message+")");
+  }
+  NIVEL="lotes"; render();
+}
+
+/* ---------- eventos ---------- */
+$("btnVoltar").onclick=()=>{
+  if(NIVEL==="pecas"){ NIVEL="volumes"; marcadas=new Map(); }
+  else if(NIVEL==="volumes") NIVEL="lotes";
+  render();
+};
+$("btnEnviar").onclick=enviar;
+$("btnCfg").onclick=()=>{ const b=$("cfgBox"); b.hidden=!b.hidden; if(!b.hidden) pintaCfg(); };
+$("cfgFechar").onclick=()=>{ $("cfgBox").hidden=true; };
+function pintaCfg(){
+  $("cfgOper").value=CFG.operador||""; $("cfgUrl").value=CFG.url||"";
+  $("cfgSheet").value=CFG.sheet; $("cfgGid").value=CFG.gid; $("cfgEst").value=CFG.estrutura||"";
+}
+$("cfgSalvar").onclick=()=>{
+  const sheet=extraiId($("cfgSheet").value);
+  if(!sheet){ toast("Informe a planilha","err"); return; }
+  CFG={ sheet, gid:$("cfgGid").value.trim()||CFG_PADRAO.gid,
+        estrutura:$("cfgEst").value.trim(), url:$("cfgUrl").value.trim(),
+        operador:$("cfgOper").value.trim() };
+  try{ localStorage.setItem(CFG_KEY,JSON.stringify(CFG)); }catch(e){}
+  $("cfgBox").hidden=true; toast("Configuração salva","ok"); carregar();
+};
+
+carregar();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
