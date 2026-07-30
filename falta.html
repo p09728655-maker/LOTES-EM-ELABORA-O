@@ -165,8 +165,11 @@
   <input type="text" id="cfgGid" spellcheck="false" placeholder="1540822534">
   <label for="cfgEst">Aba da estrutura (gid)</label>
   <input type="text" id="cfgEst" spellcheck="false" placeholder="gid da aba ESTRUTURA">
-  <div class="obs">Sem a estrutura a tela ainda funciona, mas o operador precisa digitar o
-    código da peça em vez de marcar numa lista.</div>
+  <div class="obs">Sem a estrutura a tela ainda funciona: o operador procura a peça pela
+    descrição em vez de marcar numa lista pronta.</div>
+  <label for="cfgSemi">Aba do catálogo de peças (gid)</label>
+  <input type="text" id="cfgSemi" spellcheck="false" placeholder="gid da aba SEMIACABADO">
+  <div class="obs">Usada na busca por descrição. Carrega só quando alguém procura.</div>
   <div class="acoes">
     <button class="go" id="cfgSalvar">Salvar</button>
     <button id="cfgFechar">Fechar</button>
@@ -191,6 +194,7 @@ const CFG_PADRAO = {
   sheet:"1W9bK_IoWknk8eKFbSWCMxILAQcaXuWD2gG7B0jcwFzg",
   gid:"1540822534",   // aba de programação (Lote/Data/Codigo/Qtd_cx/SALDO)
   estrutura:"",       // aba ESTRUTURA — preencher depois de criada
+  semi:"",            // aba do catálogo de peças (SEMIACABADO), para a busca
   url:"",             // Web App do Apps Script
   operador:""
 };
@@ -215,7 +219,7 @@ const extraiId = s => { const t=String(s||"").trim();
    público, e a URL é a única coisa entre o endpoint e a internet. */
 (function bootstrapPorLink(){
   const q=new URLSearchParams(location.search);
-  const de={url:"url", op:"operador", est:"estrutura", sheet:"sheet", gid:"gid"};
+  const de={url:"url", op:"operador", est:"estrutura", semi:"semi", sheet:"sheet", gid:"gid"};
   let mudou=false;
   for(const k in de){
     let v=q.get(k); if(v===null) continue;
@@ -362,10 +366,74 @@ async function carregarEstrutura(){
   }
 }
 
+/* ---------- catálogo de peças (aba SEMIACABADO) ----------
+   Rede de segurança para o volume que não está na estrutura: em vez de
+   digitar 9 dígitos de cabeça, o operador procura por descrição ("TAMPO
+   680") e toca no resultado.
+
+   Carrega SOB DEMANDA, na primeira busca. São ~4.400 peças e uns 200 KB;
+   baixar isso na rede da fábrica em toda abertura, para na maioria das
+   vezes não usar, é desperdício que se paga em tela parada. */
+const SEMI = { lista:[], carregado:false, carregando:false, aba:"", erro:"" };
+const ABAS_SEMI = ["SEMIACABADO","PECAS","PEÇAS","CATALOGO","CATÁLOGO"];
+// busca sem acento e sem pontuação, para "PEÇA" achar "PECA"
+const chave = s => String(s||"").toUpperCase()
+  .normalize("NFD").replace(/[̀-ͯ]/g,"")
+  .replace(/[^0-9A-Z ]/g," ").replace(/\s+/g," ").trim();
+
+async function carregarSemi(){
+  if(SEMI.carregado || SEMI.carregando) return;
+  SEMI.carregando=true; SEMI.erro="";
+  const abas=[...new Set([CFG.semi,...ABAS_SEMI].filter(Boolean))];
+  for(const aba of abas){
+    try{
+      const res=await fetch(abaURL(aba),{cache:"no-store"});
+      if(!res.ok) continue;
+      const txt=await res.text();
+      if(/<html/i.test(txt)) continue;
+      const rows=parseCSV(txt);
+      let h=-1, ic, id;
+      for(let i=0;i<Math.min(rows.length,15);i++){
+        const c={}; rows[i].forEach((v,j)=>{ const n=norm(v);
+          if(["codigo","cod","cdigo","peca","pea","sku"].includes(n) && c.cod===undefined) c.cod=j;
+          if(["descricao","descrio","desc","descricaopeca"].includes(n) && c.desc===undefined) c.desc=j; });
+        if(c.cod!==undefined && c.desc!==undefined){ h=i; ic=c.cod; id=c.desc; break; }
+      }
+      if(h<0) continue;
+      const out=[];
+      for(let r=h+1;r<rows.length;r++){
+        const cod=normCod(val(rows[r],ic)); if(cod.length<9) continue;   // pula separadores de grupo
+        const desc=val(rows[r],id);
+        out.push({cod, desc, k:chave(cod+" "+desc)});
+      }
+      if(!out.length) continue;
+      SEMI.lista=out; SEMI.carregado=true; SEMI.aba=aba;
+      break;
+    }catch(e){ /* tenta a próxima */ }
+  }
+  if(!SEMI.carregado) SEMI.erro="aba de peças não encontrada";
+  SEMI.carregando=false;
+}
+
+/* Todos os termos precisam bater — "TAMPO 680" acha "TAMPO 680X302X15",
+   não tudo que tem "tampo". Com 4.400 peças, uma busca frouxa devolve
+   lista grande demais para rolar no celular. */
+function buscarPecas(termo, limite){
+  const t=chave(termo).split(" ").filter(Boolean);
+  if(!t.length) return [];
+  const out=[];
+  for(const p of SEMI.lista){
+    let bate=true;
+    for(const x of t) if(p.k.indexOf(x)<0){ bate=false; break; }
+    if(bate){ out.push(p); if(out.length>=limite) break; }
+  }
+  return out;
+}
+
 /* ---------- estado da navegação ---------- */
 let NIVEL="lotes";      // lotes → volumes → pecas
 let loteSel=null, volSel=null;
-let marcadas=new Map(); // cod da peça → qtd
+let marcadas=new Map(); // cod da peça → {qtd, desc}
 
 /* ---------- telas ---------- */
 const $ = id => document.getElementById(id);
@@ -424,39 +492,74 @@ function render(){
   const l=document.createElement("div"); l.className="lista";
 
   if(!pecas.length){
-    /* Sem estrutura o operador volta a digitar código. É pior, mas travar a
-       tela seria pior ainda: o lote continua parado e ninguém registra nada. */
+    /* Volume fora da estrutura: em vez de travar a tela, o operador procura
+       a peça no catálogo por descrição. Travar seria pior — o lote continua
+       parado e ninguém registra nada. */
     const a=document.createElement("div"); a.className="aviso";
     a.innerHTML = EST.ativa
-      ? `Este volume não está na aba de estrutura. Digite o código da peça que falta — 9 dígitos.`
-      : `Aba de estrutura não encontrada. Digite o código da peça que falta — 9 dígitos. Configure o gid em ⚙ para marcar numa lista.`;
+      ? `Este volume não está na estrutura. Procure a peça pela descrição.`
+      : `Sem aba de estrutura. Procure a peça pela descrição — ou configure o gid em ⚙ para elas virem prontas.`;
     tela.appendChild(a);
-    const box=document.createElement("div"); box.className="peca";
-    box.innerHTML=`<div class="esq"><input id="codLivre" inputmode="numeric" placeholder="código da peça"
+
+    const box=document.createElement("div");
+    box.innerHTML=`<input id="busca" type="search" autocomplete="off"
+      placeholder="ex.: tampo 680  ·  ou o código"
       style="width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
-      border-radius:8px;padding:11px;font-family:'IBM Plex Mono';font-size:15px;min-height:44px"></div>
-      <div class="cnt"><input id="qtdLivre" type="number" inputmode="numeric" min="1" value="1"></div>`;
+      border-radius:9px;padding:13px;font-size:16px;min-height:50px">`;
     tela.appendChild(box);
-    const add=document.createElement("button"); add.className="voltar";
-    add.style.cssText="width:100%;margin-top:10px;min-height:48px";
-    add.textContent="+ adicionar peça";
-    add.onclick=()=>{
-      const c=normCod($("codLivre").value), q=parseInt($("qtdLivre").value,10);
-      if(c.length<9) return toast("Código precisa ter 9 dígitos","err");
-      if(!(q>0))     return toast("Quantidade deve ser maior que zero","err");
-      marcadas.set(c,q); $("codLivre").value=""; $("qtdLivre").value="1";
-      toast(`${c} · ${q}`,"ok"); pintaResumo(); listaLivres();
-    };
-    tela.appendChild(add);
-    const ul=document.createElement("div"); ul.className="lista"; ul.id="livres"; ul.style.marginTop="10px";
-    tela.appendChild(ul);
-    listaLivres(); pintaResumo();
+
+    const res=document.createElement("div"); res.className="lista"; res.id="res";
+    res.style.marginTop="10px"; tela.appendChild(res);
+
+    const sel=document.createElement("div"); sel.className="lista"; sel.id="sel";
+    sel.style.marginTop="14px"; tela.appendChild(sel);
+
+    const inp=$("busca");
+    let t=null;
+    inp.oninput=()=>{ clearTimeout(t); t=setTimeout(()=>procura(inp.value), 180); };
+    async function procura(termo){
+      const alvo=$("res"); if(!alvo) return;
+      if(chave(termo).length<3){ alvo.innerHTML=""; return; }
+      if(!SEMI.carregado){
+        alvo.innerHTML=`<div class="vazio">carregando o catálogo de peças…</div>`;
+        await carregarSemi();
+        if(!SEMI.carregado){
+          /* Sem catálogo, resta o código na mão. Some a busca, some a rede
+             de segurança — mas não some a possibilidade de registrar. */
+          alvo.innerHTML=`<div class="vazio">Catálogo indisponível.<br>Digite o código com 9 dígitos e toque em Enter.</div>`;
+          inp.onkeydown=e=>{ if(e.key!=="Enter") return;
+            const c=normCod(inp.value);
+            if(c.length<9) return toast("Código precisa ter 9 dígitos","err");
+            marcar(c,""); inp.value=""; alvo.innerHTML="";
+          };
+          return;
+        }
+      }
+      const achou=buscarPecas(termo,40);
+      if(!achou.length){ alvo.innerHTML=`<div class="vazio">nada encontrado para “${esc(termo)}”</div>`; return; }
+      alvo.innerHTML="";
+      achou.forEach(p=>{
+        const d=document.createElement("div"); d.className="item";
+        if(marcadas.has(p.cod)) d.style.borderLeftColor="var(--amber)";
+        d.innerHTML=`<div class="esq"><div class="pd" style="font-size:13.5px">${esc(p.desc)}</div>
+          <div class="pc" style="font-family:'IBM Plex Mono';font-size:11px;color:var(--mut2);margin-top:3px">${esc(p.cod)}</div></div>
+          <span class="seta">+</span>`;
+        d.onclick=()=>{ marcar(p.cod,p.desc); procura(inp.value); };
+        alvo.appendChild(d);
+      });
+    }
+    function marcar(cod,desc){
+      if(!marcadas.has(cod)) marcadas.set(cod,{qtd:1,desc:desc});
+      pintaSel(); pintaResumo();
+      toast(desc?desc.slice(0,40):cod,"ok");
+    }
+    pintaSel(); pintaResumo();
     return;
   }
 
   pecas.forEach(p=>{
     const d=document.createElement("div"); d.className="peca";
-    const qt=marcadas.get(p.cod)||0;
+    const qt=(marcadas.get(p.cod)||{}).qtd||0;
     if(qt>0) d.classList.add("on");
     d.innerHTML=`<div class="esq">
         <div class="pd">${esc(p.desc||"(sem descrição)")}</div>
@@ -470,7 +573,7 @@ function render(){
       </div>`;
     const inp=d.querySelector("input");
     const sync=()=>{ const v=Math.max(0,parseInt(inp.value,10)||0);
-      inp.value=v; if(v>0) marcadas.set(p.cod,v); else marcadas.delete(p.cod);
+      inp.value=v; if(v>0) marcadas.set(p.cod,{qtd:v,desc:p.desc||""}); else marcadas.delete(p.cod);
       d.classList.toggle("on", v>0); pintaResumo(); };
     d.querySelectorAll("button").forEach(b=>b.onclick=()=>{
       const v=Math.max(0,(parseInt(inp.value,10)||0) + (b.dataset.a==="+"?1:-1));
@@ -483,22 +586,43 @@ function render(){
   pintaResumo();
 }
 
-function listaLivres(){
-  const ul=$("livres"); if(!ul) return;
+/* Lista do que já foi marcado na busca, com contador e remoção. Fica abaixo
+   dos resultados para a pessoa conferir antes de enviar — o resultado da
+   busca some a cada nova consulta, esta lista não. */
+function pintaSel(){
+  const ul=$("sel"); if(!ul) return;
   ul.innerHTML="";
-  marcadas.forEach((q,c)=>{
+  if(!marcadas.size) return;
+  const tit=document.createElement("div");
+  tit.style.cssText="font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.12em;"+
+    "text-transform:uppercase;color:var(--mut);margin:2px 0 8px";
+  tit.textContent=`marcadas (${marcadas.size})`;
+  ul.appendChild(tit);
+  marcadas.forEach((v,c)=>{
     const d=document.createElement("div"); d.className="peca on";
-    d.innerHTML=`<div class="esq"><div class="pd">${esc(c)}</div><div class="pc">lançado à mão</div></div>
-      <div class="cnt"><input type="number" value="${q}" readonly>
-      <button data-x="1">×</button></div>`;
-    d.querySelector("[data-x]").onclick=()=>{ marcadas.delete(c); listaLivres(); pintaResumo(); };
+    d.innerHTML=`<div class="esq">
+        <div class="pd">${esc(v.desc||"(sem descrição)")}</div>
+        <div class="pc">${esc(c)}</div></div>
+      <div class="cnt">
+        <button data-a="-">−</button>
+        <input type="number" inputmode="numeric" min="0" value="${v.qtd}">
+        <button data-a="+">+</button>
+      </div>`;
+    const inp=d.querySelector("input");
+    const sync=()=>{ const n=Math.max(0,parseInt(inp.value,10)||0);
+      if(n>0){ marcadas.set(c,{qtd:n,desc:v.desc}); inp.value=n; }
+      else { marcadas.delete(c); pintaSel(); }
+      pintaResumo(); };
+    d.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      inp.value=Math.max(0,(parseInt(inp.value,10)||0)+(b.dataset.a==="+"?1:-1)); sync(); });
+    inp.onchange=sync; inp.oninput=sync;
     ul.appendChild(d);
   });
 }
 
 function pintaResumo(){
   const n=marcadas.size;
-  const tot=[...marcadas.values()].reduce((s,q)=>s+q,0);
+  const tot=[...marcadas.values()].reduce((s,v)=>s+(v.qtd||0),0);
   $("resumo").innerHTML = n
     ? `<b>${n}</b> ${n===1?"peça":"peças"} · ${nBR(tot)} no total`
     : `marque o que falta`;
@@ -527,7 +651,7 @@ async function enviar(){
   const payload={
     lote: loteSel.lote, volume: volSel.cod,
     operador: CFG.operador||"", obs:"",
-    pecas: [...marcadas].map(([cod,qtd])=>({cod,qtd}))
+    pecas: [...marcadas].map(([cod,v])=>({cod, qtd:v.qtd}))
   };
   try{
     let r;
@@ -585,13 +709,14 @@ $("btnCfg").onclick=()=>{ const b=$("cfgBox"); b.hidden=!b.hidden; if(!b.hidden)
 $("cfgFechar").onclick=()=>{ $("cfgBox").hidden=true; };
 function pintaCfg(){
   $("cfgOper").value=CFG.operador||""; $("cfgUrl").value=CFG.url||"";
-  $("cfgSheet").value=CFG.sheet; $("cfgGid").value=CFG.gid; $("cfgEst").value=CFG.estrutura||"";
+  $("cfgSheet").value=CFG.sheet; $("cfgGid").value=CFG.gid; $("cfgEst").value=CFG.estrutura||""; $("cfgSemi").value=CFG.semi||"";
 }
 $("cfgSalvar").onclick=()=>{
   const sheet=extraiId($("cfgSheet").value);
   if(!sheet){ toast("Informe a planilha","err"); return; }
   CFG={ sheet, gid:$("cfgGid").value.trim()||CFG_PADRAO.gid,
-        estrutura:$("cfgEst").value.trim(), url:$("cfgUrl").value.trim(),
+        estrutura:$("cfgEst").value.trim(), semi:$("cfgSemi").value.trim(),
+        url:$("cfgUrl").value.trim(),
         operador:$("cfgOper").value.trim() };
   try{ localStorage.setItem(CFG_KEY,JSON.stringify(CFG)); }catch(e){}
   $("cfgBox").hidden=true; toast("Configuração salva","ok"); carregar();

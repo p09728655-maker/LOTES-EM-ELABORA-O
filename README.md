@@ -127,8 +127,28 @@ A lista das peças vem da aba **`ESTRUTURA`** (lista técnica), uma linha por pe
 | `DESCRICAO` | descrição da peça | não |
 
 A aba é procurada pelo gid configurado e depois pelos nomes `ESTRUTURA`, `LISTA TECNICA`,
-`BOM`, `COMPOSICAO`. Volume que não estiver lá **não trava a tela**: cai no modo de digitação
-de código, com aviso. Travar seria pior — o lote continua parado e ninguém registra nada.
+`BOM`, `COMPOSICAO`. A coluna `QTD` é opcional, mas **sem ela a tela não mostra "N por volume"** —
+inventar 1 ali seria apresentar palpite como fato, e é nesse número que o operador se baseia
+para pedir.
+
+### Busca por descrição (aba `SEMIACABADO`)
+Volume que não está na estrutura **não trava a tela**: o operador procura a peça pela descrição
+("tampo 680") numa aba de catálogo — `CODIGO` + `DESCRICAO`, uma linha por peça — e toca no
+resultado. Travar seria pior: o lote continua parado e ninguém registra nada.
+
+O catálogo tem ~4.400 peças e uns 200 KB, então é carregado **sob demanda, na primeira busca**.
+Baixar isso na rede da fábrica a cada abertura, para na maioria das vezes não usar, é desperdício
+que se paga em tela parada. A busca exige que **todos** os termos batam: "tampo 680" acha
+`TAMPO 680X302X15`, não tudo que tem "tampo" — com 4.400 peças, busca frouxa devolve lista
+grande demais para rolar no celular.
+
+Sem o catálogo disponível, resta digitar o código de 9 dígitos e apertar Enter. Some a busca,
+some a rede de segurança, mas não some a possibilidade de registrar.
+
+`ESTRUTURA_SEMENTE.csv` e `SEMIACABADO.csv` no repositório são os dois pontos de partida,
+extraídos da pasta `LOTES_ELABORACAO_2026`. A semente cobre 37 dos 131 códigos da programação
+(28%) e **não é lista técnica**: são as peças que já faltaram naquele volume, sem quantidade por
+unidade. Serve até o ERP exportar a estrutura de verdade.
 
 A gravação vai para a aba **`FALTAS`** por um **Apps Script** publicado na própria planilha
 (`apps-script/Codigo.gs`, com o passo a passo no cabeçalho do arquivo). O painel só lê; sem
