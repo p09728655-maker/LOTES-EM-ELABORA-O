@@ -264,11 +264,18 @@ falhe ao carregar derrubaria a tela inteira.
 ## Impressão / WhatsApp
 Dois botões na barra de controles, sempre referentes à **data de referência** selecionada:
 
-- **🖨 Imprimir / PDF** — monta um relatório gerencial em A4 retrato, fundo branco: cabeçalho com
+- **🖨 Imprimir / PDF** — monta um relatório gerencial em **A4 deitado**, fundo branco: cabeçalho com
   logo e KPIs, bloco de **atraso** (com a peça que trava cada lote), quadro de **carga por etapa**
   (lotes, volumes, pontos, peso e distribuição), detalhamento por etapa com a situação de cada lote
   e as faixas de programados/concluídos. Em "Imprimir → Salvar como PDF" sai o arquivo para mandar
   no grupo. `Ctrl+P` direto do navegador também gera o relatório.
+
+  Deitado porque são 8 colunas de tabela: em pé, `Feito` ficava espremido enquanto sobrava um vão
+  de 3 cm entre `Embalagem` e `Atraso`. As larguras do bloco de atraso vêm de um `<colgroup>` — em
+  `table-layout:fixed` valem as larguras da **primeira** linha, e a primeira ali é o título com
+  `colspan`, então largura em `<th>` o navegador ignora. A orientação é trocada por
+  `montarImpresso` numa tag `<style>` própria: `@page` nomeado resolveria sem JS, mas o suporte é
+  irregular e folha que sai na orientação errada é PDF que ninguém manda.
 
   Não há mais bloco de "movimentação do dia": era a mesma lista do detalhamento por etapa logo
   abaixo, só que resumida — o lote que muda de setor já vem marcado lá. Duas listas do mesmo dado
