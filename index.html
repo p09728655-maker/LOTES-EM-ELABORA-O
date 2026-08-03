@@ -356,6 +356,31 @@
     background:var(--panel2); border:1px solid var(--green); color:var(--green);
     font-size:13px; padding:10px 18px; border-radius:8px; box-shadow:0 6px 24px rgba(0,0,0,.6)}
 
+  /* ---- busca ---- */
+  .grp.busca{position:relative}
+  #busca{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:7px; padding:9px 28px 9px 11px; font-size:13.5px; min-width:210px;
+    font-family:"Inter",system-ui,sans-serif}
+  #busca:focus{outline:none; border-color:var(--amber); background:var(--panel)}
+  #busca::-webkit-search-cancel-button{display:none}
+  .grp.busca .limpa{position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    background:none; border:none; color:var(--mut); font-size:19px; line-height:1;
+    cursor:pointer; padding:0 4px}
+  .grp.busca .limpa:hover{color:var(--ink)}
+  .grp.busca .limpa[hidden]{display:none}
+  .busca-res{margin:0 0 10px; padding:9px 13px; border:1px solid var(--amber-dim);
+    border-radius:8px; background:rgba(255,90,31,.07); font-size:12.5px; color:var(--mut);
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .busca-res[hidden]{display:none}
+  .busca-res b{color:var(--ink); font-family:"IBM Plex Mono"}
+  .busca-res .ir{background:none; border:1px solid var(--line); color:var(--amber);
+    border-radius:20px; padding:3px 11px; font-size:11.5px; cursor:pointer;
+    font-family:"IBM Plex Mono"}
+  .busca-res .ir:hover{border-color:var(--amber); background:rgba(255,90,31,.15)}
+  .busca-res .nada{color:var(--red)}
+  /* filtrado pela busca: sai da tela sem sair da conta dos totais */
+  .fora{display:none !important}
+
   /* ---- abas ---- */
   .abas{display:flex; gap:2px; margin:6px 0 12px; border-bottom:1px solid var(--line);
     overflow-x:auto; scrollbar-width:none}
@@ -653,8 +678,17 @@
     <label class="chk" title="Lista os produtos de cada lote (desmarque para o resumo curto)"><input type="checkbox" id="pItens" checked> produtos</label>
     <button class="b" id="cfgBtn" title="Endereço da planilha e das abas">⚙ Configurações</button>
   </div>
+  <div class="grp busca">
+    <input type="search" id="busca" autocomplete="off" spellcheck="false"
+           placeholder="🔍 lote, interno ou cor" aria-label="Pesquisar lote">
+    <button class="limpa" id="buscaX" hidden title="limpar">×</button>
+  </div>
   <div class="refnote">Ref.: <b id="refTxt">–</b></div>
 </div>
+
+<!-- O lote procurado pode estar em qualquer aba. Em vez de obrigar a
+     procurar aba por aba, a busca diz onde ele está e leva até lá. -->
+<div class="busca-res" id="buscaRes" hidden></div>
 
 <div class="cfg" id="cfgBox" hidden>
   <h3>Configurações</h3>
@@ -1450,6 +1484,53 @@ function situacao(l,i,ref){
 const ehHoje=(l,i,ref)=>{const d=pd(l[ETAPAS[i].key]); return !!(d&&+d===+ref);};
 
 const LATE_TOP=5;        // quantos lotes atrasados a faixa mostra sem abrir
+/* ---------- busca de lote ----------
+   O lote é procurado por três nomes: a OP do ERP (25010), o lote interno da
+   fábrica (139/26) e a cor. norm() tira a pontuação dos dois lados, então
+   digitar "139/26", "139 26" ou só "139" acha o mesmo lote.
+
+   A busca ESCONDE o que não casa, não recalcula nada: os totais do topo e os
+   contadores das abas continuam falando da fábrica inteira. Um KPI que muda
+   quando se digita no campo de busca é um KPI em que ninguém confia. */
+const chaveBusca = l => norm([l.lote,l.interno,l.cor].filter(Boolean).join(" "));
+const ABA_NOME = {elaboracao:"Lotes em elaboração", pendentes:"Volumes pendentes",
+                  elaborados:"Lotes elaborados"};
+let BUSCA="";
+
+function aplicaBusca(){
+  const q=norm(BUSCA);
+  const cx={elaboracao:0, pendentes:0, elaborados:0};
+  document.querySelectorAll("[data-busca]").forEach(el=>{
+    const ok = !q || el.dataset.busca.includes(q);
+    el.classList.toggle("fora", !ok);
+    if(ok && q){ const p=el.closest(".painel");
+      if(p){ const k=p.id.replace("painel-",""); if(k in cx) cx[k]++; } }
+  });
+  /* Estação sem nenhum card do lote procurado sai da tela: procurando um lote
+     só, cinco colunas vazias não ajudam a achar em qual delas ele está. */
+  document.querySelectorAll(".board .station").forEach(st=>{
+    const tem=[...st.querySelectorAll(".card")].some(c=>!c.classList.contains("fora"));
+    st.classList.toggle("fora", !!q && !tem);
+  });
+
+  const cxTot=cx.elaboracao+cx.pendentes+cx.elaborados;
+  const box=document.getElementById("buscaRes");
+  document.getElementById("buscaX").hidden = !BUSCA;
+  if(!BUSCA){ box.hidden=true; return; }
+  box.hidden=false;
+  if(!cxTot){
+    box.innerHTML=`<span class="nada">Nenhum lote com <b>${esc(BUSCA)}</b> nesta data de referência.</span>
+      <span style="color:var(--mut2)">O lote pode estar concluído há mais tempo ou ainda não ter entrado — tente outra data.</span>`;
+    return;
+  }
+  const atual=(document.querySelector(".aba.on")||{}).dataset?.aba;
+  const onde=Object.keys(cx).filter(k=>cx[k]);
+  box.innerHTML=`<span><b>${cxTot}</b> ${cxTot===1?"resultado":"resultados"} para <b>${esc(BUSCA)}</b></span>`+
+    onde.map(k=>k===atual
+      ? `<span style="color:var(--amber)">${cx[k]} nesta aba</span>`
+      : `<button class="ir" data-ir="${k}">${cx[k]} em ${ABA_NOME[k]} →</button>`).join("");
+}
+
 /* Começa aberto: o corte nos maiores existia porque a faixa disputava a
    primeira dobra com o quadro de etapas. Em aba própria a lista é a tela — e
    lote atrasado escondido atrás de um botão é lote que ninguém cobra. O botão
@@ -1615,7 +1696,7 @@ function render(){
     // marca no fecho quantas peças travam o lote, sem precisar abrir
     const selo = fal.length
       ? `<span class="selo-fal">${fal.length} ${fal.length===1?"peça":"peças"}</span>` : "";
-    return `<div class="lrow${tem?" tem":""}${aberto?" aberto":""}" data-lote="${esc(a.l.lote)}">
+    return `<div class="lrow${tem?" tem":""}${aberto?" aberto":""}" data-lote="${esc(a.l.lote)}" data-busca="${chaveBusca(a.l)}">
       <div class="row"><span class="abre">${tem?"▸":""}</span><b class="lt">${a.l.lote}</b>
       <span class="cel-int">${a.l.interno||""}</span>
       <span class="cel-cor">${a.l.cor?`<span class="cor" style="${corGPS(a.l.cor)}">${a.l.cor}</span>`:""}</span>
@@ -1641,14 +1722,14 @@ function render(){
   nbLane.hidden=!sbaixa.length;
   document.getElementById("nbCnt").textContent=sbaixa.length;
   document.getElementById("nbList").innerHTML=sbaixa.map(w=>
-    `<div class="row"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}
+    `<div class="row" data-busca="${chaveBusca(w.l)}"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}
       <span class="tag">emb. ${fmt(pd(w.l.emb))} · ${(w.l.qtd||0).toLocaleString("pt-BR")} vol. sem reporte</span></div>`).join("");
 
   const wl=document.getElementById("waitList"),dl=document.getElementById("doneList");
   document.getElementById("waitCnt").textContent=wait.length;
   document.getElementById("doneCnt").textContent=done.length;
   wl.innerHTML=wait.length?wait.map(w=>
-    `<div class="row"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}<span class="tag" style="color:var(--steel)">${w.dias!=null?"entra em "+w.dias+"d · "+fmt(pd(w.l.corte)):""}</span></div>`).join("")
+    `<div class="row" data-busca="${chaveBusca(w.l)}"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}<span class="tag" style="color:var(--steel)">${w.dias!=null?"entra em "+w.dias+"d · "+fmt(pd(w.l.corte)):""}</span></div>`).join("")
     :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
   /* Elaborados numa tabela: numa aba própria cabe o que a faixa antiga não
      mostrava — lote interno, volumes, pontos, peso e quando embalou. É o que
@@ -1664,7 +1745,7 @@ function render(){
     <thead><tr><th>Lote</th><th>Interno</th><th>Cor</th>
       <th style="text-align:right">Volumes</th><th style="text-align:right">Pontos</th>
       <th style="text-align:right">Peso</th><th>Embalou</th></tr></thead>
-    <tbody>${doneOrd.map(w=>`<tr>
+    <tbody>${doneOrd.map(w=>`<tr data-busca="${chaveBusca(w.l)}">
       <td class="lt">${esc(w.l.lote)}</td>
       <td class="int">${esc(w.l.interno||"–")}</td>
       <td>${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${esc(w.l.cor)}</span>`:""}</td>
@@ -1684,6 +1765,9 @@ function render(){
   document.getElementById("abaPendCnt").textContent  = nBR(volAtraso);
   document.getElementById("abaDoneCnt").textContent  = done.length;
   document.getElementById("pendVazio").hidden = !!(atras.length || sbaixa.length);
+
+  // a busca é reaplicada a cada render: as linhas e cards são recriados
+  aplicaBusca();
 
   if(TVKEY) renderTV(buckets, ref, atras, volAtraso);
 }
@@ -1744,6 +1828,7 @@ function cardEl(l,idx,ref,cont){
   const et=ETAPAS[idx], hoje=(()=>{const d=pd(l[et.key]);return d&&+d===+ref;})();
   const prox=idx<4?ETAPAS[idx+1]:null;
   const c=document.createElement("div"); c.className="card"+(hoje?" today":"")+(cont?" cont":"");
+  c.dataset.busca=chaveBusca(l);
   let stat;
   if(hoje&&prox){ const d=wdBetween(ref,pd(l[prox.key]));
     stat=`<div class="c-status s-today"><span class="dot"></span>Hoje → ${prox.curto} · ${d}d</div>`; }
@@ -2139,6 +2224,24 @@ function irPara(nome){
 }
 document.getElementById("abas").addEventListener("click",e=>{
   const b=e.target.closest(".aba"); if(b) irPara(b.dataset.aba);
+});
+
+/* ---------- eventos da busca ---------- */
+const inpBusca=document.getElementById("busca");
+inpBusca.addEventListener("input",()=>{ BUSCA=inpBusca.value.trim(); aplicaBusca(); });
+inpBusca.addEventListener("keydown",e=>{ if(e.key==="Escape"){ inpBusca.value=""; BUSCA=""; aplicaBusca(); } });
+document.getElementById("buscaX").onclick=()=>{ inpBusca.value=""; BUSCA=""; aplicaBusca(); inpBusca.focus(); };
+// o botão "N em Volumes pendentes →" leva para a aba onde o lote está
+document.getElementById("buscaRes").addEventListener("click",e=>{
+  const b=e.target.closest("[data-ir]"); if(!b) return;
+  irPara(b.dataset.ir); aplicaBusca();
+});
+/* Atalho de teclado: a tela vive aberta num monitor da fábrica e quem chega
+   quer digitar o número direto, sem procurar o campo com o mouse. */
+document.addEventListener("keydown",e=>{
+  if(e.key==="/" && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)){
+    e.preventDefault(); inpBusca.focus(); inpBusca.select();
+  }
 });
 // a aba escolhida sobrevive à recarga: a tela fica aberta o dia todo
 try{ const a=localStorage.getItem(ABA_KEY); if(a && a!=="elaboracao") irPara(a); }catch(e){}

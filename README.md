@@ -133,6 +133,16 @@ atraso mais antigo — um sublote atrasado não se esconde atrás da folga do ir
 A gravação na aba `FALTAS` grava a **OP do sublote** na coluna `LOTE` — é a chave que amarra o
 lançamento à programação — e o interno vai junto em `LOTE_INTERNO`.
 
+Com 45 lotes na esteira, achar o certo rolando a lista com o celular numa mão e a peça na outra
+é onde se perde tempo — então tem um **campo de busca** acima da lista: filtra por número interno
+(`139/26`), por OP de qualquer sublote (`25010`) ou por cor, e a pontuação não importa (`139 26`
+e `139` chegam no mesmo lote). Sobrando um único lote, **Enter abre ele direto**.
+
+O botão voltar **diz para onde volta** (`‹ Volumes`, `‹ 139/26`, `‹ Lotes`): com quatro níveis, um
+`‹` sozinho faz o operador descobrir errando. E sair da tela de peças com algo marcado **pergunta
+antes** — dez peças contadas com a mão suja não podem sumir num toque errado no canto da tela,
+porque não ficaram gravadas em lugar nenhum.
+
 A lista das peças vem da aba **`ESTRUTURA`** (lista técnica), uma linha por peça do volume:
 
 | coluna | conteúdo | obrigatória |

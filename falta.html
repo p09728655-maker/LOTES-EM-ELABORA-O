@@ -35,9 +35,13 @@
   header.top{position:sticky; top:0; z-index:40; background:var(--bg);
     border-bottom:2px solid var(--amber); padding:10px 14px 9px;
     display:flex; align-items:center; gap:10px}
+  /* o voltar diz para onde volta ("‹ Volumes", "‹ 139/26"): com quatro níveis
+     um "‹" sozinho faz o operador descobrir errando. max-width para o destino
+     longo não espremer o título no celular. */
   .voltar{background:none; border:1px solid var(--line); color:var(--ink);
-    border-radius:8px; padding:8px 12px; font-family:"Oswald"; font-size:15px;
-    cursor:pointer; flex:none; min-height:40px}
+    border-radius:8px; padding:8px 11px; font-family:"Oswald"; font-size:14px;
+    cursor:pointer; flex:none; min-height:40px; max-width:38vw;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .voltar:disabled{opacity:.25}
   .tit{flex:1 1 0; min-width:0}
   /* o caminho cresceu (lote · sublote · volume): corta em vez de quebrar
@@ -56,6 +60,20 @@
   .status .led{width:8px; height:8px; border-radius:50%; background:var(--mut2); flex:none}
   .status.ok .led{background:var(--green)} .status.warn .led{background:var(--amber)}
   .status.err .led{background:var(--red)}
+
+  /* busca de lote: alvo de dedo, não de mouse — 50px de altura e o × grande
+     o bastante para limpar sem acertar o teclado por baixo */
+  .buscabar{position:relative; padding:2px 12px 10px}
+  .buscabar[hidden]{display:none}
+  .buscabar input{width:100%; background:var(--panel2); color:var(--ink);
+    border:1px solid var(--line); border-radius:9px; padding:13px 44px 13px 13px;
+    font-size:16px; min-height:50px; font-family:"Inter",system-ui,sans-serif}
+  .buscabar input:focus{outline:none; border-color:var(--amber)}
+  .buscabar input::-webkit-search-cancel-button{display:none}
+  .buscabar .bx{position:absolute; right:18px; top:50%; transform:translateY(-58%);
+    background:none; border:none; color:var(--mut); font-size:28px; line-height:1;
+    padding:0 8px; cursor:pointer}
+  .buscabar .bx[hidden]{display:none}
 
   .wrap{padding:2px 12px}
   .lista{display:flex; flex-direction:column; gap:9px}
@@ -156,6 +174,14 @@
 </header>
 
 <div class="status" id="status"><span class="led"></span><span id="statusTxt">Carregando…</span></div>
+
+<!-- Com 45 lotes na esteira, rolar a lista com o celular na mão e a peça na
+     outra é onde se perde tempo. O operador já sabe o número do lote. -->
+<div class="buscabar" id="buscaBar" hidden>
+  <input type="search" id="buscaLote" autocomplete="off" spellcheck="false"
+         inputmode="search" placeholder="🔍 lote, OP ou cor" aria-label="Pesquisar lote">
+  <button class="bx" id="buscaLoteX" hidden aria-label="limpar">×</button>
+</div>
 
 <div class="cfg" id="cfgBox" hidden>
   <h3>Configurações</h3>
@@ -388,6 +414,8 @@ function agrupaPorInterno(lotes){
     gr.vol  = gr.subs.reduce((s,l)=>s+l.vol,0);
     gr.nvol = gr.subs.reduce((s,l)=>s+l.itens.filter(it=>it.saldo>0).length,0);
     gr.cores=[...new Set(gr.subs.map(s=>s.cor).filter(Boolean))];
+    // por onde a busca acha o lote: interno, qualquer OP do grupo, e as cores
+    gr.chave=norm([gr.interno, ...gr.subs.map(s=>s.lote), ...gr.cores].filter(Boolean).join(" "));
     /* Data do grupo: havendo sublote vencido, vale o que está atrasado há
        mais tempo — é o que cobra ação. Nenhum vencido, vale o que embala
        primeiro. Um sublote atrasado não pode ficar escondido atrás da data
@@ -623,6 +651,7 @@ const loteOp  = l => (l && l.interno) ? l.lote : "";
 /* ---------- estado da navegação ---------- */
 let NIVEL="lotes";      // lotes (internos) → sublotes → volumes → pecas
 let GRUPOS=[];
+let BUSCA="";           // filtro da lista de lotes
 let grupoSel=null, loteSel=null, volSel=null;
 let PECAS=null;         // peças do volume aberto; null = ainda buscando
 let marcadas=new Map(); // cod da peça → {qtd, desc}
@@ -660,17 +689,44 @@ function coresHTML(cores){
   return cores.slice(0,2).map(chipCor).join("")+`<span class="cor">+${cores.length-2} cores</span>`;
 }
 
+/* Para onde o voltar volta. Com quatro níveis (lote → sublote → volume →
+   peças), um "‹" sozinho não diz se o próximo toque sai do volume ou da lista
+   toda — e o operador descobre errando, perdendo o que já marcou. */
+function destinoVoltar(){
+  if(NIVEL==="pecas")    return "Volumes";
+  if(NIVEL==="volumes")  return (grupoSel && grupoSel.subs.length>1) ? loteTit(loteSel) : "Lotes";
+  if(NIVEL==="sublotes") return "Lotes";
+  return "";
+}
+
 function render(){
   const tela=$("tela"); tela.innerHTML="";
-  $("btnVoltar").disabled = NIVEL==="lotes";
+  const dest=destinoVoltar();
+  const bv=$("btnVoltar");
+  bv.disabled = NIVEL==="lotes";
+  bv.textContent = dest ? `‹ ${dest}` : "‹";
+  bv.title = dest ? `Voltar para ${dest}` : "";
   $("barra").hidden = NIVEL!=="pecas";
+  // a busca só existe onde há lista longa para filtrar
+  $("buscaBar").hidden = NIVEL!=="lotes";
+  $("buscaLoteX").hidden = !BUSCA;
 
   if(NIVEL==="lotes"){
     $("crumb").textContent="PPCP · Patrimar";
     if(!GRUPOS.length){ tela.innerHTML=`<div class="vazio">Nenhum lote com volume pendente.</div>`; return; }
+    /* Filtra pelo número interno, pela OP de qualquer sublote ou pela cor.
+       norm() tira a pontuação dos dois lados: "139/26", "139 26" e "139"
+       chegam no mesmo lote. */
+    const q=norm(BUSCA);
+    const lista = q ? GRUPOS.filter(gr=>gr.chave.includes(q)) : GRUPOS;
+    if(!lista.length){
+      tela.innerHTML=`<div class="vazio">Nenhum lote com <b>${esc(BUSCA)}</b>.<br>
+        Procure pelo número interno (139/26), pela OP (25010) ou pela cor.</div>`;
+      return;
+    }
     const l=document.createElement("div"); l.className="lista";
     let cabPend=false, cabProg=false;
-    GRUPOS.forEach(gr=>{
+    lista.forEach(gr=>{
       // separador: o que venceu cobra ação; o que ainda vai embalar, não
       if(gr.pend && !cabPend){ cabPend=true;
         l.appendChild(secao(`Pendentes — passaram da embalagem`, "var(--red)")); }
@@ -1013,12 +1069,39 @@ async function carregar(){
 
 /* ---------- eventos ---------- */
 $("btnVoltar").onclick=()=>{
-  if(NIVEL==="pecas"){ NIVEL="volumes"; marcadas=new Map(); }
+  if(NIVEL==="pecas"){
+    /* Sair das peças descarta o que foi marcado. Dez peças contadas com a
+       mão suja não podem sumir num toque errado no canto da tela — e o
+       operador não tem como recuperar: não ficou gravado em lugar nenhum. */
+    if(marcadas.size && !confirm("Sair sem enviar? "+(marcadas.size===1
+        ? "A peça marcada será perdida."
+        : `As ${marcadas.size} peças marcadas serão perdidas.`)))
+      return;
+    NIVEL="volumes"; marcadas=new Map();
+  }
   // volta para onde veio: a tela de sublotes só existiu se havia mais de um
   else if(NIVEL==="volumes") NIVEL = (grupoSel && grupoSel.subs.length>1) ? "sublotes" : "lotes";
   else if(NIVEL==="sublotes") NIVEL="lotes";
   render();
 };
+
+/* ---------- busca de lote ---------- */
+const inpLote=$("buscaLote");
+inpLote.addEventListener("input",()=>{ BUSCA=inpLote.value.trim(); render(); });
+$("buscaLoteX").onclick=()=>{ inpLote.value=""; BUSCA=""; render(); inpLote.focus(); };
+/* Enter com um único lote na tela abre ele direto: quem digitou o número
+   inteiro já disse qual quer, e o teclado do celular tampa a lista. */
+inpLote.addEventListener("keydown",e=>{
+  if(e.key!=="Enter") return;
+  e.preventDefault(); inpLote.blur();
+  const q=norm(BUSCA); if(!q) return;
+  const achou=GRUPOS.filter(gr=>gr.chave.includes(q));
+  if(achou.length!==1) return;
+  const gr=achou[0]; grupoSel=gr;
+  if(gr.subs.length>1) NIVEL="sublotes";
+  else { loteSel=gr.subs[0]; NIVEL="volumes"; }
+  render();
+});
 $("btnEnviar").onclick=enviar;
 $("btnCfg").onclick=()=>{ const b=$("cfgBox"); b.hidden=!b.hidden; if(!b.hidden) pintaCfg(); };
 $("cfgFechar").onclick=()=>{ $("cfgBox").hidden=true; };
