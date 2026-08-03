@@ -29,33 +29,36 @@
   body{background:var(--bg); color:var(--ink); font-family:"Inter",system-ui,sans-serif;
     -webkit-font-smoothing:antialiased; padding:10px 22px 40px;}
   /* cabeçalho congelado: fica preso no topo enquanto o quadro rola */
+  /* Densidade: o cabeçalho é fixo no topo, então cada pixel dele é um pixel a
+     menos de lote na tela — e é lote que se rola atrás, não KPI. Encolhido o
+     bastante para caber mais uma linha de card sem perder legibilidade. */
   header.top{position:sticky; top:0; z-index:50; background:var(--bg);
-    display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px;
-    border-bottom:2px solid var(--wood); padding:10px 0 9px; margin-top:-10px;
+    display:flex; flex-wrap:wrap; align-items:flex-end; gap:6px 18px;
+    border-bottom:2px solid var(--wood); padding:6px 0 6px; margin-top:-10px;
     box-shadow:0 8px 16px -6px rgba(0,0,0,.9)}
   .brand{display:flex; flex-direction:column; gap:2px; flex:1 1 0}
   .brand .eyebrow{font-family:"IBM Plex Mono"; font-size:11px; letter-spacing:.22em;
     text-transform:uppercase; color:var(--mut)}
   /* o título é a informação menos útil da tela — quem olha já sabe onde está.
      Encolhe para o maior tipo do cabeçalho ser o número que cobra ação. */
-  .brand h1{font-family:"Oswald"; font-weight:600; font-size:22px; letter-spacing:.02em; margin:0; line-height:1}
+  .brand h1{font-family:"Oswald"; font-weight:600; font-size:19px; letter-spacing:.02em; margin:0; line-height:1}
   .brand h1 span{color:var(--amber)}
   /* seis KPIs no desktop: o gap cai de 26 para 18 e eles podem quebrar para a
      segunda linha antes de espremer o número, que é o que se lê de longe */
   .headmeta{flex:1 1 0; display:flex; flex-wrap:wrap; justify-content:flex-end;
-    gap:10px 18px; align-items:flex-end}
+    gap:4px 18px; align-items:flex-end}
   .kpi{display:flex; flex-direction:column; align-items:flex-end; line-height:1}
-  .kpi b{font-family:"Oswald"; font-size:26px; font-weight:600}
-  .kpi small{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut);
-    margin-top:5px; white-space:nowrap}
+  .kpi b{font-family:"Oswald"; font-size:22px; font-weight:600}
+  .kpi small{font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut);
+    margin-top:3px; white-space:nowrap}
 
   /* ---------- veredito do dia: a resposta que se lê em 2 segundos ----------
      Ocupa a linha inteira do cabeçalho (que é sticky), então acompanha a
      rolagem e é a primeira coisa que aparece ao abrir a tela. */
   .verdict{flex:1 0 100%; display:flex; align-items:center; gap:13px;
-    border-radius:10px; padding:11px 16px; margin-top:2px;
-    font-family:"Oswald"; font-weight:600; font-size:22px; letter-spacing:.03em; line-height:1.1}
-  .verdict .ico{font-size:23px; line-height:1; flex:none}
+    border-radius:10px; padding:7px 14px; margin-top:1px;
+    font-family:"Oswald"; font-weight:600; font-size:19px; letter-spacing:.03em; line-height:1.1}
+  .verdict .ico{font-size:19px; line-height:1; flex:none}
   /* base 0 para a frase não ser empurrada para a linha de baixo quando quebra */
   .verdict .txt{flex:1 1 0; min-width:0}
   .verdict .sub{margin-left:auto; font-family:"IBM Plex Mono"; font-weight:400; font-size:12px;
@@ -86,8 +89,8 @@
     letter-spacing:.04em; cursor:pointer}
   .refwarn .voltar:hover{background:var(--amber); color:#000}
 
-  .controls{display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:10px 0 6px;
-    padding:8px 12px; background:var(--panel); border:1px solid var(--line); border-radius:10px}
+  .controls{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:7px 0 5px;
+    padding:5px 12px; background:var(--panel); border:1px solid var(--line); border-radius:10px}
   .controls .grp{display:flex; align-items:center; gap:8px}
   .controls label{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--mut)}
   input[type=date]{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
@@ -133,7 +136,7 @@
     justify-content:center; flex:1; min-height:60px; border:1px dashed var(--line); border-radius:8px}
 
   .card{background:var(--panel2); border:1px solid var(--line); border-left:4px solid var(--mut);
-    border-radius:9px; padding:11px 12px; cursor:pointer; transition:.15s}
+    border-radius:9px; padding:8px 11px; cursor:pointer; transition:.15s}
   .card:hover{border-color:var(--steel); transform:translateY(-1px)}
   .card.today{border-left-color:var(--amber); box-shadow:0 0 0 1px var(--amber-dim) inset}
   /* lotes seguidos da mesma OP: a OP e a cor aparecem só no primeiro card.
@@ -151,19 +154,19 @@
   .lane .row .int{font-family:"IBM Plex Mono"; font-size:12.5px; font-weight:600; color:var(--ink)}
   .cor{margin-left:auto; font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
     padding:3px 9px; border-radius:20px; border:1px solid var(--line); color:var(--mut); white-space:nowrap}
-  .c-sub{display:flex; flex-wrap:wrap; gap:5px 12px; margin-top:6px; font-size:12px; color:var(--mut)}
+  .c-sub{display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:4px; font-size:12px; color:var(--mut)}
   .c-sub b{color:var(--ink); font-family:"IBM Plex Mono"}
   /* o que falta produzir no dia: vira pastilha, é o que se procura no card */
   .c-falta{color:var(--red); background:rgba(255,59,48,.13); border:1px solid rgba(255,59,48,.45);
     border-radius:20px; padding:1px 9px; margin-left:-4px}
   .c-falta b{color:var(--red)}
-  .c-status{margin-top:9px; font-size:11.5px; display:flex; align-items:center; gap:6px;
-    padding-top:8px; border-top:1px solid var(--line)}
+  .c-status{margin-top:6px; font-size:11.5px; display:flex; align-items:center; gap:6px;
+    padding-top:5px; border-top:1px solid var(--line)}
   .dot{width:7px; height:7px; border-radius:50%; flex:none}
   .s-today{color:var(--amber)} .s-today .dot{background:var(--amber)}
   .s-next{color:var(--mut)} .s-next .dot{background:var(--steel)}
-  .tl{display:flex; margin-top:10px; justify-content:space-between}
-  .tl .step{display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; position:relative}
+  .tl{display:flex; margin-top:6px; justify-content:space-between}
+  .tl .step{display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; position:relative}
   .tl .step:not(:last-child)::after{content:""; position:absolute; top:5px; left:calc(50% + 7px);
     right:calc(-50% + 7px); height:2px; background:var(--line)}
   .tl .step.past::after{background:var(--green-dim)}
@@ -181,7 +184,7 @@
   .items td.cd{font-family:"IBM Plex Mono"; color:var(--mut2); white-space:nowrap; width:82px}
 
   .lanes{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px; margin-top:14px}
-  .lane{background:var(--panel); border:1px dashed var(--line); border-radius:12px; padding:11px 13px}
+  .lane{background:var(--panel); border:1px dashed var(--line); border-radius:12px; padding:8px 13px}
   .lane h3{font-family:"Oswald"; font-weight:500; font-size:14px; letter-spacing:.05em; margin:0 0 9px;
     color:var(--mut); text-transform:uppercase; display:flex; align-items:center; gap:8px}
   .lane h3 .cnt{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:var(--ink)}
@@ -205,14 +208,14 @@
     padding:1px 8px; min-width:22px; text-align:center}
   .lane.fal h3 .tot{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:#ff9f0a}
   .fl-lote{border:1px solid var(--line); border-left:4px solid #ff9f0a; border-radius:10px;
-    background:var(--panel2); padding:10px 12px; margin-bottom:10px}
+    background:var(--panel2); padding:7px 12px; margin-bottom:7px}
   .fl-cab{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap;
-    border-bottom:1px solid var(--line); padding-bottom:7px; margin-bottom:4px}
+    border-bottom:1px solid var(--line); padding-bottom:5px; margin-bottom:2px}
   .fl-cab .in{font-family:"IBM Plex Mono"; font-size:19px; font-weight:600; color:var(--ink)}
   .fl-cab .op{font-family:"IBM Plex Mono"; font-size:12px; color:var(--mut2)}
   .fl-cab .pz{margin-left:auto; font-family:"IBM Plex Mono"; font-size:11px; color:var(--red); text-align:right}
   .fl-pc{width:100%; border-collapse:collapse}
-  .fl-pc td{padding:5px 6px; border-bottom:1px solid rgba(255,255,255,.05);
+  .fl-pc td{padding:3px 6px; border-bottom:1px solid rgba(255,255,255,.05);
     font-size:12.5px; color:var(--ink); vertical-align:baseline}
   .fl-pc tr:last-child td{border-bottom:none}
   .fl-pc .q{font-family:"IBM Plex Mono"; font-size:16px; font-weight:700; color:#ff9f0a;
@@ -225,8 +228,8 @@
   /* o atraso não é um KPI igual aos outros: é o único que cobra ação.
      Vira caixa vermelha e número maior; os outros três recuam para contexto. */
   .kpi.late{align-items:flex-end; background:rgba(255,59,48,.12); border:1px solid var(--red);
-    border-radius:9px; padding:7px 13px 8px; margin-bottom:-4px}
-  .kpi.late b{color:var(--red); font-size:34px}
+    border-radius:9px; padding:4px 12px 5px; margin-bottom:-3px}
+  .kpi.late b{color:var(--red); font-size:28px}
   .kpi.late small{color:var(--red); opacity:.85}
   .kpi.late[hidden]{display:none}
   .kpi.late.zero{background:rgba(63,209,95,.1); border-color:var(--green)}
@@ -328,7 +331,7 @@
   .tv-it .d{color:var(--ink); flex:1; white-space:normal; word-break:break-word}
   .tv-it .q{font-family:"IBM Plex Mono"; color:var(--amber); margin-left:auto; white-space:nowrap; font-weight:600}
   /* logomarca — vai no meio do cabeçalho, entre o título e os KPIs */
-  .logo{height:52px; width:auto; display:block; flex:none; align-self:center}
+  .logo{height:40px; width:auto; display:block; flex:none; align-self:center}
   @media(max-width:900px){ .logo{height:42px} }
   .tv-logobar{display:flex; justify-content:center; padding:0 0 .6vh}
   .tv-logo{height:5.6vh; width:auto}
@@ -406,11 +409,11 @@
   .fora{display:none !important}
 
   /* ---- abas ---- */
-  .abas{display:flex; gap:2px; margin:6px 0 12px; border-bottom:1px solid var(--line);
+  .abas{display:flex; gap:2px; margin:4px 0 9px; border-bottom:1px solid var(--line);
     overflow-x:auto; scrollbar-width:none}
   .abas::-webkit-scrollbar{display:none}
   .aba{background:none; border:none; border-bottom:2px solid transparent; color:var(--mut);
-    font-family:"Oswald"; font-size:15px; letter-spacing:.04em; padding:9px 15px 8px;
+    font-family:"Oswald"; font-size:15px; letter-spacing:.04em; padding:6px 15px 6px;
     cursor:pointer; white-space:nowrap; margin-bottom:-1px; transition:.14s}
   .aba:hover{color:var(--ink)}
   .aba.on{color:var(--amber); border-bottom-color:var(--amber)}
