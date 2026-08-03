@@ -286,10 +286,9 @@ falhe ao carregar derrubaria a tela inteira.
 Dois botões na barra de controles, sempre referentes à **data de referência** selecionada:
 
 - **🖨 Imprimir / PDF** — monta um relatório gerencial em **A4 deitado**, fundo branco: cabeçalho com
-  logo e KPIs, bloco de **atraso** (com a peça que trava cada lote), **detalhamento por etapa** com
-  a situação de cada lote, quadro de **carga por etapa** (lotes, volumes, pontos, peso e
-  distribuição) e as faixas de programados/sem baixa/concluídos. O detalhamento vem antes do
-  agregado: quem lê o relatório quer o lote, não a média. **Faixa vazia não é impressa** — três
+  logo e KPIs, **detalhamento por etapa** com a situação de cada lote, quadro de **carga por
+  etapa** (lotes, volumes, pontos, peso e distribuição), bloco de **atraso** (com a peça que trava
+  cada lote) e as faixas de programados/sem baixa/concluídos. **Faixa vazia não é impressa** — três
   caixas dizendo "nenhum" empurravam uma folha inteira só para elas. Em "Imprimir → Salvar como PDF" sai o arquivo para mandar
   no grupo. `Ctrl+P` direto do navegador também gera o relatório.
 
