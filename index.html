@@ -1981,19 +1981,20 @@ function buildPrint(ref, comItens){
         <th style="text-align:right">Itens</th><th style="text-align:right">Prod.</th><th>Situação</th></tr></thead>
       ${linhas}</table></div>`;}).join("");
 
-  /* 4. entradas e saídas da esteira */
-  const lanes = `<div class="pv-lanes">
-    <div class="pv-lane"><h3>Programados · ${wait.length}</h3>
-      ${wait.length?wait.map(w=>`<div class="r"><b>${esc(w.l.lote)}</b>${esc(w.l.cor||"")}
-        <span>${w.dias!=null?`entra em ${w.dias}d · ${fmt(pd(w.l.corte))}`:""}</span></div>`).join("")
-        :`<div class="pv-vazio">nenhum</div>`}</div>
-    ${sbaixa.length?`<div class="pv-lane"><h3>Sem baixa · ${sbaixa.length}</h3>
-      ${sbaixa.map(w=>`<div class="r"><b>${esc(w.l.lote)}</b>${esc(w.l.cor||"")}
-        <span>emb. ${fmt(pd(w.l.emb))} · ${nBR(w.l.qtd)} vol.</span></div>`).join("")}</div>`:""}
-    <div class="pv-lane"><h3>Concluídos · ${done.length}</h3>
-      ${done.length?done.map(w=>`<div class="r"><b>${esc(w.l.lote)}</b>${esc(w.l.cor||"")}
-        <span>emb. ${fmt(pd(w.l.emb))}</span></div>`).join("")
-        :`<div class="pv-vazio">nenhum</div>`}</div></div>`;
+  /* 4. entradas e saídas da esteira.
+     Faixa vazia não é impressa. Uma caixa dizendo "nenhum" não informa nada
+     que a ausência dela já não diga — e, no fim do relatório, as três vazias
+     empurravam uma folha inteira só para elas. */
+  const faixa = (tit, arr, linha) => arr.length
+    ? `<div class="pv-lane"><h3>${tit} · ${arr.length}</h3>${arr.map(linha).join("")}</div>` : "";
+  const lanesHTML =
+    faixa("Programados", wait, w=>`<div class="r"><b>${esc(w.l.lote)}</b>${esc(w.l.cor||"")}
+        <span>${w.dias!=null?`entra em ${w.dias}d · ${fmt(pd(w.l.corte))}`:""}</span></div>`) +
+    faixa("Sem baixa", sbaixa, w=>`<div class="r"><b>${esc(w.l.lote)}</b>${esc(w.l.cor||"")}
+        <span>emb. ${fmt(pd(w.l.emb))} · ${nBR(w.l.qtd)} vol.</span></div>`) +
+    faixa("Concluídos", done, w=>`<div class="r"><b>${esc(w.l.lote)}</b>${esc(w.l.cor||"")}
+        <span>emb. ${fmt(pd(w.l.emb))}</span></div>`);
+  const lanes = lanesHTML ? `<div class="pv-lanes">${lanesHTML}</div>` : "";
 
   const agora=new Date();
   /* Tabela de página: o <tfoot> é repetido pelo navegador no pé de TODA folha,
@@ -2020,9 +2021,9 @@ function buildPrint(ref, comItens){
         </div>
       </div>
       ${atrasoBox}
-      ${resumo}
       <div class="pv-h2">Detalhamento por etapa</div>
       ${secs}
+      ${resumo}
       ${lanes}
     </td></tr></tbody></table>`;
 }
