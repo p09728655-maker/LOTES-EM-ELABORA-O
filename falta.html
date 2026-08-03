@@ -65,6 +65,9 @@
   .item:active{background:var(--panel2); transform:scale(.99)}
   .item .esq{flex:1 1 0; min-width:0}
   .item .lote{font-family:"IBM Plex Mono"; font-weight:600; font-size:19px}
+  /* nº da OP ao lado do lote interno: quem confere no ERP ainda precisa dele,
+     mas não é por ele que o operador reconhece o lote na fábrica */
+  .item .op{font-family:"IBM Plex Mono"; font-size:12.5px; color:var(--mut2); margin-left:7px}
   .item .cod{font-family:"IBM Plex Mono"; font-weight:600; font-size:15px}
   .item .desc{font-size:12px; color:var(--mut); margin-top:3px; line-height:1.3}
   .item .dir{flex:none; text-align:right; font-family:"IBM Plex Mono"; font-size:12px; color:var(--mut)}
@@ -277,7 +280,11 @@ const ALIAS = {
   desc:["desc","descricao","descrio","produto","item"],
   qtd:["qtd","qtde","quantidade","qtdcx","qtcx","caixas"],
   prod:["produzido","prod","feito"], saldo:["saldo","falta"],
-  cor:["cor","corgps","cordogps"], interno:["loteinterno","interno","op"]
+  cor:["cor","corgps","cordogps"],
+  // lote interno da fábrica (142/26) — mesma lista de cabeçalhos do painel,
+  // para os dois apps lerem a mesma coluna. "op" ficou de fora de propósito:
+  // uma coluna OP é o número do ERP (25010), não o lote interno.
+  interno:["loteinterno","interno","loteint","numerointerno","loteinternopcp"]
 };
 
 /* ---------- datas ----------
@@ -560,6 +567,16 @@ function buscarPecas(termo, limite){
   return out;
 }
 
+/* ---------- como o lote se chama na tela ----------
+   Na planilha o lote é a OP do ERP (25010), mas na fábrica ninguém chama
+   assim: o operador conhece o lote pelo número interno (142/26), que é o
+   que está escrito no carrinho e na etiqueta. Mostrar o interno na frente
+   e a OP ao lado tira do operador o trabalho de traduzir um no outro no
+   meio do turno — e mantém a OP à vista para quem confere no ERP.
+   Sem coluna de lote interno preenchida, a OP volta a ser o título. */
+const loteTit = l => (l && l.interno) ? l.interno : (l ? l.lote : "");
+const loteOp  = l => (l && l.interno) ? l.lote : "";
+
 /* ---------- estado da navegação ---------- */
 let NIVEL="lotes";      // lotes → volumes → pecas
 let loteSel=null, volSel=null;
@@ -607,7 +624,8 @@ function render(){
         ? (lo.pend ? `emb. ${fmtD(lo.emb)} · ${lo.dias}d de atraso`
                    : `embala ${fmtD(lo.emb)}${lo.dias===0?" (hoje)":""}`)
         : "sem data";
-      d.innerHTML=`<div class="esq"><span class="lote">${esc(lo.lote)}</span>
+      d.innerHTML=`<div class="esq"><span class="lote">${esc(loteTit(lo))}</span>
+        ${loteOp(lo)?`<span class="op">${esc(loteOp(lo))}</span>`:""}
         ${lo.cor?`<span class="cor" style="${corGPS(lo.cor)}">${esc(lo.cor)}</span>`:""}
         <div class="desc">${nv} ${nv===1?"volume":"volumes"} · ${quando}</div></div>
         <div class="dir"><b${lo.pend?"":' style="color:var(--mut)"'}>${nBR(lo.vol)}</b>a produzir</div>
@@ -620,7 +638,7 @@ function render(){
   }
 
   if(NIVEL==="volumes"){
-    $("crumb").textContent=`Lote ${loteSel.lote}`;
+    $("crumb").textContent=`Lote ${loteTit(loteSel)}`+(loteOp(loteSel)?` · OP ${loteOp(loteSel)}`:"");
     const pend=loteSel.itens.filter(it=>it.saldo>0);
     const l=document.createElement("div"); l.className="lista";
     pend.forEach(it=>{
@@ -641,7 +659,7 @@ function render(){
   }
 
   // ---- peças ----
-  $("crumb").textContent=`${loteSel.lote} · ${volSel.cod}`;
+  $("crumb").textContent=`${loteTit(loteSel)} · ${volSel.cod}`;
   if(PECAS===null && EST.ativa){
     tela.innerHTML=`<div class="vazio">buscando as peças deste volume…</div>`;
     return;
@@ -857,7 +875,7 @@ async function enviar(){
     }catch(e){ r=await enviarJSONP(CFG.url,payload); }
 
     if(r && r.ok){
-      toast(`Gravado — ${r.gravadas} ${r.gravadas===1?"peça":"peças"} do lote ${payload.lote}`,"ok");
+      toast(`Gravado — ${r.gravadas} ${r.gravadas===1?"peça":"peças"} do lote ${loteTit(loteSel)}`,"ok");
       marcadas=new Map(); NIVEL="volumes"; render();
     } else {
       toast("Não gravou: "+((r&&r.erro)||"resposta inesperada"),"err");

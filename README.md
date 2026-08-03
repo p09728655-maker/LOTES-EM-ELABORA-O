@@ -117,6 +117,13 @@ Tela separada, feita para **celular no chão de fábrica**: registra o que falta
 cada volume. Fluxo em três toques — **lote → volume → peças** — e o operador **não digita
 código**: marca numa lista e ajusta a quantidade no `−`/`+`.
 
+O lote aparece pelo **número interno da fábrica** (`142/26`), com a **OP do ERP** (`25010`)
+ao lado em cinza — é pelo interno que o operador reconhece o lote no carrinho e na etiqueta, e
+trocar de um para o outro no meio do turno é onde ele erra. O interno vem da coluna
+`LOTE INTERNO` da aba de programação, a mesma que o painel lê; **sem essa coluna preenchida o
+título volta a ser a OP**, como antes. A gravação na aba `FALTAS` continua usando a OP na coluna
+`LOTE` — é a chave que amarra o lançamento à programação.
+
 A lista das peças vem da aba **`ESTRUTURA`** (lista técnica), uma linha por peça do volume:
 
 | coluna | conteúdo | obrigatória |
