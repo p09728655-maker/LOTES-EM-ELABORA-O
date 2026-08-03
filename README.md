@@ -26,13 +26,31 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
 - **KPIs**: lotes ativos, volumes em elaboração, **volumes p/ embalar hoje** e volumes em atraso.
   O de atraso é o único que cobra ação, então vira caixa destacada — vermelha quando há
   pendência, verde quando está zerado.
-- Faixas **Em atraso** e **Sem baixa** vêm **antes** do quadro de estações — as duas cobram ação
-  de alguém e não podem depender de rolagem. **Programados** e **Concluídos** ficam no rodapé.
-- A faixa de atraso mostra os **5 maiores por volume pendente** (`LATE_TOP`) e resume o resto em
-  `+ mais N lotes · X volumes`, que abre no clique. Duas razões: com 18 lotes atrasados a faixa
-  tomava a tela inteira e empurrava o quadro para fora da primeira dobra; e a lista **ordena por
-  volume, não por idade** — metade dos atrasos costuma ser sobra de 5 a 20 volumes em lote 96%
-  feito, que ordenada por dia ocupa o topo e esconde o lote que concentra o volume.
+- **Quatro abas**, não uma rolagem só. São perguntas diferentes e uma competia com a outra pela
+  primeira dobra: o quadro de etapas responde *onde cada lote está*, a faixa de atraso responde
+  *o que ficou para trás*, e empilhadas o atraso empurrava o quadro para fora da tela.
+
+  | aba | o que tem | o contador conta |
+  |---|---|---|
+  | **Lotes em elaboração** | quadro das 5 estações · Programados | lotes ativos |
+  | **Volumes pendentes** | Em atraso · Sem baixa | **volumes** em atraso |
+  | **Lotes elaborados** | tabela do que fechou, mais recente primeiro | lotes |
+  | **⚙ Configuração** | planilha e gids | — |
+
+  Em elaboração conta **lote** (é o que se acompanha no quadro); em pendentes conta **volume**,
+  que é a unidade da cobrança — `29 lotes` e `2.293 volumes` levam a prioridades diferentes. A aba
+  escolhida fica salva: a tela fica ligada o dia todo.
+- A faixa de atraso **abre com a lista completa**. O corte nos `LATE_TOP` maiores existia porque
+  ela disputava espaço com o quadro; em aba própria, lote atrasado escondido atrás de um botão é
+  lote que ninguém cobra. O botão continua para quem quiser encurtar. A lista **ordena por volume,
+  não por idade** — metade dos atrasos costuma ser sobra de 5 a 20 volumes em lote 96% feito, que
+  ordenada por dia ocupa o topo e esconde o lote que concentra o volume.
+- **Busca de lote** (atalho `/`): acha por OP (`25010`), lote interno (`139/26`) ou cor, e a
+  pontuação não importa. Ela **esconde** o que não casa, **não recalcula nada** — os KPIs do topo e
+  os contadores das abas continuam falando da fábrica inteira, porque número que muda quando se
+  digita no campo de busca é número em que ninguém confia. Como o lote pode estar em qualquer aba,
+  o resumo diz **onde ele está** e leva até lá; estação sem nenhum card do lote procurado sai da
+  tela.
 - Cada estação mostra a carga em **volume**, não só em lote, com barra relativa à etapa mais
   cheia: três lotes podem ser 300 ou 3.000 volumes e a coluna fica igual se só contar lote.
 - Navegação por **data de referência** (◀/▶/Hoje) para simular os próximos dias. Quando a data
