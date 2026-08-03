@@ -228,6 +228,18 @@
   .lane.late .row-det .rid{color:var(--mut); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .lane.late .row-det .riq{font-family:"IBM Plex Mono"; color:var(--red); font-weight:600; margin-left:auto}
   .lane.late .row-det .rit{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2); min-width:52px; text-align:right}
+  /* peça em falta: é a causa, não o sintoma — ganha destaque sobre o volume */
+  .lane.late .row-det .ri-tit{font-family:"IBM Plex Mono"; font-size:9.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--mut2); margin:7px 0 2px}
+  .lane.late .row-det .ri-tit:first-child{margin-top:2px}
+  .lane.late .row-det .ri.fal .rid{color:var(--ink)}
+  .lane.late .row-det .ri.fal .riq{color:var(--amber)}
+  .lane.late .row-det .ricd{font-family:"IBM Plex Mono"; font-size:10.5px; color:var(--mut2); flex:none}
+  .lane.late .row-det .ri.fal .rit{min-width:0; max-width:180px; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap; font-size:10.5px}
+  .lane.late .row .lt .selo-fal{margin-left:6px; font-family:"IBM Plex Mono"; font-size:9.5px;
+    font-weight:400; color:var(--amber); border:1px solid rgba(255,159,10,.5);
+    border-radius:20px; padding:0 5px; white-space:nowrap}
   .lane.late .row .lt{font-family:"IBM Plex Mono"; font-size:13.5px; color:var(--ink)}
   .lane.late .row .cel-int{font-family:"IBM Plex Mono"; font-size:12.5px; font-weight:600; color:var(--ink)}
   .lane.late .row .cel-cor{display:flex}
@@ -318,6 +330,8 @@
   button.b.go:hover{background:var(--amber); color:#000; border-color:var(--amber)}
   button.b.zap{border-color:var(--green-dim); color:var(--green)}
   button.b.zap:hover{background:var(--green); color:#000; border-color:var(--green)}
+  button.b.fal{border-color:rgba(255,159,10,.5); color:#ff9f0a}
+  button.b.fal:hover{background:#ff9f0a; color:#000; border-color:#ff9f0a}
   /* aba de configurações: endereço da planilha e das abas */
   .cfg{background:var(--panel); border:1px solid var(--line); border-radius:10px;
     padding:14px 16px 12px; margin:0 0 10px}
@@ -423,6 +437,46 @@
       display:flex; gap:4pt; border-bottom:.2pt dotted #ddd}
     .pv-its li .cd{font-family:"IBM Plex Mono"; color:#888; white-space:nowrap}
     .pv-its li .dq{font-family:"IBM Plex Mono"; margin-left:auto; white-space:nowrap; color:#000}
+    /* peça em falta dentro do bloco de atraso: uma coluna só e mais escura —
+       é a causa da parada, não pode se perder no meio dos volumes */
+    .pv-fal ul{columns:1}
+    .pv-fal li{font-size:8pt; color:#000; border-bottom:.3pt solid #f0d9c8}
+    .pv-fal li .vl{color:#777; font-size:7pt}
+    .pv-fal li .dq{color:#c1121f; font-weight:700}
+
+    /* ---- folha da fábrica: PEÇAS EM FALTA ----
+       Vai para a parede e para a mão do supervisor, então nada de análise:
+       lote, cor, prazo e a peça, em corpo que se lê em pé a um metro. */
+    .pf-tit{font-family:"Oswald"; font-size:13pt; margin:9pt 0 4pt; font-weight:600;
+      border-bottom:1pt solid #333; padding-bottom:2pt;
+      page-break-after:avoid; break-after:avoid}
+    .pf-lote{page-break-inside:avoid; break-inside:avoid; margin-bottom:7pt;
+      border:.8pt solid #999; border-left:3pt solid #c1121f; border-radius:2pt; padding:5pt 7pt}
+    .pf-lote.ok{border-left-color:#999}
+    .pf-cab{display:flex; align-items:baseline; gap:7pt; flex-wrap:wrap;
+      border-bottom:.5pt solid #ddd; padding-bottom:3pt; margin-bottom:3pt}
+    .pf-cab .in{font-family:"IBM Plex Mono"; font-size:16pt; font-weight:600; line-height:1}
+    .pf-cab .op{font-family:"IBM Plex Mono"; font-size:9.5pt; color:#666}
+    .pf-cab .cor{font-size:8.5pt; font-weight:700; text-transform:uppercase; letter-spacing:.04em}
+    .pf-cab .pz{margin-left:auto; font-family:"IBM Plex Mono"; font-size:8.5pt; color:#c1121f;
+      white-space:nowrap; text-align:right}
+    .pf-cab .pz b{font-size:10pt}
+    .pf-pc{width:100%; border-collapse:collapse}
+    .pf-pc td{padding:2.4pt 4pt; border-bottom:.3pt dotted #ccc; font-size:9.5pt; vertical-align:baseline}
+    .pf-pc tr:last-child td{border-bottom:none}
+    .pf-pc .q{font-family:"IBM Plex Mono"; font-size:13pt; font-weight:700; text-align:right;
+      white-space:nowrap; width:38pt; color:#c1121f}
+    .pf-pc .cd{font-family:"IBM Plex Mono"; font-size:8pt; color:#777; white-space:nowrap; width:64pt}
+    .pf-pc .vl{font-size:7.5pt; color:#777; text-align:right; white-space:nowrap; width:32%}
+    .pf-nada{font-size:8.5pt; color:#a25a00; font-style:italic; padding:1pt 0}
+    .pf-sem{border:.8pt dashed #bbb; border-radius:2pt; padding:5pt 7pt; margin-top:6pt;
+      page-break-inside:avoid; break-inside:avoid}
+    .pf-sem h3{font-family:"Oswald"; font-size:9.5pt; margin:0 0 3pt; color:#555;
+      text-transform:uppercase; letter-spacing:.05em; font-weight:500}
+    .pf-sem .r{font-size:8.5pt; padding:1.5pt 0; display:flex; gap:7pt; align-items:baseline;
+      border-bottom:.3pt dotted #ddd}
+    .pf-sem .r b{font-family:"IBM Plex Mono"}
+    .pf-sem .r span{margin-left:auto; font-family:"IBM Plex Mono"; font-size:7.5pt; color:#666}
     .pv-lanes{display:flex; gap:14pt; margin-top:10pt}
     .pv-lane{flex:1; border:.6pt dashed #bbb; border-radius:3pt; padding:5pt 7pt;
       page-break-inside:avoid; break-inside:avoid}
@@ -559,6 +613,7 @@
   </div>
   <div class="grp">
     <button class="b go" id="imprimir" title="Gera a folha A4 — salve como PDF pra mandar no WhatsApp">🖨 Imprimir / PDF</button>
+    <button class="b fal" id="impFaltas" title="Folha para a fábrica: o que falta de peça em cada lote parado">🔧 Peças em falta</button>
     <button class="b zap" id="whats" title="Monta o resumo em texto e abre o WhatsApp">Enviar no WhatsApp</button>
     <label class="chk" title="Lista os produtos de cada lote (desmarque para o resumo curto)"><input type="checkbox" id="pItens" checked> produtos</label>
     <button class="b" id="cfgBtn" title="Endereço da planilha e das abas">⚙ Configurações</button>
@@ -585,6 +640,10 @@
     <div class="cfg-row">
       <label for="cfgCad">Aba do cadastro (gid) <span class="opc">pontos e peso</span></label>
       <input type="text" id="cfgCad" spellcheck="false" placeholder="399284148">
+    </div>
+    <div class="cfg-row">
+      <label for="cfgFaltas">Aba das faltas (gid) <span class="opc">peça que trava o lote</span></label>
+      <input type="text" id="cfgFaltas" spellcheck="false" placeholder="711658815">
     </div>
   </div>
   <div class="cfg-acoes">
@@ -651,7 +710,8 @@ const CFG_PADRAO = {
   sheet:"1W9bK_IoWknk8eKFbSWCMxILAQcaXuWD2gG7B0jcwFzg",
   gid:"1540822534",                     // aba de programação (Lote/Data/.../STATUS)
   baixa:"1353172751",                   // aba BAIXA (reserva; a baixa vem pelo app)
-  cadastro:"905587643"                  // aba de cadastro (CODIGO · P B · PONTOS)
+  cadastro:"905587643",                 // aba de cadastro (CODIGO · P B · PONTOS)
+  faltas:"711658815"                    // aba FALTAS (o que o app do celular lança)
 };
 const CFG_KEY = "lotesElaboracaoCfg";
 function lerCfg(){
@@ -966,6 +1026,110 @@ async function carregarBaixa(){
   aplicarBaixa();
 }
 
+/* ================== FALTAS: A PEÇA QUE TRAVA O LOTE ==================
+   O painel sabia QUANTO falta (volumes pendentes) e nunca POR QUÊ. O porquê
+   é o que a Embalagem lança no celular: a peça que não chegou. Sem isso o
+   relatório diz "700 volumes parados" e quem lê tem de ir perguntar de quê.
+
+   Aba append-only: a mesma peça é lançada de novo quando a contagem muda.
+   Vale SEMPRE o lançamento mais recente de lote+volume+peça — nunca a soma,
+   senão relançar vira falta em dobro. Mesma regra do Apps Script. */
+const FALTAS = { map:new Map(), ativa:false, aba:"", erro:"", linhas:0, quando:null };
+const GIDS_FALTAS = ["711658815"];
+const ABAS_FALTAS = ["FALTAS","FALTA"];
+const faltasURL = aba => /^\d+$/.test(aba)
+  ? `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&gid=${aba}`
+  : `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(aba)}`;
+
+const ALIAS_FAL = {
+  data:["datahora","data","dthora","quando"],
+  lote:["lote","op","numlote"],
+  interno:["loteinterno","interno"],
+  vol:["codvolume","volume","codvol","cod_volume"],
+  volDesc:["descvolume","descricaovolume","descvol"],
+  peca:["codpeca","peca","codigopeca","cod_peca"],
+  pecaDesc:["descpeca","descricaopeca","descricao","desc"],
+  qtd:["qtd","qtde","quantidade","qt"],
+  oper:["operador","quem","usuario"]
+};
+
+/* A quantidade da falta é inteira e pequena (1, 2, 3 peças). O num() do painel
+   trata ponto como separador de milhar — certo para "1.663" volumes, errado se
+   o gviz devolver "3.0" e virar 30. Aqui só é milhar quando o formato é milhar
+   de verdade. */
+function numFalta(x){
+  let s=String(x||"").trim().replace(/\s/g,"");
+  if(!s) return 0;
+  if(/^\d{1,3}(\.\d{3})+$/.test(s)) s=s.replace(/\./g,"");   // 1.663 → 1663
+  else s=s.replace(",",".");                                 // 3,0 → 3.0
+  const v=parseFloat(s);
+  return isFinite(v) ? Math.round(v) : 0;
+}
+
+function parseFaltas(rows){
+  let h=-1, idx={};
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    const c={}; rows[i].forEach((v,j)=>{ const n=norm(v);
+      for(const k in ALIAS_FAL){ if(ALIAS_FAL[k].includes(n) && c[k]===undefined) c[k]=j; } });
+    if(c.lote!==undefined && c.peca!==undefined && c.qtd!==undefined){ h=i; idx=c; break; }
+  }
+  if(h<0) return null;
+
+  /* Chave lote+volume+peça: o último lançamento manda. As linhas vêm em ordem
+     de gravação, mas a data decide — reordenar a aba na mão não pode inverter
+     o resultado. */
+  const map=new Map();
+  for(let r=h+1;r<rows.length;r++){
+    const row=rows[r];
+    const lote=normCod(val(row,idx.lote));
+    const peca=normCod(val(row,idx.peca));
+    const qtd=numFalta(val(row,idx.qtd));
+    if(!lote || !peca) continue;
+    const vol=normCod(val(row,idx.vol));
+    const quando=pd(val(row,idx.data));
+    const k=lote+"|"+vol+"|"+peca;
+    const ant=map.get(k);
+    if(ant && ant.quando && quando && quando<ant.quando) continue;   // chegou mais velho
+    map.set(k,{ lote, vol, peca, qtd, quando,
+      volDesc:val(row,idx.volDesc), pecaDesc:val(row,idx.pecaDesc),
+      oper:val(row,idx.oper), interno:val(row,idx.interno) });
+  }
+
+  // agrupa por lote, maior falta primeiro — é por onde se começa a cobrar
+  const porLote=new Map();
+  map.forEach(f=>{
+    if(f.qtd<=0) return;                      // zerado = a peça chegou
+    if(!porLote.has(f.lote)) porLote.set(f.lote,[]);
+    porLote.get(f.lote).push(f);
+  });
+  porLote.forEach(v=>v.sort((a,b)=>b.qtd-a.qtd));
+  return porLote;
+}
+
+async function carregarFaltas(){
+  FALTAS.map=new Map(); FALTAS.ativa=false; FALTAS.aba=""; FALTAS.erro="";
+  FALTAS.linhas=0; FALTAS.quando=null;
+  const cand=[...new Set([CFG.faltas,...GIDS_FALTAS,...ABAS_FALTAS].filter(Boolean))];
+  for(const aba of cand){
+    try{
+      const res=await fetch(faltasURL(aba),{cache:"no-store"});
+      if(!res.ok) continue;
+      const txt=await res.text();
+      if(/<html/i.test(txt)) continue;
+      const m=parseFaltas(parseCSV(txt));
+      if(!m) continue;                       // aba existe mas não é a de faltas
+      FALTAS.map=m; FALTAS.ativa=true; FALTAS.aba=(/^\d+$/.test(aba)?"FALTAS":aba);
+      m.forEach(v=>{ FALTAS.linhas+=v.length;
+        v.forEach(f=>{ if(f.quando && (!FALTAS.quando || f.quando>FALTAS.quando)) FALTAS.quando=f.quando; }); });
+      return;
+    }catch(e){ /* tenta a próxima candidata */ }
+  }
+  FALTAS.erro="não encontrei a aba FALTAS";
+}
+
+// peças que travam um lote, do maior para o menor
+const faltasDe = l => FALTAS.ativa ? (FALTAS.map.get(normCod(l.lote))||[]) : [];
+
 /* ================== CADASTRO: PONTOS E PESO POR PRODUTO ==================
    Pontos e peso são atributos do PRODUTO, não do lote: moram na aba de
    cadastro (uma linha por código, com `P B` em kg e `PONTOS` por volume) e
@@ -1073,6 +1237,13 @@ function txtCadastro(){
     : "";
   return ` · cadastro <b>${CADASTRO.aba}</b>: ${CADASTRO.map.size.toLocaleString("pt-BR")} códigos${aviso}`;
 }
+function txtFaltas(){
+  if(!FALTAS.ativa)
+    return FALTAS.erro ? ` · <span style="color:var(--amber)">faltas: ${FALTAS.erro}</span>` : "";
+  if(!FALTAS.linhas) return ` · <b>${FALTAS.aba}</b>: nenhuma peça em aberto`;
+  return ` · <b>${FALTAS.aba}</b>: ${FALTAS.linhas} ${FALTAS.linhas===1?"peça":"peças"} em `+
+    `${FALTAS.map.size} ${FALTAS.map.size===1?"lote":"lotes"}`;
+}
 
 /* ---------- frescor do dado ----------
    Dado velho é pior que dado ausente: a tela continua com cara de tempo real
@@ -1103,9 +1274,9 @@ async function carregar(){
     const txt=await res.text();
     if(/<html/i.test(txt)) throw new Error("sem-acesso");
     const lotes=rowsToLotes(parseCSV(txt));
-    if(lotes.length){ LOTES=lotes; ULTIMA_OK=Date.now(); await carregarBaixa(); await carregarCadastro();
-      setStatus("ok",`Planilha lida — <b>${lotes.length}</b> lotes · atualizado ${new Date().toLocaleTimeString("pt-BR")}${txtBaixa()}${txtCadastro()}`);
-    } else { LOTES=DEMO; await carregarBaixa(); await carregarCadastro();
+    if(lotes.length){ LOTES=lotes; ULTIMA_OK=Date.now(); await carregarBaixa(); await carregarCadastro(); await carregarFaltas();
+      setStatus("ok",`Planilha lida — <b>${lotes.length}</b> lotes · atualizado ${new Date().toLocaleTimeString("pt-BR")}${txtBaixa()}${txtCadastro()}${txtFaltas()}`);
+    } else { LOTES=DEMO; await carregarBaixa(); await carregarCadastro(); await carregarFaltas();
       setStatus("warn","Planilha vazia ou cabeçalho não reconhecido — mostrando dados de exemplo. Cole as linhas com o cabeçalho indicado.");
     }
   }catch(e){ LOTES=DEMO; aplicarCadastro();
@@ -1350,13 +1521,26 @@ function render(){
   const linhaAtraso = a => {
     const pct=a.l.qtd?Math.max(0,Math.min(100,Math.round((a.l.qtd-a.pend)/a.l.qtd*100))):0;
     const its=itensPend(a.l);
-    const aberto=its.length && LATE_DET.has(a.l.lote);
-    const det=its.length?`<div class="row-det"${aberto?"":" hidden"}>${its.map(it=>
-      `<div class="ri"><span class="rid">${esc(it.desc||it.cod||"")}</span>
+    const fal=faltasDe(a.l);
+    const tem=its.length||fal.length;
+    const aberto=tem && LATE_DET.has(a.l.lote);
+    /* As peças vêm primeiro: elas respondem POR QUE o lote parou, e é a
+       resposta que muda o que se faz agora. O volume pendente diz quanto. */
+    const blocoFal = fal.length?`<div class="ri-tit">Peças em falta · lançadas na Embalagem</div>`+
+      fal.map(f=>`<div class="ri fal"><span class="rid">${esc(f.pecaDesc||f.peca)}</span>
+         <span class="ricd">${esc(f.peca)}</span>
+         <span class="riq">${f.qtd.toLocaleString("pt-BR")}</span>
+         <span class="rit">${f.volDesc?esc(f.volDesc):esc(f.vol||"")}</span></div>`).join(""):"";
+    const blocoVol = its.length?(fal.length?`<div class="ri-tit">Volumes pendentes</div>`:"")+
+      its.map(it=>`<div class="ri"><span class="rid">${esc(it.desc||it.cod||"")}</span>
          <span class="riq">−${pendItem(it,a.l).toLocaleString("pt-BR")}</span>
-         <span class="rit">de ${(it.qtd||0).toLocaleString("pt-BR")}</span></div>`).join("")}</div>`:"";
-    return `<div class="lrow${its.length?" tem":""}${aberto?" aberto":""}" data-lote="${esc(a.l.lote)}">
-      <div class="row"><span class="abre">${its.length?"▸":""}</span><b class="lt">${a.l.lote}</b>
+         <span class="rit">de ${(it.qtd||0).toLocaleString("pt-BR")}</span></div>`).join(""):"";
+    const det=tem?`<div class="row-det"${aberto?"":" hidden"}>${blocoFal}${blocoVol}</div>`:"";
+    // marca no fecho quantas peças travam o lote, sem precisar abrir
+    const selo = fal.length
+      ? `<span class="selo-fal">${fal.length} ${fal.length===1?"peça":"peças"}</span>` : "";
+    return `<div class="lrow${tem?" tem":""}${aberto?" aberto":""}" data-lote="${esc(a.l.lote)}">
+      <div class="row"><span class="abre">${tem?"▸":""}</span><b class="lt">${a.l.lote}${selo}</b>
       <span class="cel-int">${a.l.interno||""}</span>
       <span class="cel-cor">${a.l.cor?`<span class="cor" style="${corGPS(a.l.cor)}">${a.l.cor}</span>`:""}</span>
       <span class="pend">${a.pend.toLocaleString("pt-BR")}</span>
@@ -1546,12 +1730,19 @@ function buildPrint(ref, comItens){
       <th style="text-align:right">Feito</th><th style="text-align:right">Pendente</th></tr></thead>
     ${atras.map(a=>{
       const feito=(a.l.qtd||0)-a.pend, pct=a.l.qtd?Math.round(feito/a.l.qtd*100):0;
+      const fal=faltasDe(a.l);
       return `<tbody class="lote"><tr><td class="lt" style="color:#c1121f">${esc(a.l.lote)}${a.l.interno?`<span class="int">${esc(a.l.interno)}</span>`:""}</td>
         <td class="cel-cor">${chipCor(a.l.cor)}</td>
         <td class="n" style="text-align:left">${fmt(pd(a.l.emb))}</td>
         <td class="n">${a.dias}d</td><td class="n">${nBR(a.l.qtd)}</td>
         <td class="n">${nBR(feito)} · ${pct}%</td>
         <td class="n" style="color:#c1121f;font-weight:700">${nBR(a.pend)}</td></tr>`
+        /* A peça em falta vem antes do volume pendente: no papel também é ela
+           que responde por que o lote parou. */
+        + (fal.length ? `<tr class="pv-its pv-fal"><td colspan="7"><ul>${
+          fal.map(f=>`<li><span class="cd">${esc(f.peca)}</span><span>${esc(f.pecaDesc||"")}</span>
+             <span class="vl">${esc(f.volDesc||f.vol||"")}</span>
+             <span class="dq">falta ${nBR(f.qtd)}</span></li>`).join("")}</ul></td></tr>`:"")
         + (comItens && itensPend(a.l).length ? `<tr class="pv-its"><td colspan="7"><ul>${
           itensPend(a.l).map(it=>
             `<li><span class="cd">${esc(it.cod||"")}</span><span>${esc(it.desc||"")}</span>
@@ -1639,6 +1830,99 @@ function buildPrint(ref, comItens){
     </td></tr></tbody></table>`;
 }
 
+/* ================== FOLHA DA FÁBRICA: PEÇAS EM FALTA ==================
+   Impresso separado do gerencial, para a parede do setor e para a mão do
+   supervisor. Sem carga por etapa, sem pontos, sem peso: lote, cor, prazo e
+   a peça que falta, em corpo grande. Quem lê esta folha não decide sobre a
+   esteira — decide o que buscar agora.
+
+   Um bloco por LOTE INTERNO, porque é assim que a fábrica chama o lote: o
+   139/26 é um só, mesmo saindo em três OPs. */
+function agrupaAtrasoPorInterno(atras){
+  const g=new Map();
+  atras.forEach(a=>{
+    const k=a.l.interno || (" op:"+a.l.lote);
+    if(!g.has(k)) g.set(k,{interno:a.l.interno||"", subs:[], pecas:[], pend:0, dias:0});
+    const gr=g.get(k);
+    gr.subs.push(a); gr.pend+=a.pend; gr.dias=Math.max(gr.dias,a.dias);
+    faltasDe(a.l).forEach(f=>gr.pecas.push(Object.assign({op:a.l.lote},f)));
+  });
+  return [...g.values()].map(gr=>{
+    gr.tit   = gr.interno || gr.subs[0].l.lote;
+    gr.cores = [...new Set(gr.subs.map(a=>a.l.cor).filter(Boolean))];
+    const ds = gr.subs.map(a=>pd(a.l.emb)).filter(Boolean).map(d=>+d);
+    gr.emb   = ds.length ? new Date(Math.min(...ds)) : null;
+    gr.pecas.sort((a,b)=>b.qtd-a.qtd);
+    return gr;
+  }).sort((a,b)=>
+    (b.pecas.length>0)-(a.pecas.length>0) ||   // quem tem peça a buscar vem antes
+    b.dias-a.dias || b.pend-a.pend);           // depois o mais atrasado
+}
+
+function buildPrintFaltas(ref){
+  const {atras}=computeBuckets(ref);
+  const grupos=agrupaAtrasoPorInterno(atras);
+  const comPeca=grupos.filter(g=>g.pecas.length);
+  const semPeca=grupos.filter(g=>!g.pecas.length);
+  const totPecas=comPeca.reduce((s,g)=>s+g.pecas.reduce((t,f)=>t+f.qtd,0),0);
+
+  const bloco = gr => {
+    const multi=gr.subs.length>1;
+    const prazo = gr.emb
+      ? `emb. ${fmt(gr.emb)}<br><b>${gr.dias}d de atraso</b>` : `<b>sem data</b>`;
+    const linhas = gr.pecas.length
+      ? `<table class="pf-pc">${gr.pecas.map(f=>
+          `<tr><td class="q">${nBR(f.qtd)}</td>
+             <td>${esc(f.pecaDesc||"—")}</td>
+             <td class="cd">${esc(f.peca)}</td>
+             <td class="vl">${multi?esc(f.op)+" · ":""}${esc(f.volDesc||f.vol||"")}</td></tr>`).join("")}</table>`
+      : `<div class="pf-nada">Nenhuma peça lançada — confirmar com a Embalagem o que está faltando.</div>`;
+    return `<div class="pf-lote${gr.pecas.length?"":" ok"}">
+      <div class="pf-cab">
+        <span class="in">${esc(gr.tit)}</span>
+        <span class="op">${esc(gr.subs.map(a=>a.l.lote).join(" · "))}</span>
+        ${gr.cores.map(c=>`<span class="cor">${chipCor(c)}</span>`).join("")}
+        <span class="pz">${prazo}<br>${nBR(gr.pend)} vol. pendentes</span>
+      </div>${linhas}</div>`;
+  };
+
+  const agora=new Date();
+  const semBox = semPeca.length ? `<div class="pf-sem">
+    <h3>Atrasados sem peça lançada · ${semPeca.length}</h3>
+    ${semPeca.map(gr=>`<div class="r"><b>${esc(gr.tit)}</b>
+      <span style="margin-left:0;color:#555">${esc(gr.subs.map(a=>a.l.lote).join(" · "))}${gr.cores.length?" · "+esc(gr.cores.join(", ")):""}</span>
+      <span>${nBR(gr.pend)} vol. · ${gr.dias}d</span></div>`).join("")}
+    <div class="pf-nada" style="margin-top:3pt">Estes passaram da embalagem e ninguém registrou o que falta.</div>
+  </div>` : "";
+
+  document.getElementById("printview").innerHTML=`
+    <table class="pv-page">
+    <tfoot><tr><td><div class="pv-foot">
+      <span>PPCP Patrimar · Peças em falta · ref. ${fmt(ref)}/${ref.getFullYear()}</span>
+      <span>Lançado pela Embalagem no app · vale o último lançamento de cada peça</span>
+      <span>Emitido ${agora.toLocaleDateString("pt-BR")} ${agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span>
+    </div></td></tr></tfoot>
+    <tbody><tr><td>
+      <div class="pv-head">
+        <img src="logo-patrimar.png" alt="Patrimar Móveis">
+        <div class="pv-title"><h1>Peças em Falta</h1>
+          <div class="pv-sub">O que buscar para destravar os lotes · ${dataExt(ref)}</div></div>
+        <div class="pv-kpis">
+          <div><b>${comPeca.length}</b><small>lotes travados</small></div>
+          <div><b>${nBR(totPecas)}</b><small>peças a buscar</small></div>
+          ${semPeca.length?`<div class="atr"><b>${semPeca.length}</b><small>sem lançamento</small></div>`:""}
+        </div>
+      </div>
+      ${!FALTAS.ativa
+        ? `<div class="pf-nada" style="margin-top:10pt">Aba FALTAS não encontrada — sem ela esta folha
+           não tem o que listar. Confira o gid em Configurações.</div>`
+        : (comPeca.length
+            ? `<div class="pf-tit">Lotes parados esperando peça</div>${comPeca.map(bloco).join("")}`
+            : `<div class="pf-nada" style="margin-top:10pt">Nenhuma peça em falta lançada nos lotes atrasados.</div>`)}
+      ${semBox}
+    </td></tr></tbody></table>`;
+}
+
 /* ================== SAÍDA GERENCIAL: TEXTO DO WHATSAPP ==================
    Resumo curto, na formatação do WhatsApp (*negrito*), pra colar no grupo. */
 function textoWhats(ref, comItens){
@@ -1709,8 +1993,14 @@ document.getElementById("lateLane").addEventListener("click",e=>{
 });
 refInput.addEventListener("change",render);
 
+/* Qual folha o beforeprint deve montar. O Ctrl+P do navegador dispara o mesmo
+   evento dos dois botões: sem essa marca, pedir a folha de faltas e o
+   navegador remontaria o gerencial por cima logo antes de imprimir. Volta ao
+   gerencial depois, que é o padrão de quem só aperta Ctrl+P. */
+let IMPRESSO="gerencial";
 function montarImpresso(){
-  buildPrint(pd(refInput.value), document.getElementById("pItens").checked);
+  if(IMPRESSO==="faltas") buildPrintFaltas(pd(refInput.value));
+  else buildPrint(pd(refInput.value), document.getElementById("pItens").checked);
 }
 /* ---------- configurações ---------- */
 const cfgBox=document.getElementById("cfgBox");
@@ -1719,6 +2009,7 @@ function pintaCfg(){
   document.getElementById("cfgGid").value=CFG.gid;
   document.getElementById("cfgBaixa").value=CFG.baixa||"";
   document.getElementById("cfgCad").value=CFG.cadastro||"";
+  document.getElementById("cfgFaltas").value=CFG.faltas||"";
   document.getElementById("srcUrl").textContent=csvURL();
   document.getElementById("cfgAbrir").href=linkPlanilha();
 }
@@ -1729,7 +2020,8 @@ document.getElementById("cfgSalvar").onclick=()=>{
   if(!sheet){ toast("Informe o endereço da planilha"); return; }
   CFG={ sheet, gid:document.getElementById("cfgGid").value.trim()||CFG_PADRAO.gid,
         baixa:document.getElementById("cfgBaixa").value.trim(),
-        cadastro:document.getElementById("cfgCad").value.trim() };
+        cadastro:document.getElementById("cfgCad").value.trim(),
+        faltas:document.getElementById("cfgFaltas").value.trim() };
   try{ localStorage.setItem(CFG_KEY,JSON.stringify(CFG)); }catch(e){}
   pintaCfg(); toast("Configuração salva — recarregando a planilha"); carregar();
 };
@@ -1740,7 +2032,9 @@ document.getElementById("cfgPadrao").onclick=()=>{
 };
 pintaCfg();
 
-document.getElementById("imprimir").onclick=()=>{ montarImpresso(); setTimeout(()=>window.print(),60); };
+document.getElementById("imprimir").onclick=()=>{ IMPRESSO="gerencial"; montarImpresso(); setTimeout(()=>window.print(),60); };
+document.getElementById("impFaltas").onclick=()=>{ IMPRESSO="faltas"; montarImpresso(); setTimeout(()=>window.print(),60); };
+window.addEventListener("afterprint", ()=>{ IMPRESSO="gerencial"; });
 // Ctrl+P direto do navegador também sai com o relatório montado
 window.addEventListener("beforeprint", montarImpresso);
 document.getElementById("whats").onclick=async ()=>{
