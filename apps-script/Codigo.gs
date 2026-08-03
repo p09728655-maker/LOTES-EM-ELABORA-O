@@ -279,7 +279,10 @@ function faltas_gravar_(p) {
         DESC_PECA:    String(it.desc || '').trim(),
         QTD:          Number(it.qtd),
         OPERADOR:     oper,
-        OBS:          obs,
+        /* Um "0" solto na coluna QTD nao se le: quem abre a aba nao sabe se
+           foi engano, campo vazio ou a peca que chegou. A OBS diz. So preenche
+           quando ninguem escreveu nada ali. */
+        OBS:          obs || (Number(it.qtd) === 0 ? 'BAIXA - peca chegou' : ''),
         ENVIO_ID:     envio
       };
       return cab.map(function (nome) {

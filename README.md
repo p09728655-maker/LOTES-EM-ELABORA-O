@@ -175,7 +175,7 @@ topo com `já lançado: N`, e o que muda dali em diante é o que vai para a plan
 | na tela | o que grava |
 |---|---|
 | aumentar/diminuir uma peça lançada | corrige a quantidade |
-| **✓ chegou** (zera o contador) | grava `QTD 0` — a **baixa** |
+| **✓ chegou** (zera o contador) | grava `QTD 0` — a **baixa**, com `OBS: BAIXA - peca chegou` |
 | marcar peça sem lançamento | falta nova |
 | não mexer em nada | **nada** — botão desabilitado |
 
@@ -184,6 +184,12 @@ planilha para sempre porque **não havia como dar baixa**. O `QTD 0` é o que re
 o lançamento mais recente de cada `lote+volume+peça` e descarta zero, então a peça sai da lista de
 faltas sem apagar histórico nenhum. Por isso o Apps Script passou a **aceitar quantidade 0**
 (negativo e fracionário continuam recusados).
+
+Na aba, a peça que teve baixa aparece **duas vezes** — a linha da falta e a linha do zero. É
+histórico, não lista de pendências: apagar perderia quanto tempo a peça faltou e quem resolveu,
+que é o que permite medir depois o tempo médio de resolução. Para o `0` não ficar ilegível, a
+coluna `OBS` vem preenchida com `BAIXA - peca chegou` (a menos que alguém tenha escrito outra
+observação).
 
 O envio manda **só a diferença**, não a tela inteira: menos linha na planilha e a intenção de quem
 lançou fica legível. Depois de gravar, o app atualiza o estado em memória em vez de reler a
