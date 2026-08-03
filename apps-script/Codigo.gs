@@ -75,22 +75,28 @@ function faltas_planilha_() {
 // Cria a aba na primeira chamada. O insertSheet pode falhar por autorizacao
 // ainda nao concedida ou porque outra execucao criou a aba no mesmo instante:
 // nos dois casos vale reconsultar pelo nome antes de desistir.
+//
+// O cabecalho e conferido SEMPRE, inclusive quando a aba ja existia - que e o
+// caso normal. Sair mais cedo aqui deixava a migracao inalcancavel: a unica
+// planilha que ganharia as colunas novas seria uma que ainda nem tinha a aba.
 function faltas_aba_() {
   var ss = faltas_planilha_();
   var sh = ss.getSheetByName(FALTAS_ABA);
-  if (sh) return sh;
 
-  try {
-    sh = ss.insertSheet(FALTAS_ABA);
-  } catch (e) {
-    sh = ss.getSheetByName(FALTAS_ABA);
-    if (!sh) {
-      throw new Error('nao consegui criar a aba ' + FALTAS_ABA + ' em "' + ss.getName() +
-        '". Rode faltas_diagnostico_ pelo editor para conceder a autorizacao. (' +
-        (e && e.message ? e.message : e) + ')');
+  if (!sh) {
+    try {
+      sh = ss.insertSheet(FALTAS_ABA);
+    } catch (e) {
+      sh = ss.getSheetByName(FALTAS_ABA);
+      if (!sh) {
+        throw new Error('nao consegui criar a aba ' + FALTAS_ABA + ' em "' + ss.getName() +
+          '". Rode DIAGNOSTICO pelo editor para conceder a autorizacao. (' +
+          (e && e.message ? e.message : e) + ')');
+      }
     }
   }
-  // so escreve o cabecalho quando a aba esta vazia: reprocessar nao duplica
+
+  // aba vazia ganha o cabecalho; aba com historico e migrada se for a antiga
   if (sh.getLastRow() === 0) {
     sh.appendRow(FALTAS_CABECALHO);
     sh.setFrozenRows(1);
