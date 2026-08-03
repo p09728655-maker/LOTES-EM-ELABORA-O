@@ -990,7 +990,7 @@ function pintaResumo(){
 function enviarJSONP(url, payload){
   return new Promise((ok,err)=>{
     const cb="cb"+Date.now();
-    const t=setTimeout(()=>{ limpa(); err(new Error("sem resposta do Apps Script")); }, 20000);
+    const t=setTimeout(()=>{ limpa(); err(new Error("sem resposta do Apps Script")); }, 12000);
     function limpa(){ clearTimeout(t); delete window[cb]; s.remove(); }
     window[cb]=r=>{ limpa(); ok(r); };
     const s=document.createElement("script");
@@ -1021,12 +1021,26 @@ async function enviar(){
     operador: CFG.operador||"", obs:"",
     pecas: [...marcadas].map(([cod,v])=>({cod, qtd:v.qtd, desc:v.desc||""}))
   };
+  /* Conta os segundos no botão. O Apps Script leva alguns segundos para
+     acordar, e uma tela parada em "Enviando…" faz o operador achar que travou
+     — foi assim que a falta acabou lançada duas vezes. */
+  let seg=0;
+  const relogio=setInterval(()=>{ btn.textContent=`Enviando… ${++seg}s`; },1000);
+
   try{
     let r;
     try{
-      const res=await fetch(CFG.url,{method:"POST",
-        headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload)});
-      r=await res.json();
+      /* Corta o POST em 8s e cai para o JSONP. Abortar não desfaz o que o
+         servidor já gravou — é justamente por isso que o envioId existe: a
+         segunda tentativa carrega o mesmo id e o Apps Script a reconhece.
+         Sem o corte, um POST pendurado deixava o operador esperando sem fim. */
+      const ac=new AbortController();
+      const corta=setTimeout(()=>ac.abort(),8000);
+      try{
+        const res=await fetch(CFG.url,{method:"POST", signal:ac.signal,
+          headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload)});
+        r=await res.json();
+      } finally { clearTimeout(corta); }
     }catch(e){ r=await enviarJSONP(CFG.url,payload); }
 
     if(r && r.ok){
@@ -1038,7 +1052,7 @@ async function enviar(){
   }catch(e){
     toast("Não gravou: "+e.message,"err");
   }finally{
-    btn.textContent=antes; pintaResumo();
+    clearInterval(relogio); btn.textContent=antes; pintaResumo();
   }
 }
 

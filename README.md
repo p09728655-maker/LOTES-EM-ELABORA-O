@@ -239,6 +239,17 @@ por redirecionamento), o app cai no fallback por JSONP e escreve de novo. As dua
 idênticas e ninguém desconfiava olhando a planilha. A conferência acontece **dentro da trava**, então
 duas chamadas do mesmo envio nunca passam as duas.
 
+Com essa proteção no lugar, o app pode **cortar o POST em 8s** e cair para o JSONP sem medo —
+abortar não desfaz o que o servidor já gravou, mas a segunda tentativa leva o mesmo id e é
+reconhecida. Antes, um POST pendurado deixava o operador esperando sem fim, e foi por isso que a
+falta acabou lançada duas vezes: a tela parada parecia travada. O botão agora **conta os segundos**
+(`Enviando… 3s`) enquanto espera.
+
+Do lado do Apps Script, o cabeçalho da aba é lido **uma vez por execução** e guardado em memória.
+O caminho da gravação pedia a linha 1 quatro vezes — migração, complemento, montagem da linha e
+busca do `ENVIO_ID` — e cada `getValues()` é uma ida ao servidor de planilhas com o operador
+esperando de pé. São 3 idas por gravação, contra 6 ou mais.
+
 O painel, de todo modo, usa o **último lançamento** de cada `lote+volume+peça` — nunca a soma — então
 duplicata que já esteja gravada não vira falta dobrada no relatório.
 

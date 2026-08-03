@@ -123,6 +123,7 @@ function faltas_completaCabecalho_(sh) {
   if (!faltando.length) return false;
   sh.getRange(1, cab.length + 1, 1, faltando.length)
     .setValues([faltando]).setFontWeight('bold');
+  FALTAS_CAB_CACHE = cab.concat(faltando);
   return true;
 }
 
@@ -135,12 +136,10 @@ function faltas_completaCabecalho_(sh) {
 // reorganizou, ou que ja foi migrada, fica como esta: adivinhar o layout de
 // uma planilha alheia e o tipo de erro que so aparece depois de estragar.
 function faltas_migraCabecalho_(sh) {
-  var larg = sh.getLastColumn();
-  if (larg !== FALTAS_CABECALHO_V1.length) return false;
-
-  var atual = sh.getRange(1, 1, 1, larg).getValues()[0];
-  for (var i = 0; i < larg; i++) {
-    if (String(atual[i] == null ? '' : atual[i]).trim().toUpperCase() !== FALTAS_CABECALHO_V1[i]) return false;
+  var atual = faltas_cabecalhoAtual_(sh);
+  if (atual.length !== FALTAS_CABECALHO_V1.length) return false;
+  for (var i = 0; i < atual.length; i++) {
+    if (atual[i] !== FALTAS_CABECALHO_V1[i]) return false;
   }
 
   sh.insertColumnAfter(2);   // LOTE_INTERNO, depois de LOTE
@@ -149,23 +148,33 @@ function faltas_migraCabecalho_(sh) {
   sh.getRange(1, 1, 1, FALTAS_CABECALHO.length)
     .setValues([FALTAS_CABECALHO]).setFontWeight('bold');
   sh.setFrozenRows(1);
+  FALTAS_CAB_CACHE = FALTAS_CABECALHO.slice();   // mudou: o cache seguiria velho
   return true;
 }
 
-// O cabecalho que a aba tem de verdade, em maiuscula e sem espaco em volta.
+/* O cabecalho que a aba tem de verdade, em maiuscula e sem espaco em volta.
+   Guardado em memoria pelo tempo da execucao: cada getValues() e uma ida ao
+   servidor de planilhas, e o caminho da gravacao pedia o cabecalho quatro
+   vezes - uma na migracao, uma na completa, uma para montar a linha e uma para
+   achar o ENVIO_ID. Sao quatro idas para ler sempre a mesma linha 1, e o
+   operador esperando de pe na fabrica. */
+var FALTAS_CAB_CACHE = null;
+
 function faltas_cabecalhoAtual_(sh) {
+  if (FALTAS_CAB_CACHE) return FALTAS_CAB_CACHE;
   var larg = sh.getLastColumn();
-  if (larg < 1) return FALTAS_CABECALHO.slice();
-  return sh.getRange(1, 1, 1, larg).getValues()[0].map(function (v) {
-    return String(v == null ? '' : v).trim().toUpperCase();
-  });
+  FALTAS_CAB_CACHE = larg < 1 ? FALTAS_CABECALHO.slice()
+    : sh.getRange(1, 1, 1, larg).getValues()[0].map(function (v) {
+        return String(v == null ? '' : v).trim().toUpperCase();
+      });
+  return FALTAS_CAB_CACHE;
 }
 
 // Esse envio ja foi gravado? Procura de tras para frente: uma repeticao chega
 // segundos depois da original, nunca no meio do historico. Olha so as ultimas
 // linhas para nao ficar mais lento conforme a aba cresce - retentativa que
 // demorasse mais que isso ja teria estourado o timeout do app.
-var FALTAS_JANELA_ID = 400;
+var FALTAS_JANELA_ID = 150;
 
 function faltas_jaGravado_(sh, cab, id) {
   if (!id) return false;
