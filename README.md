@@ -175,7 +175,7 @@ topo com `já lançado: N`, e o que muda dali em diante é o que vai para a plan
 | na tela | o que grava |
 |---|---|
 | aumentar/diminuir uma peça lançada | corrige a quantidade |
-| **✓ chegou** (zera o contador) | grava `QTD 0` — a **baixa**, com `OBS: BAIXA - peca chegou` |
+| **✓ chegou** (zera o contador) | **remove** a peça da aba e arquiva em `FALTAS_HIST` |
 | marcar peça sem lançamento | falta nova |
 | não mexer em nada | **nada** — botão desabilitado |
 
@@ -185,11 +185,18 @@ o lançamento mais recente de cada `lote+volume+peça` e descarta zero, então a
 faltas sem apagar histórico nenhum. Por isso o Apps Script passou a **aceitar quantidade 0**
 (negativo e fracionário continuam recusados).
 
-Na aba, a peça que teve baixa aparece **duas vezes** — a linha da falta e a linha do zero. É
-histórico, não lista de pendências: apagar perderia quanto tempo a peça faltou e quem resolveu,
-que é o que permite medir depois o tempo médio de resolução. Para o `0` não ficar ilegível, a
-coluna `OBS` vem preenchida com `BAIXA - peca chegou` (a menos que alguém tenha escrito outra
-observação).
+A aba `FALTAS` vale como **lista do que está em aberto**: a baixa **remove** as linhas daquela peça
+em vez de empilhar um zero em cima. Assim quem faz relatório conta linha e acerta, sem precisar
+saber da regra do "último lançamento vence" — que continua valendo para **correção de quantidade**,
+essa sim empilhada de propósito.
+
+O que sai vai inteiro para a aba **`FALTAS_HIST`**, criada na primeira baixa, com duas colunas a
+mais: `BAIXA_EM` e `BAIXA_POR`. Apagar de vez perderia quanto tempo a peça ficou faltando, que é o
+único jeito de medir depois se a resposta está melhorando.
+
+Para a planilha que já rodou no formato antigo (com zeros empilhados), rode **`LIMPAR`** uma vez
+pelo menu ao lado de Executar: ele tira da aba as peças cujo lançamento mais recente é zero, junto
+com as linhas anteriores delas. Rodar de novo não faz mal — na segunda vez não acha nada.
 
 O envio manda **só a diferença**, não a tela inteira: menos linha na planilha e a intenção de quem
 lançou fica legível. Depois de gravar, o app atualiza o estado em memória em vez de reler a

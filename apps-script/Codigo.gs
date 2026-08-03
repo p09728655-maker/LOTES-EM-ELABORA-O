@@ -11,6 +11,7 @@
 //   2. no editor: Ctrl+A e Delete para esvaziar, depois cole este arquivo
 //   3. Ctrl+S para salvar
 //   4. no menu ao lado de Executar escolha DIAGNOSTICO -> Executar -> autorize
+//      (LIMPAR, no mesmo menu, tira da aba as pecas que ja foram resolvidas)
 //   5. Implantar -> Nova implantacao -> App da Web
 //        Executar como:     Eu
 //        Quem pode acessar: Qualquer pessoa
@@ -51,6 +52,16 @@ var FALTAS_CABECALHO = ['DATA_HORA', 'LOTE', 'LOTE_INTERNO',
 // Layout anterior, sem lote interno e sem descricao. Quem ja estava gravando
 // tem uma aba assim, com historico dentro: ela e migrada, nunca recriada.
 var FALTAS_CABECALHO_V1 = ['DATA_HORA', 'LOTE', 'COD_VOLUME', 'COD_PECA', 'QTD', 'OPERADOR', 'OBS'];
+
+/* A aba FALTAS passa a valer como LISTA DO QUE ESTA EM ABERTO: dar baixa
+   REMOVE as linhas daquela peca, em vez de empilhar um zero em cima. Assim
+   quem faz relatorio conta linha e acerta, sem precisar saber da regra do
+   "ultimo lancamento vence".
+   O que sai vai inteiro para FALTAS_HIST, com quando e por quem foi resolvido:
+   apagar de vez perderia quanto tempo a peca ficou faltando, que e o unico
+   jeito de medir depois se a resposta esta melhorando. */
+var FALTAS_ABA_HIST  = 'FALTAS_HIST';
+var FALTAS_EXTRA_HIST = ['BAIXA_EM', 'BAIXA_POR'];
 
 
 // --- utilidades ------------------------------------------------------------
@@ -170,6 +181,54 @@ function faltas_cabecalhoAtual_(sh) {
   return FALTAS_CAB_CACHE;
 }
 
+/* A aba de historico nasce na primeira baixa. Mesmo cabecalho da FALTAS, mais
+   quando e por quem foi dada a baixa. */
+function faltas_abaHist_(cab) {
+  var ss = faltas_planilha_();
+  var sh = ss.getSheetByName(FALTAS_ABA_HIST);
+  if (!sh) {
+    try { sh = ss.insertSheet(FALTAS_ABA_HIST); }
+    catch (e) { sh = ss.getSheetByName(FALTAS_ABA_HIST); if (!sh) throw e; }
+  }
+  if (sh.getLastRow() === 0) {
+    var h = cab.concat(FALTAS_EXTRA_HIST);
+    sh.appendRow(h);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, h.length).setFontWeight('bold');
+  }
+  return sh;
+}
+
+/* Tira da FALTAS todas as linhas de lote+volume+peca e as manda para o
+   historico. Devolve quantas sairam.
+
+   Apaga de baixo para cima: deletar a linha 5 empurra a 6 para o lugar dela,
+   e uma varredura de cima para baixo pularia uma linha a cada remocao. */
+function faltas_baixar_(sh, cab, chaves, quando, quem, envio) {
+  var ultima = sh.getLastRow();
+  if (ultima < 2) return 0;
+
+  var iL = cab.indexOf('LOTE'), iV = cab.indexOf('COD_VOLUME'), iP = cab.indexOf('COD_PECA');
+  if (iL < 0 || iP < 0) return 0;
+
+  var vals = sh.getRange(2, 1, ultima - 1, cab.length).getValues();
+  var mover = [], linhas = [];
+  for (var i = 0; i < vals.length; i++) {
+    var k = faltas_normCod_(vals[i][iL]) + '|' +
+            (iV < 0 ? '' : faltas_normCod_(vals[i][iV])) + '|' +
+            faltas_normCod_(vals[i][iP]);
+    if (chaves[k]) { mover.push(vals[i]); linhas.push(i + 2); }
+  }
+  if (!mover.length) return 0;
+
+  var hist = faltas_abaHist_(cab);
+  hist.getRange(hist.getLastRow() + 1, 1, mover.length, cab.length + FALTAS_EXTRA_HIST.length)
+      .setValues(mover.map(function (l) { return l.concat([quando, quem]); }));
+
+  for (var j = linhas.length - 1; j >= 0; j--) sh.deleteRow(linhas[j]);
+  return mover.length;
+}
+
 // Esse envio ja foi gravado? Procura de tras para frente: uma repeticao chega
 // segundos depois da original, nunca no meio do historico. Olha so as ultimas
 // linhas para nao ficar mais lento conforme a aba cresce - retentativa que
@@ -180,10 +239,20 @@ function faltas_jaGravado_(sh, cab, id) {
   if (!id) return false;
   var c = cab.indexOf('ENVIO_ID');
   if (c < 0) return false;
+  if (faltas_temEnvio_(sh, c, id)) return true;
+  /* Envio que so tinha baixa nao deixa linha na FALTAS - ela some junto com as
+     que foram removidas. O rastro fica no historico, entao a repetida so e
+     reconhecida se olhar la tambem. */
+  var ss = faltas_planilha_();
+  var hist = ss.getSheetByName(FALTAS_ABA_HIST);
+  return hist ? faltas_temEnvio_(hist, c, id) : false;
+}
+
+function faltas_temEnvio_(sh, col, id) {
   var ultima = sh.getLastRow();
   if (ultima < 2) return false;
   var inicio = Math.max(2, ultima - FALTAS_JANELA_ID + 1);
-  var vals = sh.getRange(inicio, c + 1, ultima - inicio + 1, 1).getValues();
+  var vals = sh.getRange(inicio, col + 1, ultima - inicio + 1, 1).getValues();
   for (var i = vals.length - 1; i >= 0; i--) {
     if (String(vals[i][0]).trim() === id) return true;
   }
@@ -268,7 +337,22 @@ function faltas_gravar_(p) {
       return { ok: true, gravadas: p.pecas.length, lote: lote, volume: vol, repetido: true };
     }
 
-    var linhas = p.pecas.map(function (it) {
+    /* Qtd 0 e BAIXA: sai da aba em vez de virar mais uma linha. O resto e
+       lancamento e continua sendo acrescentado. Uma correcao de quantidade da
+       mesma peca ainda empilha - e proposital, o historico de quanto faltou
+       vale, e o painel resolve pelo lancamento mais recente. */
+    var baixas = [], novas = [], chaves = {};
+    for (var i = 0; i < p.pecas.length; i++) {
+      var it = p.pecas[i];
+      if (Number(it.qtd) === 0) {
+        baixas.push(it);
+        chaves[faltas_normCod_(lote) + '|' + faltas_normCod_(vol) + '|' + faltas_normCod_(it.cod)] = true;
+      } else {
+        novas.push(it);
+      }
+    }
+
+    var linhas = novas.map(function (it) {
       var v = {
         DATA_HORA:    agora,
         LOTE:         lote,
@@ -279,10 +363,7 @@ function faltas_gravar_(p) {
         DESC_PECA:    String(it.desc || '').trim(),
         QTD:          Number(it.qtd),
         OPERADOR:     oper,
-        /* Um "0" solto na coluna QTD nao se le: quem abre a aba nao sabe se
-           foi engano, campo vazio ou a peca que chegou. A OBS diz. So preenche
-           quando ninguem escreveu nada ali. */
-        OBS:          obs || (Number(it.qtd) === 0 ? 'BAIXA - peca chegou' : ''),
+        OBS:          obs,
         ENVIO_ID:     envio
       };
       return cab.map(function (nome) {
@@ -291,10 +372,36 @@ function faltas_gravar_(p) {
     });
 
     // uma escrita so, em bloco: mais rapido e atomico o bastante sob a trava
-    sh.getRange(sh.getLastRow() + 1, 1, linhas.length, cab.length)
-      .setValues(linhas);
+    if (linhas.length) {
+      sh.getRange(sh.getLastRow() + 1, 1, linhas.length, cab.length).setValues(linhas);
+    }
 
-    return { ok: true, gravadas: linhas.length, lote: lote, volume: vol };
+    var saidas = 0;
+    if (baixas.length) {
+      /* A linha da baixa vai para o historico ANTES de mexer na FALTAS: e ela
+         que carrega o ENVIO_ID, e sem esse registro uma retentativa nao seria
+         reconhecida - as linhas originais ja teriam sumido e a checagem de
+         repetido nao acharia nada. */
+      var hist = faltas_abaHist_(cab);
+      hist.getRange(hist.getLastRow() + 1, 1, baixas.length, cab.length + FALTAS_EXTRA_HIST.length)
+        .setValues(baixas.map(function (it) {
+          var v = {
+            DATA_HORA: agora, LOTE: lote, LOTE_INTERNO: intn,
+            COD_VOLUME: vol, DESC_VOLUME: volD,
+            COD_PECA: faltas_normCod_(it.cod), DESC_PECA: String(it.desc || '').trim(),
+            QTD: 0, OPERADOR: oper,
+            OBS: obs || 'BAIXA - peca chegou', ENVIO_ID: envio
+          };
+          return cab.map(function (nome) {
+            return Object.prototype.hasOwnProperty.call(v, nome) ? v[nome] : '';
+          }).concat([agora, oper]);
+        }));
+      saidas = faltas_baixar_(sh, cab, chaves, agora, oper, envio);
+    }
+
+    return { ok: true, gravadas: p.pecas.length, lancadas: linhas.length,
+             baixadas: baixas.length, linhasRemovidas: saidas,
+             lote: lote, volume: vol };
   } catch (e) {
     return { ok: false, erro: String(e && e.message ? e.message : e) };
   } finally {
@@ -389,5 +496,47 @@ function faltas_testar_() {
 // O Apps Script trata nome terminado em _ como privado e nao o lista no menu
 // ao lado de Executar. Estes dois existem so para aparecerem la.
 
+/* Passa uma vez na aba e tira o que ja esta resolvido: peca cujo lancamento
+   mais recente e zero sai, junto com as linhas anteriores dela. Serve para a
+   planilha que ja rodou no formato antigo, onde a baixa empilhava um zero em
+   vez de remover. Rodar de novo nao faz mal: na segunda vez nao acha nada. */
+function faltas_limpar_() {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(30000); } catch (e) { return 'planilha ocupada, tente de novo'; }
+  try {
+    var sh  = faltas_aba_();
+    var cab = faltas_cabecalhoAtual_(sh);
+    var ultima = sh.getLastRow();
+    if (ultima < 2) return 'aba vazia - nada a limpar';
+
+    var iL = cab.indexOf('LOTE'), iV = cab.indexOf('COD_VOLUME'),
+        iP = cab.indexOf('COD_PECA'), iQ = cab.indexOf('QTD');
+    if (iL < 0 || iP < 0 || iQ < 0) return 'cabecalho sem LOTE/COD_PECA/QTD';
+
+    // ultimo lancamento de cada peca decide; zero significa resolvida
+    var vals = sh.getRange(2, 1, ultima - 1, cab.length).getValues();
+    var estado = {};
+    for (var i = 0; i < vals.length; i++) {
+      var k = faltas_normCod_(vals[i][iL]) + '|' +
+              (iV < 0 ? '' : faltas_normCod_(vals[i][iV])) + '|' +
+              faltas_normCod_(vals[i][iP]);
+      estado[k] = Number(vals[i][iQ]) || 0;
+    }
+    var chaves = {}, n = 0;
+    for (var k2 in estado) if (estado[k2] === 0) { chaves[k2] = true; n++; }
+    if (!n) return 'nenhuma peca resolvida na aba - nada a limpar';
+
+    var saiu = faltas_baixar_(sh, cab, chaves, new Date(), 'LIMPEZA', '');
+    var txt = n + ' peca(s) resolvida(s) -> ' + saiu + ' linha(s) movida(s) para ' + FALTAS_ABA_HIST;
+    Logger.log(txt);
+    return txt;
+  } catch (e) {
+    return 'FALHOU: ' + (e && e.message ? e.message : e);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function LIMPAR()      { return faltas_limpar_(); }
 function DIAGNOSTICO() { return faltas_diagnostico_(); }
 function TESTAR()      { return faltas_testar_(); }
