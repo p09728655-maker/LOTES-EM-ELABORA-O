@@ -265,10 +265,14 @@ falhe ao carregar derrubaria a tela inteira.
 Dois botões na barra de controles, sempre referentes à **data de referência** selecionada:
 
 - **🖨 Imprimir / PDF** — monta um relatório gerencial em A4 retrato, fundo branco: cabeçalho com
-  logo e KPIs, quadro de **carga por etapa** (lotes, peças e distribuição), **movimentação do dia**
-  (o que muda de setor na data), detalhamento por etapa com a situação de cada lote e as faixas de
-  programados/concluídos. Em "Imprimir → Salvar como PDF" sai o arquivo para mandar no grupo.
-  `Ctrl+P` direto do navegador também gera o relatório.
+  logo e KPIs, bloco de **atraso** (com a peça que trava cada lote), quadro de **carga por etapa**
+  (lotes, volumes, pontos, peso e distribuição), detalhamento por etapa com a situação de cada lote
+  e as faixas de programados/concluídos. Em "Imprimir → Salvar como PDF" sai o arquivo para mandar
+  no grupo. `Ctrl+P` direto do navegador também gera o relatório.
+
+  Não há mais bloco de "movimentação do dia": era a mesma lista do detalhamento por etapa logo
+  abaixo, só que resumida — o lote que muda de setor já vem marcado lá. Duas listas do mesmo dado
+  gastavam meia folha e faziam quem lê conferir uma contra a outra.
 - **Enviar no WhatsApp** — monta o mesmo resumo em texto, já na formatação do WhatsApp
   (`*negrito*`), copia para a área de transferência e abre o WhatsApp (`wa.me`, ou o menu de
   compartilhar no celular).
