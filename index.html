@@ -213,11 +213,21 @@
   .lane.late h3 .cnt{margin-left:0; color:var(--bg); background:var(--red); border-radius:20px;
     padding:1px 8px; min-width:22px; text-align:center}
   .lane.late h3 .tot{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:var(--red)}
-  /* grade de colunas fixas: lote · cor · nº · rótulo · de N/% · atraso */
+  /* grade de colunas fixas: ▸ · lote · cor · nº · rótulo · de N/% · atraso */
   .lane.late .row{display:grid; align-items:center; gap:0 10px; padding:6px 0;
-    grid-template-columns:58px 62px 104px 64px 96px 1fr auto;
+    grid-template-columns:12px 58px 62px 104px 64px 96px 1fr auto;
     border-bottom:1px solid rgba(255,59,48,.16)}
-  .lane.late .row:last-child{border-bottom:none}
+  .lane.late .lrow:last-child .row{border-bottom:none}
+  .lane.late .lrow.tem .row{cursor:pointer}
+  .lane.late .row .abre{color:var(--red); font-size:10px; transition:transform .14s}
+  .lane.late .lrow.aberto .abre{transform:rotate(90deg)}
+  /* detalhe do lote: o que falta, produto por produto */
+  .lane.late .row-det{padding:2px 0 8px 22px; border-bottom:1px solid rgba(255,59,48,.16)}
+  .lane.late .lrow:last-child .row-det{border-bottom:none}
+  .lane.late .row-det .ri{display:flex; align-items:baseline; gap:10px; padding:2.5px 0; font-size:12px}
+  .lane.late .row-det .rid{color:var(--mut); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .lane.late .row-det .riq{font-family:"IBM Plex Mono"; color:var(--red); font-weight:600; margin-left:auto}
+  .lane.late .row-det .rit{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2); min-width:52px; text-align:right}
   .lane.late .row .lt{font-family:"IBM Plex Mono"; font-size:13.5px; color:var(--ink)}
   .lane.late .row .cel-int{font-family:"IBM Plex Mono"; font-size:12.5px; font-weight:600; color:var(--ink)}
   .lane.late .row .cel-cor{display:flex}
@@ -234,7 +244,7 @@
     letter-spacing:.04em; cursor:pointer; transition:.14s}
   .maislotes:hover{background:rgba(255,59,48,.14); border-color:var(--red)}
   .maislotes[hidden]{display:none}
-  #lateExtra .row:first-child{border-top:1px solid rgba(255,59,48,.16)}
+  #lateExtra .lrow:first-child .row{border-top:1px solid rgba(255,59,48,.16)}
   .foot{margin-top:26px; font-size:11.5px; color:var(--mut2); line-height:1.6; max-width:760px}
   .foot code{font-family:"IBM Plex Mono"; color:var(--mut); background:var(--panel); padding:1px 5px; border-radius:4px}
   @media(max-width:900px){ .board{grid-template-columns:1fr} .headmeta{flex:0 0 100%; width:100%; justify-content:flex-start; margin-left:0} .lanes{grid-template-columns:1fr} }
@@ -1198,6 +1208,7 @@ const ehHoje=(l,i,ref)=>{const d=pd(l[ETAPAS[i].key]); return !!(d&&+d===+ref);}
 
 const LATE_TOP=5;        // quantos lotes atrasados a faixa mostra sem abrir
 let LATE_ABERTO=false;   // o "mais N lotes" sobrevive às recargas de 5 min
+const LATE_DET=new Set();   // lotes da faixa de atraso abertos no detalhe
 
 /* ---------- veredito do dia ----------
    Uma frase só, com cor, no topo da tela: quem bate o olho precisa sair
@@ -1331,15 +1342,27 @@ function render(){
      no botão e a escolha fica guardada entre recargas.
      Uma célula por coluna, sempre todas: assim os números ficam alinhados
      mesmo quando o lote não tem cor ou o valor tem menos dígitos. */
+  /* Cada linha abre no toque e mostra O QUE falta: produto por produto, com
+     o pendente de cada um. O número agregado diz quanto; quem vai atrás do
+     lote precisa saber de quê — e ia procurar isso lote a lote no quadro.
+     Aberto/fechado sobrevive à recarga de 5 min pelo mesmo motivo do
+     LATE_ABERTO: a tela fica ligada o dia inteiro na fábrica. */
   const linhaAtraso = a => {
     const pct=a.l.qtd?Math.max(0,Math.min(100,Math.round((a.l.qtd-a.pend)/a.l.qtd*100))):0;
-    return `<div class="row"><b class="lt">${a.l.lote}</b>
+    const its=itensPend(a.l);
+    const aberto=its.length && LATE_DET.has(a.l.lote);
+    const det=its.length?`<div class="row-det"${aberto?"":" hidden"}>${its.map(it=>
+      `<div class="ri"><span class="rid">${esc(it.desc||it.cod||"")}</span>
+         <span class="riq">−${pendItem(it,a.l).toLocaleString("pt-BR")}</span>
+         <span class="rit">de ${(it.qtd||0).toLocaleString("pt-BR")}</span></div>`).join("")}</div>`:"";
+    return `<div class="lrow${its.length?" tem":""}${aberto?" aberto":""}" data-lote="${esc(a.l.lote)}">
+      <div class="row"><span class="abre">${its.length?"▸":""}</span><b class="lt">${a.l.lote}</b>
       <span class="cel-int">${a.l.interno||""}</span>
       <span class="cel-cor">${a.l.cor?`<span class="cor" style="${corGPS(a.l.cor)}">${a.l.cor}</span>`:""}</span>
       <span class="pend">${a.pend.toLocaleString("pt-BR")}</span>
       <span class="rot">vol. pendentes</span>
       <span class="pct">de ${(a.l.qtd||0).toLocaleString("pt-BR")} · ${pct}% feito</span>
-      <span class="dias">emb. ${fmt(pd(a.l.emb))} · ${a.dias}d de atraso</span></div>`; };
+      <span class="dias">emb. ${fmt(pd(a.l.emb))} · ${a.dias}d de atraso</span></div>${det}</div>`; };
   ll.innerHTML = atras.slice(0,LATE_TOP).map(linhaAtraso).join("");
   const resto=atras.slice(LATE_TOP);
   const extra=document.getElementById("lateExtra"), btnMais=document.getElementById("lateMais");
@@ -1677,6 +1700,13 @@ document.getElementById("refVoltar").onclick=irParaHoje;
 document.getElementById("reload").onclick=carregar;
 document.getElementById("staleReload").onclick=carregar;
 document.getElementById("lateMais").onclick=()=>{ LATE_ABERTO=!LATE_ABERTO; render(); };
+// um listener na faixa toda: as linhas são recriadas a cada render
+document.getElementById("lateLane").addEventListener("click",e=>{
+  const r=e.target.closest(".lrow.tem"); if(!r) return;
+  const det=r.querySelector(".row-det"); if(!det) return;
+  det.hidden=!det.hidden; r.classList.toggle("aberto",!det.hidden);
+  if(det.hidden) LATE_DET.delete(r.dataset.lote); else LATE_DET.add(r.dataset.lote);
+});
 refInput.addEventListener("change",render);
 
 function montarImpresso(){

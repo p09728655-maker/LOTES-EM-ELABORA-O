@@ -40,8 +40,11 @@
     cursor:pointer; flex:none; min-height:40px}
   .voltar:disabled{opacity:.25}
   .tit{flex:1 1 0; min-width:0}
+  /* o caminho cresceu (lote · sublote · volume): corta em vez de quebrar
+     a linha e empurrar o título para fora do cabeçalho */
   .tit .eyebrow{font-family:"IBM Plex Mono"; font-size:9.5px; letter-spacing:.2em;
-    text-transform:uppercase; color:var(--mut)}
+    text-transform:uppercase; color:var(--mut);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .tit h1{font-family:"Oswald"; font-weight:600; font-size:19px; margin:1px 0 0;
     line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .tit h1 span{color:var(--amber)}
@@ -352,10 +355,50 @@ function rowsToLotes(rows){
     l.dias = l.pend ? wdBetween(l.emb, hj) : (l.emb ? -wdBetween(hj, l.emb) : null);
     l.vol  = l.itens.reduce((s,it)=>s+(it.saldo>0?it.saldo:0),0);
     return l;
-  }).sort((a,b)=>
-    (b.pend-a.pend) ||                                   // pendentes primeiro
-    (b.pend ? b.vol-a.vol : (a.dias??99)-(b.dias??99))   // maior volume / mais perto
-  );
+  }).sort(ordena);
+}
+
+/* Pendente primeiro; entre os pendentes, o de maior volume; entre os que
+   ainda estão no prazo, o que embala antes. `dias` no prazo é negativo
+   (-1 = amanhã, -5 = daqui a cinco dias), então ordenar por ele crescente
+   punha o mais distante no topo — comparar a data resolve nos dois casos. */
+const ordena = (a,b) =>
+  (b.pend-a.pend) ||
+  (b.pend ? b.vol-a.vol
+          : (a.emb?+a.emb:Infinity)-(b.emb?+b.emb:Infinity));
+
+/* ---------- sublotes ----------
+   Um lote interno (142/26) sai da fábrica quebrado em várias OPs seguidas
+   — 25010, 25011, 25012 — que são os sublotes dele. Numa lista plana de OP
+   o operador que tem "142/26" na mão precisa saber de cor quais números
+   são os dele, e os três aparecem separados por lotes de outra gente. Então
+   a lista de cima é por lote interno, e os sublotes ficam um toque adentro.
+   Lote sem número interno vira grupo de um só: continua no fluxo em vez de
+   virar um "sem lote interno" jogado no fim. */
+function agrupaPorInterno(lotes){
+  const g=new Map();
+  lotes.forEach(l=>{
+    const k = l.interno || (" op:"+l.lote);   // OP nunca colide com interno
+    if(!g.has(k)) g.set(k, {interno:l.interno||"", subs:[]});
+    g.get(k).subs.push(l);
+  });
+  return [...g.values()].map(gr=>{
+    gr.tit  = gr.interno || gr.subs[0].lote;
+    gr.pend = gr.subs.some(s=>s.pend);
+    gr.vol  = gr.subs.reduce((s,l)=>s+l.vol,0);
+    gr.nvol = gr.subs.reduce((s,l)=>s+l.itens.filter(it=>it.saldo>0).length,0);
+    gr.cores=[...new Set(gr.subs.map(s=>s.cor).filter(Boolean))];
+    /* Data do grupo: havendo sublote vencido, vale o que está atrasado há
+       mais tempo — é o que cobra ação. Nenhum vencido, vale o que embala
+       primeiro. Um sublote atrasado não pode ficar escondido atrás da data
+       folgada do irmão. */
+    const alvo  = gr.pend ? gr.subs.filter(s=>s.pend) : gr.subs;
+    const datas = alvo.map(s=>s.emb).filter(Boolean).map(d=>+d);
+    gr.emb  = datas.length ? new Date(Math.min(...datas)) : null;
+    gr.dias = gr.pend ? Math.max(...alvo.map(s=>s.dias??0))
+                      : (alvo.find(s=>s.emb&&+s.emb===+gr.emb)?.dias ?? null);
+    return gr;
+  }).sort(ordena);
 }
 
 /* ---------- estrutura (lista técnica) ----------
@@ -578,8 +621,9 @@ const loteTit = l => (l && l.interno) ? l.interno : (l ? l.lote : "");
 const loteOp  = l => (l && l.interno) ? l.lote : "";
 
 /* ---------- estado da navegação ---------- */
-let NIVEL="lotes";      // lotes → volumes → pecas
-let loteSel=null, volSel=null;
+let NIVEL="lotes";      // lotes (internos) → sublotes → volumes → pecas
+let GRUPOS=[];
+let grupoSel=null, loteSel=null, volSel=null;
 let PECAS=null;         // peças do volume aberto; null = ainda buscando
 let marcadas=new Map(); // cod da peça → {qtd, desc}
 
@@ -601,6 +645,21 @@ function secao(txt, cor){
   return d;
 }
 
+// mesma frase de data para o lote interno e para o sublote
+const quandoTxt = x => x.emb
+  ? (x.pend ? `emb. ${fmtD(x.emb)} · ${x.dias}d de atraso`
+            : `embala ${fmtD(x.emb)}${x.dias===0?" (hoje)":""}`)
+  : "sem data";
+
+/* Cores do lote interno: os sublotes costumam ser da mesma cor, mas quando
+   não são a linha teria seis pastilhas e nada se lê. Acima de três vira
+   contagem. */
+const chipCor = c => `<span class="cor" style="${corGPS(c)}">${esc(c)}</span>`;
+function coresHTML(cores){
+  if(cores.length<=3) return cores.map(chipCor).join("");
+  return cores.slice(0,2).map(chipCor).join("")+`<span class="cor">+${cores.length-2} cores</span>`;
+}
+
 function render(){
   const tela=$("tela"); tela.innerHTML="";
   $("btnVoltar").disabled = NIVEL==="lotes";
@@ -608,26 +667,51 @@ function render(){
 
   if(NIVEL==="lotes"){
     $("crumb").textContent="PPCP · Patrimar";
-    if(!LOTES.length){ tela.innerHTML=`<div class="vazio">Nenhum lote com volume pendente.</div>`; return; }
+    if(!GRUPOS.length){ tela.innerHTML=`<div class="vazio">Nenhum lote com volume pendente.</div>`; return; }
     const l=document.createElement("div"); l.className="lista";
     let cabPend=false, cabProg=false;
-    LOTES.forEach(lo=>{
+    GRUPOS.forEach(gr=>{
       // separador: o que venceu cobra ação; o que ainda vai embalar, não
-      if(lo.pend && !cabPend){ cabPend=true;
+      if(gr.pend && !cabPend){ cabPend=true;
         l.appendChild(secao(`Pendentes — passaram da embalagem`, "var(--red)")); }
-      if(!lo.pend && !cabProg){ cabProg=true;
+      if(!gr.pend && !cabProg){ cabProg=true;
         l.appendChild(secao(`Ainda no prazo`, "var(--mut)")); }
+      const ns=gr.subs.length, nv=gr.nvol;
+      const d=document.createElement("div"); d.className="item";
+      if(gr.pend) d.style.borderLeftColor="var(--red)";
+      // grupo de um sublote só: a OP fica na linha, não faz sentido esconder
+      const opUnico = ns===1 ? loteOp(gr.subs[0]) : "";
+      const quantos = ns>1 ? `${ns} sublotes · ` : "";
+      d.innerHTML=`<div class="esq"><span class="lote">${esc(gr.tit)}</span>
+        ${opUnico?`<span class="op">${esc(opUnico)}</span>`:""}
+        ${coresHTML(gr.cores)}
+        <div class="desc">${quantos}${nv} ${nv===1?"volume":"volumes"} · ${quandoTxt(gr)}</div></div>
+        <div class="dir"><b${gr.pend?"":' style="color:var(--mut)"'}>${nBR(gr.vol)}</b>a produzir</div>
+        <span class="seta">›</span>`;
+      /* Um sublote só não merece uma tela inteira: seria um toque a mais
+         para mostrar uma lista de um item. Vai direto para os volumes. */
+      d.onclick=()=>{
+        grupoSel=gr;
+        if(ns>1){ NIVEL="sublotes"; }
+        else { loteSel=gr.subs[0]; NIVEL="volumes"; }
+        render();
+      };
+      l.appendChild(d);
+    });
+    tela.appendChild(l);
+    return;
+  }
+
+  if(NIVEL==="sublotes"){
+    $("crumb").textContent=`Lote ${grupoSel.tit}`;
+    const l=document.createElement("div"); l.className="lista";
+    grupoSel.subs.forEach(lo=>{
       const nv=lo.itens.filter(it=>it.saldo>0).length;
       const d=document.createElement("div"); d.className="item";
       if(lo.pend) d.style.borderLeftColor="var(--red)";
-      const quando = lo.emb
-        ? (lo.pend ? `emb. ${fmtD(lo.emb)} · ${lo.dias}d de atraso`
-                   : `embala ${fmtD(lo.emb)}${lo.dias===0?" (hoje)":""}`)
-        : "sem data";
-      d.innerHTML=`<div class="esq"><span class="lote">${esc(loteTit(lo))}</span>
-        ${loteOp(lo)?`<span class="op">${esc(loteOp(lo))}</span>`:""}
-        ${lo.cor?`<span class="cor" style="${corGPS(lo.cor)}">${esc(lo.cor)}</span>`:""}
-        <div class="desc">${nv} ${nv===1?"volume":"volumes"} · ${quando}</div></div>
+      d.innerHTML=`<div class="esq"><span class="lote">${esc(lo.lote)}</span>
+        ${lo.cor?chipCor(lo.cor):""}
+        <div class="desc">${nv} ${nv===1?"volume":"volumes"} · ${quandoTxt(lo)}</div></div>
         <div class="dir"><b${lo.pend?"":' style="color:var(--mut)"'}>${nBR(lo.vol)}</b>a produzir</div>
         <span class="seta">›</span>`;
       d.onclick=()=>{ loteSel=lo; NIVEL="volumes"; render(); };
@@ -638,7 +722,7 @@ function render(){
   }
 
   if(NIVEL==="volumes"){
-    $("crumb").textContent=`Lote ${loteTit(loteSel)}`+(loteOp(loteSel)?` · OP ${loteOp(loteSel)}`:"");
+    $("crumb").textContent=`Lote ${loteTit(loteSel)}`+(loteOp(loteSel)?` · sublote ${loteOp(loteSel)}`:"");
     const pend=loteSel.itens.filter(it=>it.saldo>0);
     const l=document.createElement("div"); l.className="lista";
     pend.forEach(it=>{
@@ -659,7 +743,8 @@ function render(){
   }
 
   // ---- peças ----
-  $("crumb").textContent=`${loteTit(loteSel)} · ${volSel.cod}`;
+  // com sublote, ele entra no caminho: é nele que a falta vai ser gravada
+  $("crumb").textContent=[loteTit(loteSel), loteOp(loteSel), volSel.cod].filter(Boolean).join(" · ");
   if(PECAS===null && EST.ativa){
     tela.innerHTML=`<div class="vazio">buscando as peças deste volume…</div>`;
     return;
@@ -861,10 +946,16 @@ function enviarJSONP(url, payload){
 async function enviar(){
   if(!CFG.url){ toast("Configure a URL do Apps Script em ⚙","err"); return; }
   const btn=$("btnEnviar"); btn.disabled=true; const antes=btn.textContent; btn.textContent="Enviando…";
+  /* A descrição vai junto com o código. Quem abre a aba FALTAS para cobrar a
+     peça só via "479001001" e tinha de ir procurar o número em outra planilha;
+     e gravar depois não resolve, porque a estrutura muda e o que a peça era no
+     dia se perde. O lote interno vai pelo mesmo motivo: é por ele que a
+     fábrica chama o lote. */
   const payload={
-    lote: loteSel.lote, volume: volSel.cod,
+    lote: loteSel.lote, interno: loteSel.interno||"",
+    volume: volSel.cod, volumeDesc: volSel.desc||"",
     operador: CFG.operador||"", obs:"",
-    pecas: [...marcadas].map(([cod,v])=>({cod, qtd:v.qtd}))
+    pecas: [...marcadas].map(([cod,v])=>({cod, qtd:v.qtd, desc:v.desc||""}))
   };
   try{
     let r;
@@ -896,30 +987,36 @@ async function carregar(){
     const txt=await res.text();
     if(/<html/i.test(txt)) throw new Error("sem-acesso");
     LOTES=rowsToLotes(parseCSV(txt));
+    GRUPOS=agrupaPorInterno(LOTES);
     await carregarEstrutura();
     const est = EST.ativa
       ? ` · estrutura <b>${EST.aba}</b> ligada`
       : ` · <span style="color:var(--amber)">sem aba de estrutura — lançamento por código</span>`;
     const semUrl = CFG.url ? "" : ` · <span style="color:var(--red)">falta a URL do Apps Script (⚙)</span>`;
-    // o número que interessa é o que venceu, não o total da esteira
-    const np=LOTES.filter(l=>l.pend).length;
+    // o número que interessa é o que venceu, não o total da esteira — e a
+    // conta é por lote interno, que é a unidade que aparece na lista
+    const np=GRUPOS.filter(g=>g.pend).length;
     const resumo = np
-      ? `<b style="color:var(--red)">${np}</b> ${np===1?"lote pendente":"lotes pendentes"} de ${LOTES.length}`
-      : `nenhum lote vencido · ${LOTES.length} na esteira`;
+      ? `<b style="color:var(--red)">${np}</b> ${np===1?"lote pendente":"lotes pendentes"} de ${GRUPOS.length}`
+      : `nenhum lote vencido · ${GRUPOS.length} na esteira`;
     setStatus(CFG.url?"ok":"warn", `${resumo}${est}${semUrl}`);
   }catch(e){
-    LOTES=[];
+    LOTES=[]; GRUPOS=[];
     setStatus("err", String(e.message).includes("sem-acesso")
       ? "Sem acesso à planilha — compartilhe como “qualquer pessoa com o link: leitor”."
       : "Não consegui ler a planilha agora ("+e.message+")");
   }
-  NIVEL="lotes"; render();
+  // recarregar troca os objetos: seguir dentro de um lote antigo mostraria
+  // saldo velho, então a navegação volta para o começo
+  NIVEL="lotes"; grupoSel=loteSel=volSel=null; render();
 }
 
 /* ---------- eventos ---------- */
 $("btnVoltar").onclick=()=>{
   if(NIVEL==="pecas"){ NIVEL="volumes"; marcadas=new Map(); }
-  else if(NIVEL==="volumes") NIVEL="lotes";
+  // volta para onde veio: a tela de sublotes só existiu se havia mais de um
+  else if(NIVEL==="volumes") NIVEL = (grupoSel && grupoSel.subs.length>1) ? "sublotes" : "lotes";
+  else if(NIVEL==="sublotes") NIVEL="lotes";
   render();
 };
 $("btnEnviar").onclick=enviar;

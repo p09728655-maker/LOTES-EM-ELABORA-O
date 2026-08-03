@@ -4,7 +4,7 @@
      da rede (o painel precisa estar online para atualizar os lotes).
    - Estratégia network-first no mesmo domínio: online pega sempre a versão
      nova; offline cai para o cache. */
-const CACHE = 'esteira-v6';   // subiu ao lote interno virar o título no Lançar faltas
+const CACHE = 'esteira-v7';   // subiu ao entrarem sublotes e o detalhe da faixa de atraso
 const SHELL = [
   './', './index.html', './falta.html', './estrutura.html',
   './manifest.webmanifest', './manifest-falta.webmanifest',

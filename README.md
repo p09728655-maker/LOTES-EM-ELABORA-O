@@ -107,6 +107,9 @@ quantos itens ficaram de fora — se o número parecer pequeno, é o primeiro lu
 - O card mostra `Pend N vol.` e, aberto, o que falta de cada produto. No **modo TV** entra uma
   tarja vermelha com o total pendente. **Impresso** e **WhatsApp** trazem o bloco de atraso com
   os produtos que faltam.
+- Na faixa **Em atraso**, cada linha com `▸` **abre no clique** e mostra o que falta produto por
+  produto — pendente e total de cada um. O agregado diz quanto; quem vai atrás do lote precisa
+  saber de quê. A linha aberta continua aberta na recarga automática de 5 min.
 - Uma linha de `STATUS` com "atrasado", "pendente", "parado" ou "falta" também marca o lote.
 
 A baixa só responde pelos dias que ela cobre: um lote com embalagem fora do período carregado
@@ -114,15 +117,21 @@ nunca é acusado de atraso.
 
 ## Lançar faltas (`falta.html`)
 Tela separada, feita para **celular no chão de fábrica**: registra o que falta para fechar
-cada volume. Fluxo em três toques — **lote → volume → peças** — e o operador **não digita
-código**: marca numa lista e ajusta a quantidade no `−`/`+`.
+cada volume. Fluxo em toques — **lote interno → sublote → volume → peças** — e o operador
+**não digita código**: marca numa lista e ajusta a quantidade no `−`/`+`.
 
-O lote aparece pelo **número interno da fábrica** (`142/26`), com a **OP do ERP** (`25010`)
-ao lado em cinza — é pelo interno que o operador reconhece o lote no carrinho e na etiqueta, e
-trocar de um para o outro no meio do turno é onde ele erra. O interno vem da coluna
-`LOTE INTERNO` da aba de programação, a mesma que o painel lê; **sem essa coluna preenchida o
-título volta a ser a OP**, como antes. A gravação na aba `FALTAS` continua usando a OP na coluna
-`LOTE` — é a chave que amarra o lançamento à programação.
+A lista de cima é por **lote interno da fábrica** (`142/26`) — é por ele que o operador
+reconhece o lote no carrinho e na etiqueta. Uma OP do ERP (`25010`) é um **sublote**: o mesmo
+`142/26` costuma sair quebrado em várias OPs seguidas (`25010`, `25011`, `25012`), e numa lista
+plana por OP o operador precisaria saber de cor quais números são os dele. Tocando no lote
+interno aparecem os sublotes; **lote com um sublote só pula essa tela** e vai direto aos
+volumes, com a OP visível ao lado do número interno. O interno vem da coluna `LOTE INTERNO`
+da aba de programação, a mesma que o painel lê; sem ela preenchida o lote aparece pela OP,
+como antes. A data e a cor do lote interno são as do pior sublote: havendo um vencido, vale o
+atraso mais antigo — um sublote atrasado não se esconde atrás da folga do irmão.
+
+A gravação na aba `FALTAS` grava a **OP do sublote** na coluna `LOTE` — é a chave que amarra o
+lançamento à programação — e o interno vai junto em `LOTE_INTERNO`.
 
 A lista das peças vem da aba **`ESTRUTURA`** (lista técnica), uma linha por peça do volume:
 
@@ -189,11 +198,20 @@ esse Web App não há como escrever. A `FALTAS` é **append-only**: nunca reescr
 dois celulares gravando juntos não se atropelam e fica o histórico de quem lançou o quê.
 
 ```
-DATA_HORA | LOTE | COD_VOLUME | COD_PECA | QTD | OPERADOR | OBS
+DATA_HORA | LOTE | LOTE_INTERNO | COD_VOLUME | DESC_VOLUME | COD_PECA | DESC_PECA | QTD | OPERADOR | OBS
 ```
 
 `QTD` é **quantas peças faltam de fato**, não multiplicador por volume — há lote com 2 volumes
 pendentes e `QT=1`, e outro com 3 volumes e `QT=14`. É o número que a pessoa sabe de cabeça.
+
+As **descrições vão gravadas junto com os códigos**: só `479001001` não diz a ninguém o que
+faltou, e quem abre a aba para cobrar a peça tinha de procurar cada número em outra planilha.
+Gravar na hora também congela o que a peça **era naquele dia** — a estrutura muda, e uma
+consulta feita depois responderia outra coisa. Aba `FALTAS` antiga (7 colunas) é **migrada
+automaticamente** na primeira gravação: as colunas novas são inseridas no lugar certo e os
+lançamentos já feitos ficam onde estão, com as novas em branco. Se alguém reorganizou as
+colunas da aba, o script **não adivinha**: grava cada valor embaixo do título que encontrar
+pelo nome e ignora os que não existirem.
 
 ### Configurar um celular
 Digitar uma URL de 100 caracteres num campo de celular, uma vez por aparelho, é o tipo de passo

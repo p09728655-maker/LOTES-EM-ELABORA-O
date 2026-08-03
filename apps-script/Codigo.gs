@@ -32,7 +32,19 @@
 var FALTAS_SHEET_ID = '1W9bK_IoWknk8eKFbSWCMxILAQcaXuWD2gG7B0jcwFzg';
 
 var FALTAS_ABA = 'FALTAS';
-var FALTAS_CABECALHO = ['DATA_HORA', 'LOTE', 'COD_VOLUME', 'COD_PECA', 'QTD', 'OPERADOR', 'OBS'];
+
+// So codigo nao se le: "479001001" nao diz a ninguem o que faltou, e quem
+// abre a aba para cobrar a peca tem de ir consultar cada numero em outra
+// planilha. A descricao vai junto no ato da gravacao - depois nao da, porque
+// a estrutura muda e o que a peca era na epoca se perde.
+var FALTAS_CABECALHO = ['DATA_HORA', 'LOTE', 'LOTE_INTERNO',
+                        'COD_VOLUME', 'DESC_VOLUME',
+                        'COD_PECA', 'DESC_PECA',
+                        'QTD', 'OPERADOR', 'OBS'];
+
+// Layout anterior, sem lote interno e sem descricao. Quem ja estava gravando
+// tem uma aba assim, com historico dentro: ela e migrada, nunca recriada.
+var FALTAS_CABECALHO_V1 = ['DATA_HORA', 'LOTE', 'COD_VOLUME', 'COD_PECA', 'QTD', 'OPERADOR', 'OBS'];
 
 
 // --- utilidades ------------------------------------------------------------
@@ -83,8 +95,45 @@ function faltas_aba_() {
     sh.appendRow(FALTAS_CABECALHO);
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, FALTAS_CABECALHO.length).setFontWeight('bold');
+  } else {
+    faltas_migraCabecalho_(sh);
   }
   return sh;
+}
+
+// Cabecalho antigo virando o novo sem tocar no que ja esta gravado:
+// insertColumnAfter empurra os valores para a direita, entao cada lancamento
+// antigo continua com o dado dele embaixo do titulo certo e as colunas novas
+// nascem vazias - que e a verdade, aquelas linhas nunca tiveram descricao.
+//
+// So mexe quando o cabecalho e EXATAMENTE o antigo. Aba que alguem ja
+// reorganizou, ou que ja foi migrada, fica como esta: adivinhar o layout de
+// uma planilha alheia e o tipo de erro que so aparece depois de estragar.
+function faltas_migraCabecalho_(sh) {
+  var larg = sh.getLastColumn();
+  if (larg !== FALTAS_CABECALHO_V1.length) return false;
+
+  var atual = sh.getRange(1, 1, 1, larg).getValues()[0];
+  for (var i = 0; i < larg; i++) {
+    if (String(atual[i] == null ? '' : atual[i]).trim().toUpperCase() !== FALTAS_CABECALHO_V1[i]) return false;
+  }
+
+  sh.insertColumnAfter(2);   // LOTE_INTERNO, depois de LOTE
+  sh.insertColumnAfter(4);   // DESC_VOLUME,  depois de COD_VOLUME
+  sh.insertColumnAfter(6);   // DESC_PECA,    depois de COD_PECA
+  sh.getRange(1, 1, 1, FALTAS_CABECALHO.length)
+    .setValues([FALTAS_CABECALHO]).setFontWeight('bold');
+  sh.setFrozenRows(1);
+  return true;
+}
+
+// O cabecalho que a aba tem de verdade, em maiuscula e sem espaco em volta.
+function faltas_cabecalhoAtual_(sh) {
+  var larg = sh.getLastColumn();
+  if (larg < 1) return FALTAS_CABECALHO.slice();
+  return sh.getRange(1, 1, 1, larg).getValues()[0].map(function (v) {
+    return String(v == null ? '' : v).trim().toUpperCase();
+  });
 }
 
 // JSONP quando o cliente pede callback: atravessa qualquer politica de CORS.
@@ -140,16 +189,38 @@ function faltas_gravar_(p) {
     var sh    = faltas_aba_();
     var agora = new Date();
     var lote  = String(p.lote).trim();
+    var intn  = String(p.interno || '').trim();
     var vol   = String(p.volume).trim();
+    var volD  = String(p.volumeDesc || '').trim();
     var oper  = String(p.operador || '').trim();
     var obs   = String(p.obs || '').trim();
 
+    /* A linha e montada pelo NOME da coluna, nao pela posicao. Aba migrada,
+       aba antiga que ficou como estava e aba com uma coluna a mais: nos tres
+       casos o dado cai embaixo do titulo certo, em vez de escrever tudo
+       deslocado uma casa. Titulo que a aba nao tem simplesmente nao e
+       gravado - o lancamento passa, so sem aquele campo. */
+    var cab = faltas_cabecalhoAtual_(sh);
     var linhas = p.pecas.map(function (it) {
-      return [agora, lote, vol, faltas_normCod_(it.cod), Number(it.qtd), oper, obs];
+      var v = {
+        DATA_HORA:    agora,
+        LOTE:         lote,
+        LOTE_INTERNO: intn,
+        COD_VOLUME:   vol,
+        DESC_VOLUME:  volD,
+        COD_PECA:     faltas_normCod_(it.cod),
+        DESC_PECA:    String(it.desc || '').trim(),
+        QTD:          Number(it.qtd),
+        OPERADOR:     oper,
+        OBS:          obs
+      };
+      return cab.map(function (nome) {
+        return Object.prototype.hasOwnProperty.call(v, nome) ? v[nome] : '';
+      });
     });
 
     // uma escrita so, em bloco: mais rapido e atomico o bastante sob a trava
-    sh.getRange(sh.getLastRow() + 1, 1, linhas.length, FALTAS_CABECALHO.length)
+    sh.getRange(sh.getLastRow() + 1, 1, linhas.length, cab.length)
       .setValues(linhas);
 
     return { ok: true, gravadas: linhas.length, lote: lote, volume: vol };
@@ -230,10 +301,12 @@ function faltas_diagnostico_() {
 function faltas_testar_() {
   var r = faltas_gravar_({
     lote: '000000',
+    interno: '000/00',
     volume: '501.000.000',
+    volumeDesc: 'VOLUME DE TESTE',
     operador: 'TESTE',
     obs: 'linha de teste - pode apagar',
-    pecas: [{ cod: '778005108', qtd: 1 }]
+    pecas: [{ cod: '778005108', qtd: 1, desc: 'PECA DE TESTE' }]
   });
   Logger.log(r);
   return r;
