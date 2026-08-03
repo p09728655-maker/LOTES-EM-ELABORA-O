@@ -237,9 +237,10 @@
   .lane.late .row-det .ricd{font-family:"IBM Plex Mono"; font-size:10.5px; color:var(--mut2); flex:none}
   .lane.late .row-det .ri.fal .rit{min-width:0; max-width:180px; overflow:hidden;
     text-overflow:ellipsis; white-space:nowrap; font-size:10.5px}
-  .lane.late .row .lt .selo-fal{margin-left:6px; font-family:"IBM Plex Mono"; font-size:9.5px;
-    font-weight:400; color:var(--amber); border:1px solid rgba(255,159,10,.5);
-    border-radius:20px; padding:0 5px; white-space:nowrap}
+  /* o selo mora na coluna flexível (.pct): nas de largura fixa ele passava
+     por cima da coluna seguinte */
+  .lane.late .row .pct .selo-fal{margin-left:7px; font-size:10px; color:#ff9f0a;
+    border:1px solid rgba(255,159,10,.45); border-radius:20px; padding:1px 6px; white-space:nowrap}
   .lane.late .row .lt{font-family:"IBM Plex Mono"; font-size:13.5px; color:var(--ink)}
   .lane.late .row .cel-int{font-family:"IBM Plex Mono"; font-size:12.5px; font-weight:600; color:var(--ink)}
   .lane.late .row .cel-cor{display:flex}
@@ -354,6 +355,37 @@
   .toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%); z-index:99;
     background:var(--panel2); border:1px solid var(--green); color:var(--green);
     font-size:13px; padding:10px 18px; border-radius:8px; box-shadow:0 6px 24px rgba(0,0,0,.6)}
+
+  /* ---- abas ---- */
+  .abas{display:flex; gap:2px; margin:6px 0 12px; border-bottom:1px solid var(--line);
+    overflow-x:auto; scrollbar-width:none}
+  .abas::-webkit-scrollbar{display:none}
+  .aba{background:none; border:none; border-bottom:2px solid transparent; color:var(--mut);
+    font-family:"Oswald"; font-size:15px; letter-spacing:.04em; padding:9px 15px 8px;
+    cursor:pointer; white-space:nowrap; margin-bottom:-1px; transition:.14s}
+  .aba:hover{color:var(--ink)}
+  .aba.on{color:var(--amber); border-bottom-color:var(--amber)}
+  .aba .cnt{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2);
+    background:var(--panel2); border-radius:20px; padding:1px 7px; margin-left:5px}
+  .aba.on .cnt{color:var(--bg); background:var(--amber)}
+  .painel[hidden]{display:none}
+  /* dentro da aba a caixa de configuração é a tela, não um painel flutuante */
+  #painel-config .cfg{margin:0}
+
+  /* tabela dos lotes elaborados: confere o que saiu, não acompanha etapa */
+  .tab-done{width:100%; border-collapse:collapse; font-size:12.5px}
+  .tab-done th{font-family:"IBM Plex Mono"; font-size:9.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--mut2); font-weight:400; text-align:left;
+    padding:5px 8px; border-bottom:1px solid var(--line); white-space:nowrap}
+  .tab-done td{padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.045); vertical-align:baseline}
+  .tab-done tr:last-child td{border-bottom:none}
+  .tab-done .lt{font-family:"IBM Plex Mono"; font-size:13.5px; color:var(--ink); white-space:nowrap}
+  .tab-done .int{font-family:"IBM Plex Mono"; font-size:12.5px; font-weight:600; color:var(--ink); white-space:nowrap}
+  .tab-done .n{font-family:"IBM Plex Mono"; text-align:right; white-space:nowrap}
+  .tab-done .dt{font-family:"IBM Plex Mono"; font-size:11.5px; color:var(--mut); white-space:nowrap}
+  .tab-done .cor{margin-left:0}
+  .tab-done tfoot td{border-top:1px solid var(--line); color:var(--mut);
+    font-family:"IBM Plex Mono"; padding-top:8px}
 
   #printview{display:none}
   @media print{
@@ -658,6 +690,17 @@
 <div class="status" id="status"><span class="led"></span><span id="statusTxt">Carregando…</span>
   <button class="mini" id="reload">recarregar</button></div>
 
+<!-- Três telas em vez de uma rolagem só. Quem abre o painel quase sempre quer
+     o que está em aberto; o que já saiu serve para conferir, não para vigiar,
+     e configuração se mexe uma vez por ano. -->
+<nav class="abas" id="abas">
+  <button class="aba on" data-aba="aberto">Em aberto <span class="cnt" id="abaAbertoCnt">0</span></button>
+  <button class="aba" data-aba="elaborados">Lotes elaborados <span class="cnt" id="abaElabCnt">0</span></button>
+  <button class="aba" data-aba="config">⚙ Configuração</button>
+</nav>
+
+<div class="painel" id="painel-aberto">
+
 <!-- o atraso vem ANTES do quadro: é o que não pode depender de rolagem -->
 <div class="lane late" id="lateLane" hidden>
   <h3>Em atraso <span class="cnt" id="lateCnt">0</span>
@@ -678,13 +721,31 @@
 
 <div class="board" id="board"></div>
 
-<div id="tv"></div>
-<div id="printview"></div>
-
 <div class="lanes">
   <div class="lane wait"><h3>Programados <span class="cnt" id="waitCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram</span></h3><div id="waitList"></div></div>
-  <div class="lane done"><h3>Concluídos <span class="cnt" id="doneCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· baixa completa</span></h3><div id="doneList"></div></div>
 </div>
+
+</div><!-- /painel-aberto -->
+
+<!-- Lote elaborado é o que fechou: passou a embalagem e a baixa não deixou
+     saldo. Aqui vale a tabela, não o card - ninguém acompanha etapa de lote
+     pronto, só confere o que saiu e quando. -->
+<div class="painel" id="painel-elaborados" hidden>
+  <div class="lane done">
+    <h3>Lotes elaborados <span class="cnt" id="doneCnt">0</span>
+      <span style="font-weight:400;letter-spacing:.06em">· passaram a embalagem com a baixa completa</span>
+      <span class="tot" id="doneTot"></span></h3>
+    <div id="doneList"></div>
+  </div>
+</div>
+
+<div class="painel" id="painel-config" hidden></div>
+
+<!-- Fora dos painéis de propósito: o modo TV substitui a tela toda, e a regra
+     de impressão é `body > #printview` — dentro de uma aba escondida a folha
+     sairia em branco. -->
+<div id="tv"></div>
+<div id="printview"></div>
 
 <div class="foot">
   Lê ao vivo a aba de elaboração no Google Sheets e posiciona cada lote pela <b>data prevista</b> de cada etapa
@@ -1540,12 +1601,12 @@ function render(){
     const selo = fal.length
       ? `<span class="selo-fal">${fal.length} ${fal.length===1?"peça":"peças"}</span>` : "";
     return `<div class="lrow${tem?" tem":""}${aberto?" aberto":""}" data-lote="${esc(a.l.lote)}">
-      <div class="row"><span class="abre">${tem?"▸":""}</span><b class="lt">${a.l.lote}${selo}</b>
+      <div class="row"><span class="abre">${tem?"▸":""}</span><b class="lt">${a.l.lote}</b>
       <span class="cel-int">${a.l.interno||""}</span>
       <span class="cel-cor">${a.l.cor?`<span class="cor" style="${corGPS(a.l.cor)}">${a.l.cor}</span>`:""}</span>
       <span class="pend">${a.pend.toLocaleString("pt-BR")}</span>
       <span class="rot">vol. pendentes</span>
-      <span class="pct">de ${(a.l.qtd||0).toLocaleString("pt-BR")} · ${pct}% feito</span>
+      <span class="pct">de ${(a.l.qtd||0).toLocaleString("pt-BR")} · ${pct}% feito${selo}</span>
       <span class="dias">emb. ${fmt(pd(a.l.emb))} · ${a.dias}d de atraso</span></div>${det}</div>`; };
   ll.innerHTML = atras.slice(0,LATE_TOP).map(linhaAtraso).join("");
   const resto=atras.slice(LATE_TOP);
@@ -1574,9 +1635,36 @@ function render(){
   wl.innerHTML=wait.length?wait.map(w=>
     `<div class="row"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}<span class="tag" style="color:var(--steel)">${w.dias!=null?"entra em "+w.dias+"d · "+fmt(pd(w.l.corte)):""}</span></div>`).join("")
     :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
-  dl.innerHTML=done.length?done.map(w=>
-    `<div class="row"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}<span class="tag" style="color:var(--green)">emb. ${fmt(pd(w.l.emb))}</span></div>`).join("")
-    :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
+  /* Elaborados numa tabela: numa aba própria cabe o que a faixa antiga não
+     mostrava — lote interno, volumes, pontos, peso e quando embalou. É o que
+     se confere depois, e o total no pé é o que se leva para a reunião.
+     Mais recente primeiro: ninguém procura o lote de duas semanas atrás. */
+  const doneOrd=[...done].sort((a,b)=>(pd(b.l.emb)||0)-(pd(a.l.emb)||0));
+  const dVol=doneOrd.reduce((s,w)=>s+(w.l.qtd||0),0);
+  const dPts=doneOrd.reduce((s,w)=>s+(w.l.pontosTot||0),0);
+  const dPeso=doneOrd.reduce((s,w)=>s+(w.l.pesoTot||0),0);
+  document.getElementById("doneTot").textContent =
+    done.length ? `${nBR(dVol)} volumes${dPeso?" · "+pesoTxt(dPeso):""}` : "";
+  dl.innerHTML = doneOrd.length ? `<table class="tab-done">
+    <thead><tr><th>Lote</th><th>Interno</th><th>Cor</th>
+      <th style="text-align:right">Volumes</th><th style="text-align:right">Pontos</th>
+      <th style="text-align:right">Peso</th><th>Embalou</th></tr></thead>
+    <tbody>${doneOrd.map(w=>`<tr>
+      <td class="lt">${esc(w.l.lote)}</td>
+      <td class="int">${esc(w.l.interno||"–")}</td>
+      <td>${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${esc(w.l.cor)}</span>`:""}</td>
+      <td class="n">${nBR(w.l.qtd)}</td>
+      <td class="n">${w.l.pontosTot?nBR(w.l.pontosTot):"–"}</td>
+      <td class="n">${w.l.pesoTot?pesoTxt(w.l.pesoTot):"–"}</td>
+      <td class="dt" style="color:var(--green)">${fmt(pd(w.l.emb))}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td colspan="3">${done.length} ${done.length===1?"lote":"lotes"}</td>
+      <td class="n">${nBR(dVol)}</td><td class="n">${dPts?nBR(dPts):"–"}</td>
+      <td class="n">${dPeso?pesoTxt(dPeso):"–"}</td><td></td></tr></tfoot></table>`
+    : `<div class="row" style="color:var(--mut2);font-style:italic">Nenhum lote concluído nesta data de referência.</div>`;
+
+  // contadores das abas
+  document.getElementById("abaAbertoCnt").textContent = ativos + atras.length;
+  document.getElementById("abaElabCnt").textContent   = done.length;
 
   if(TVKEY) renderTV(buckets, ref, atras, volAtraso);
 }
@@ -2013,8 +2101,31 @@ function pintaCfg(){
   document.getElementById("srcUrl").textContent=csvURL();
   document.getElementById("cfgAbrir").href=linkPlanilha();
 }
-document.getElementById("cfgBtn").onclick=()=>{ cfgBox.hidden=!cfgBox.hidden; if(!cfgBox.hidden) pintaCfg(); };
-document.getElementById("cfgFechar").onclick=()=>{ cfgBox.hidden=true; };
+/* ---------- abas ----------
+   A caixa de configuração nasce no HTML logo abaixo dos controles porque é lá
+   que ela sempre esteve; aqui ela é MOVIDA para dentro da aba. Assim o markup
+   dela (e tudo que aponta para os ids dos campos) fica intacto. */
+document.getElementById("painel-config").appendChild(cfgBox);
+cfgBox.hidden=false;
+
+const ABA_KEY="lotesElaboracaoAba";
+function irPara(nome){
+  document.querySelectorAll(".aba").forEach(b=>b.classList.toggle("on", b.dataset.aba===nome));
+  ["aberto","elaborados","config"].forEach(n=>
+    document.getElementById("painel-"+n).hidden = n!==nome);
+  if(nome==="config") pintaCfg();
+  try{ localStorage.setItem(ABA_KEY,nome); }catch(e){}
+  window.scrollTo({top:0,behavior:"instant"});
+}
+document.getElementById("abas").addEventListener("click",e=>{
+  const b=e.target.closest(".aba"); if(b) irPara(b.dataset.aba);
+});
+// a aba escolhida sobrevive à recarga: a tela fica aberta o dia todo
+try{ const a=localStorage.getItem(ABA_KEY);
+  if(a==="elaborados"||a==="config") irPara(a); }catch(e){}
+
+document.getElementById("cfgBtn").onclick=()=>irPara("config");
+document.getElementById("cfgFechar").onclick=()=>irPara("aberto");
 document.getElementById("cfgSalvar").onclick=()=>{
   const sheet=extraiId(document.getElementById("cfgSheet").value);
   if(!sheet){ toast("Informe o endereço da planilha"); return; }
