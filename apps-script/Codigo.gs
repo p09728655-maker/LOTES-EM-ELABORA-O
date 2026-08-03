@@ -218,7 +218,11 @@ function faltas_valida_(p) {
     var cod = faltas_normCod_(it.cod);
     var qtd = Number(it.qtd);
     if (cod.length < 9)          return 'peca ' + (i + 1) + ': codigo invalido (' + (it.cod || 'vazio') + ')';
-    if (!(qtd > 0))              return 'peca ' + (i + 1) + ' (' + cod + '): quantidade deve ser maior que zero';
+    /* Zero e permitido de proposito: e a BAIXA - a peca chegou. O painel usa o
+       lancamento mais recente de cada lote+volume+peca e descarta qtd 0, entao
+       gravar zero tira a peca da lista de faltas sem apagar historico nenhum.
+       Negativo e fracionario continuam recusados. */
+    if (!(qtd >= 0))             return 'peca ' + (i + 1) + ' (' + cod + '): quantidade nao pode ser negativa';
     if (qtd !== Math.floor(qtd)) return 'peca ' + (i + 1) + ' (' + cod + '): quantidade deve ser inteira';
   }
   return '';

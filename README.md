@@ -26,7 +26,7 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
 - **KPIs**: lotes ativos, volumes em elaboração, **volumes p/ embalar hoje** e volumes em atraso.
   O de atraso é o único que cobra ação, então vira caixa destacada — vermelha quando há
   pendência, verde quando está zerado.
-- **Quatro abas**, não uma rolagem só. São perguntas diferentes e uma competia com a outra pela
+- **Cinco abas**, não uma rolagem só. São perguntas diferentes e uma competia com a outra pela
   primeira dobra: o quadro de etapas responde *onde cada lote está*, a faixa de atraso responde
   *o que ficou para trás*, e empilhadas o atraso empurrava o quadro para fora da tela.
 
@@ -167,6 +167,34 @@ O botão voltar **diz para onde volta** (`‹ Volumes`, `‹ 139/26`, `‹ Lotes
 antes** — dez peças contadas com a mão suja não podem sumir num toque errado no canto da tela,
 porque não ficaram gravadas em lugar nenhum.
 
+### Lançar é corrigir, não anotar
+O app **lê a aba `FALTAS`** e abre a tela de peças já mostrando o que está lançado — pelo turno
+de quem está com o celular ou pelo outro. O contador vem preenchido, a peça lançada sobe para o
+topo com `já lançado: N`, e o que muda dali em diante é o que vai para a planilha:
+
+| na tela | o que grava |
+|---|---|
+| aumentar/diminuir uma peça lançada | corrige a quantidade |
+| **✓ chegou** (zera o contador) | grava `QTD 0` — a **baixa** |
+| marcar peça sem lançamento | falta nova |
+| não mexer em nada | **nada** — botão desabilitado |
+
+Sem isso o app era cego e só de escrita: lançava por cima do que já existia, e a falta ficava na
+planilha para sempre porque **não havia como dar baixa**. O `QTD 0` é o que resolve — o painel usa
+o lançamento mais recente de cada `lote+volume+peça` e descarta zero, então a peça sai da lista de
+faltas sem apagar histórico nenhum. Por isso o Apps Script passou a **aceitar quantidade 0**
+(negativo e fracionário continuam recusados).
+
+O envio manda **só a diferença**, não a tela inteira: menos linha na planilha e a intenção de quem
+lançou fica legível. Depois de gravar, o app atualiza o estado em memória em vez de reler a
+planilha — o `gviz` leva minutos para refletir a escrita, e reler mostraria o valor velho, como se
+o envio não tivesse pegado. Peça lançada que **não está na estrutura** do volume aparece na lista
+mesmo assim, com a descrição gravada no dia: falta invisível é o mesmo que falta inexistente para
+quem está com o celular na mão. Lote, sublote e volume ganham um selo `N em falta`.
+
+Sem a aba `FALTAS` configurada (gid em ⚙, padrão `711658815`), o app funciona exatamente como
+antes — sem selo, sem baixa, marcando do zero.
+
 A lista das peças vem da aba **`ESTRUTURA`** (lista técnica), uma linha por peça do volume:
 
 | coluna | conteúdo | obrigatória |
@@ -277,7 +305,7 @@ aparelho se configura sozinho no primeiro acesso:
 falta.html?url=<URL /exec do Apps Script>&op=NOME
 ```
 
-Aceita ainda `est=` (gid da estrutura), `sheet=` e `gid=`. O que não vier no link fica como
+Aceita ainda `est=` (gid da estrutura), `fal=` (gid das faltas), `sheet=` e `gid=`. O que não vier no link fica como
 estava — dá para mandar só `?op=JOAO` para trocar o nome sem mexer no resto. Depois de aplicar,
 a página **limpa os parâmetros da barra de endereço**: se ficassem ali, o operador compartilharia
 o endereço de gravação sem perceber.

@@ -102,6 +102,23 @@
   .peca{background:var(--panel); border:1px solid var(--line); border-radius:10px;
     padding:11px 12px; display:flex; align-items:center; gap:10px; min-height:64px}
   .peca.on{border-color:var(--amber); background:rgba(255,90,31,.07)}
+  /* peça já lançada que teve a quantidade corrigida */
+  .peca.mudou{border-color:var(--amber); border-left:4px solid var(--amber)}
+  /* zerar o que estava lançado é BAIXA: verde, porque é boa notícia — a peça
+     chegou. Vermelho ali seria alarme para o único evento bom da tela. */
+  .peca.baixa{border-color:var(--green); background:rgba(63,209,95,.07)}
+  .peca.baixa .cnt input{border-color:var(--green); color:var(--green)}
+  .peca .ja{font-family:"IBM Plex Mono"; font-size:10.5px; color:var(--amber); margin-top:3px}
+  .peca.baixa .ja{color:var(--green); text-decoration:line-through}
+  .chegou{flex:none; background:none; border:1px solid var(--green-dim,rgba(63,209,95,.45));
+    color:var(--green); border-radius:9px; padding:9px 10px; font-size:11.5px;
+    font-family:"Oswald"; letter-spacing:.03em; cursor:pointer; min-height:44px; white-space:nowrap}
+  .chegou:active{background:var(--green); color:#000}
+  .peca.baixa .chegou{background:var(--green); color:#000; border-color:var(--green)}
+  /* selo de falta aberta nas listas de lote, sublote e volume */
+  .selo-f{font-family:"IBM Plex Mono"; font-size:9.5px; color:var(--amber);
+    border:1px solid rgba(255,90,31,.5); border-radius:20px; padding:2px 7px;
+    margin-left:8px; white-space:nowrap}
   .peca .esq{flex:1 1 0; min-width:0}
   .peca .pd{font-size:13.5px; font-weight:500; line-height:1.25}
   .peca .pc{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2); margin-top:3px}
@@ -202,6 +219,9 @@
   <label for="cfgSemi">Aba do catálogo de peças (gid)</label>
   <input type="text" id="cfgSemi" spellcheck="false" placeholder="gid da aba SEMIACABADO">
   <div class="obs">Usada na busca por descrição. Carrega só quando alguém procura.</div>
+  <label for="cfgFal">Aba das faltas (gid)</label>
+  <input type="text" id="cfgFal" spellcheck="false" placeholder="711658815">
+  <div class="obs">É dela que a tela mostra o que já foi lançado — e é nela que a baixa zera a falta.</div>
   <div class="acoes">
     <button class="go" id="cfgSalvar">Salvar</button>
     <button id="cfgFechar">Fechar</button>
@@ -227,6 +247,7 @@ const CFG_PADRAO = {
   gid:"1540822534",   // aba de programação (Lote/Data/Codigo/Qtd_cx/SALDO)
   estrutura:"",       // aba ESTRUTURA — preencher depois de criada
   semi:"",            // aba do catálogo de peças (SEMIACABADO), para a busca
+  faltas:"711658815", // aba FALTAS — o que já foi lançado, para a tela mostrar
   url:"",             // Web App do Apps Script
   operador:""
 };
@@ -251,7 +272,7 @@ const extraiId = s => { const t=String(s||"").trim();
    público, e a URL é a única coisa entre o endpoint e a internet. */
 (function bootstrapPorLink(){
   const q=new URLSearchParams(location.search);
-  const de={url:"url", op:"operador", est:"estrutura", semi:"semi", sheet:"sheet", gid:"gid"};
+  const de={url:"url", op:"operador", est:"estrutura", semi:"semi", fal:"faltas", sheet:"sheet", gid:"gid"};
   let mudou=false;
   for(const k in de){
     let v=q.get(k); if(v===null) continue;
@@ -574,6 +595,70 @@ function linhasParaPecas(rows, idx, esperado){
   return out;
 }
 
+/* ---------- faltas já lançadas ----------
+   O que transforma o app de caderno de anotação em ferramenta: antes de
+   marcar, o operador VÊ o que já está lançado — pelo turno dele ou pelo
+   outro. A mesma leitura que o painel faz da aba FALTAS, com a mesma regra:
+   o último lançamento de cada lote+volume+peça vence, e qtd 0 é baixa. */
+const FAL = { ativa:false, aba:"", map:new Map() };   // lote|vol|peça → {qtd, desc, quando}
+const ALIAS_FAL = {
+  data:["datahora","data","dthora","quando"],
+  lote:["lote","op","numlote"],
+  vol:["codvolume","volume","codvol"],
+  peca:["codpeca","peca","codigopeca"],
+  pecaDesc:["descpeca","descricaopeca","descricao","desc"],
+  qtd:["qtd","qtde","quantidade","qt"]
+};
+function parseFaltasApp(rows){
+  let h=-1, idx={};
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    const c={}; rows[i].forEach((v,j)=>{ const n=norm(v);
+      for(const k in ALIAS_FAL){ if(ALIAS_FAL[k].includes(n) && c[k]===undefined) c[k]=j; } });
+    if(c.lote!==undefined && c.peca!==undefined && c.qtd!==undefined){ h=i; idx=c; break; }
+  }
+  if(h<0) return null;
+  const map=new Map();
+  for(let r=h+1;r<rows.length;r++){ const row=rows[r];
+    const lote=normCod(val(row,idx.lote)), peca=normCod(val(row,idx.peca));
+    if(!lote || !peca) continue;
+    const vol=normCod(val(row,idx.vol));
+    const quando=pd(val(row,idx.data));
+    const k=lote+"|"+vol+"|"+peca;
+    const ant=map.get(k);
+    if(ant && ant.quando && quando && quando<ant.quando) continue;   // chegou mais velho
+    map.set(k,{ qtd:Math.max(0,Math.round(num(val(row,idx.qtd)))),
+                desc:val(row,idx.pecaDesc), quando });
+  }
+  return map;
+}
+async function carregarFaltas(){
+  FAL.map=new Map(); FAL.ativa=false; FAL.aba="";
+  const cand=[...new Set([CFG.faltas,"FALTAS","FALTA"].filter(Boolean))];
+  for(const aba of cand){
+    try{
+      const res=await fetch(abaURL(aba),{cache:"no-store"});
+      if(!res.ok) continue;
+      const txt=await res.text();
+      if(/<html/i.test(txt)) continue;
+      const m=parseFaltasApp(parseCSV(txt));
+      if(!m) continue;
+      FAL.map=m; FAL.ativa=true; FAL.aba=aba;
+      return;
+    }catch(e){ /* tenta a próxima */ }
+  }
+}
+// faltas abertas (qtd>0) de um volume; e a contagem por lote, para os selos
+function faltasDoVolume(lote,vol){
+  const pre=normCod(lote)+"|"+normCod(vol)+"|"; const out=new Map();
+  FAL.map.forEach((v,k)=>{ if(k.startsWith(pre) && v.qtd>0) out.set(k.slice(pre.length),{qtd:v.qtd,desc:v.desc}); });
+  return out;
+}
+function nFaltasLote(lote){
+  const pre=normCod(lote)+"|"; let n=0;
+  FAL.map.forEach((v,k)=>{ if(k.startsWith(pre) && v.qtd>0) n++; });
+  return n;
+}
+
 /* ---------- catálogo de peças (aba SEMIACABADO) ----------
    Rede de segurança para o volume que não está na estrutura: em vez de
    digitar 9 dígitos de cabeça, o operador procura por descrição ("TAMPO
@@ -654,7 +739,19 @@ let GRUPOS=[];
 let BUSCA="";           // filtro da lista de lotes
 let grupoSel=null, loteSel=null, volSel=null;
 let PECAS=null;         // peças do volume aberto; null = ainda buscando
-let marcadas=new Map(); // cod da peça → {qtd, desc}
+let marcadas=new Map(); // cod da peça → {qtd, desc} — o estado EDITADO
+let BASE=new Map();     // cod da peça → {qtd, desc} — o que JÁ ESTÁ lançado
+
+/* O envio é a DIFERENÇA entre o editado e o lançado: peça nova, quantidade
+   corrigida, ou zerada (baixa — "chegou"). Reenviar o que não mudou só
+   engordaria a planilha e esconderia a intenção de quem lançou. */
+function diffFaltas(){
+  const out=[];
+  marcadas.forEach((v,c)=>{ const b=BASE.get(c);
+    if(!b || b.qtd!==v.qtd) out.push({cod:c, qtd:v.qtd, desc:v.desc||(b&&b.desc)||""}); });
+  BASE.forEach((b,c)=>{ if(!marcadas.has(c)) out.push({cod:c, qtd:0, desc:b.desc||""}); });
+  return out;
+}
 
 /* ---------- telas ---------- */
 const $ = id => document.getElementById(id);
@@ -738,9 +835,11 @@ function render(){
       // grupo de um sublote só: a OP fica na linha, não faz sentido esconder
       const opUnico = ns===1 ? loteOp(gr.subs[0]) : "";
       const quantos = ns>1 ? `${ns} sublotes · ` : "";
+      const nfg=gr.subs.reduce((s,l)=>s+nFaltasLote(l.lote),0);
       d.innerHTML=`<div class="esq"><span class="lote">${esc(gr.tit)}</span>
         ${opUnico?`<span class="op">${esc(opUnico)}</span>`:""}
         ${coresHTML(gr.cores)}
+        ${nfg?`<span class="selo-f">${nfg} em falta</span>`:""}
         <div class="desc">${quantos}${nv} ${nv===1?"volume":"volumes"} · ${quandoTxt(gr)}</div></div>
         <div class="dir"><b${gr.pend?"":' style="color:var(--mut)"'}>${nBR(gr.vol)}</b>a produzir</div>
         <span class="seta">›</span>`;
@@ -765,8 +864,10 @@ function render(){
       const nv=lo.itens.filter(it=>it.saldo>0).length;
       const d=document.createElement("div"); d.className="item";
       if(lo.pend) d.style.borderLeftColor="var(--red)";
+      const nfs=nFaltasLote(lo.lote);
       d.innerHTML=`<div class="esq"><span class="lote">${esc(lo.lote)}</span>
         ${lo.cor?chipCor(lo.cor):""}
+        ${nfs?`<span class="selo-f">${nfs} em falta</span>`:""}
         <div class="desc">${nv} ${nv===1?"volume":"volumes"} · ${quandoTxt(lo)}</div></div>
         <div class="dir"><b${lo.pend?"":' style="color:var(--mut)"'}>${nBR(lo.vol)}</b>a produzir</div>
         <span class="seta">›</span>`;
@@ -783,12 +884,19 @@ function render(){
     const l=document.createElement("div"); l.className="lista";
     pend.forEach(it=>{
       const d=document.createElement("div"); d.className="item";
+      const nf=faltasDoVolume(loteSel.lote, it.cod).size;
       d.innerHTML=`<div class="esq"><span class="cod">${esc(it.cod)}</span>
+        ${nf?`<span class="selo-f">${nf} em falta</span>`:""}
         <div class="desc">${esc(it.desc||"")}</div></div>
         <div class="dir"><b>${nBR(it.saldo)}</b>a produzir</div>
         <span class="seta">›</span>`;
       d.onclick=async ()=>{
-        volSel=it; marcadas=new Map(); PECAS=null; NIVEL="pecas"; render();
+        volSel=it;
+        /* O contador já abre no que está lançado: o operador vê o estado e
+           corrige, em vez de lançar às cegas por cima. */
+        BASE=faltasDoVolume(loteSel.lote, it.cod);
+        marcadas=new Map([...BASE].map(([c,v])=>[c,{qtd:v.qtd,desc:v.desc}]));
+        PECAS=null; NIVEL="pecas"; render();
         const p=await pecasDoVolume(it.cod);
         if(NIVEL==="pecas" && volSel===it){ PECAS=p; render(); }
       };
@@ -805,7 +913,16 @@ function render(){
     tela.innerHTML=`<div class="vazio">buscando as peças deste volume…</div>`;
     return;
   }
-  const pecas = PECAS || [];
+  /* Peça lançada que não está na estrutura do volume entra na lista mesmo
+     assim: ela veio da aba FALTAS com a descrição que foi gravada no dia.
+     Sem isso, uma falta lançada por outro turno ficaria invisível — e
+     invisível é o mesmo que não existir para quem está com o celular. */
+  const base = PECAS===null ? [] : (PECAS||[]);
+  const extras=[...BASE].filter(([c])=>!base.some(p=>p.cod===c))
+    .map(([c,v])=>({cod:c, desc:v.desc||"", porUn:0}));
+  /* Lançada primeiro: é o que já cobra ação. O resto da estrutura fica
+     abaixo, na ordem em que veio. */
+  const pecas = [...base,...extras].sort((a,b)=>(BASE.has(b.cod)?1:0)-(BASE.has(a.cod)?1:0));
   const l=document.createElement("div"); l.className="lista";
 
   if(!pecas.length){
@@ -914,28 +1031,40 @@ function render(){
   }
 
   function item(p){
+    const b0=BASE.get(p.cod);            // o que já está lançado nesta peça
     const d=document.createElement("div"); d.className="peca";
     const qt=(marcadas.get(p.cod)||{}).qtd||0;
-    if(qt>0) d.classList.add("on");
     d.innerHTML=`<div class="esq">
-        <div class="pd">${esc(p.desc||"(sem descrição)")}</div>
+        <div class="pd">${esc(p.desc||(b0&&b0.desc)||"(sem descrição)")}</div>
         <div class="pc">${esc(p.cod)}</div>
+        ${b0?`<div class="ja">já lançado: ${nBR(b0.qtd)}</div>`:""}
         ${p.porUn>0?`<div class="un">${p.porUn} por volume · ${nBR(p.porUn*volSel.saldo)} p/ fechar</div>`:""}
       </div>
+      ${b0?`<button class="chegou" title="a peça chegou — zera a falta">✓ chegou</button>`:""}
       <div class="cnt">
         <button data-a="-">−</button>
         <input type="number" inputmode="numeric" min="0" value="${qt}">
         <button data-a="+">+</button>
       </div>`;
     const inp=d.querySelector("input");
+    const pinta=()=>{
+      const v=parseInt(inp.value,10)||0;
+      d.classList.toggle("on", v>0);
+      // zerar o que estava lançado é baixa: verde, porque é boa notícia
+      d.classList.toggle("baixa", !!b0 && v===0);
+      d.classList.toggle("mudou", !!b0 && v>0 && v!==b0.qtd);
+    };
     const sync=()=>{ const v=Math.max(0,parseInt(inp.value,10)||0);
-      inp.value=v; if(v>0) marcadas.set(p.cod,{qtd:v,desc:p.desc||""}); else marcadas.delete(p.cod);
-      d.classList.toggle("on", v>0); pintaResumo(); };
-    d.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      inp.value=v; if(v>0) marcadas.set(p.cod,{qtd:v,desc:p.desc||(b0&&b0.desc)||""}); else marcadas.delete(p.cod);
+      pinta(); pintaResumo(); };
+    d.querySelectorAll(".cnt button").forEach(b=>b.onclick=()=>{
       const v=Math.max(0,(parseInt(inp.value,10)||0) + (b.dataset.a==="+"?1:-1));
       inp.value=v; sync();
     });
+    const bc=d.querySelector(".chegou");
+    if(bc) bc.onclick=()=>{ inp.value=0; sync(); };
     inp.onchange=sync; inp.oninput=sync;
+    pinta();
     l.appendChild(d);
   }
 }
@@ -974,13 +1103,21 @@ function pintaSel(){
   });
 }
 
+/* O resumo fala do que VAI SER GRAVADO, não do que está na tela. Com o
+   contador já preenchido pelo que estava lançado, "3 peças" seria mentira:
+   pode não haver nada a enviar. */
 function pintaResumo(){
-  const n=marcadas.size;
-  const tot=[...marcadas.values()].reduce((s,v)=>s+(v.qtd||0),0);
-  $("resumo").innerHTML = n
-    ? `<b>${n}</b> ${n===1?"peça":"peças"} · ${nBR(tot)} no total`
-    : `marque o que falta`;
-  $("btnEnviar").disabled = !n;
+  const d=diffFaltas();
+  const novas=d.filter(x=>x.qtd>0 && !BASE.has(x.cod)).length;
+  const alt  =d.filter(x=>x.qtd>0 && BASE.has(x.cod)).length;
+  const baixas=d.filter(x=>x.qtd===0).length;
+  const partes=[];
+  if(novas)  partes.push(`<b>${novas}</b> ${novas===1?"peça nova":"peças novas"}`);
+  if(alt)    partes.push(`<b>${alt}</b> ${alt===1?"corrigida":"corrigidas"}`);
+  if(baixas) partes.push(`<b>${baixas}</b> ${baixas===1?"baixa":"baixas"}`);
+  $("resumo").innerHTML = partes.length ? partes.join(" · ")
+    : (BASE.size ? `nada mudou — ajuste ou dê baixa` : `marque o que falta`);
+  $("btnEnviar").disabled = !d.length;
 }
 
 /* ---------- envio ----------
@@ -1019,8 +1156,9 @@ async function enviar(){
     lote: loteSel.lote, interno: loteSel.interno||"",
     volume: volSel.cod, volumeDesc: volSel.desc||"",
     operador: CFG.operador||"", obs:"",
-    pecas: [...marcadas].map(([cod,v])=>({cod, qtd:v.qtd, desc:v.desc||""}))
+    pecas: diffFaltas()
   };
+  if(!payload.pecas.length){ toast("Nada mudou para enviar"); btn.disabled=false; return; }
   /* Conta os segundos no botão. O Apps Script leva alguns segundos para
      acordar, e uma tela parada em "Enviando…" faz o operador achar que travou
      — foi assim que a falta acabou lançada duas vezes. */
@@ -1044,7 +1182,19 @@ async function enviar(){
     }catch(e){ r=await enviarJSONP(CFG.url,payload); }
 
     if(r && r.ok){
-      toast(`Gravado — ${r.gravadas} ${r.gravadas===1?"peça":"peças"} do lote ${loteTit(loteSel)}`,"ok");
+      const nb=payload.pecas.filter(x=>x.qtd===0).length;
+      toast(nb===payload.pecas.length
+        ? `Baixa registrada — ${nb} ${nb===1?"peça chegou":"peças chegaram"}`
+        : `Gravado — ${payload.pecas.length} ${payload.pecas.length===1?"alteração":"alterações"} do lote ${loteTit(loteSel)}`,"ok");
+      /* O que foi enviado vira o novo estado conhecido, sem reler a planilha:
+         o gviz leva minutos para refletir a escrita, e a tela mostraria o
+         valor velho — parecendo que o envio não pegou. */
+      payload.pecas.forEach(x=>{
+        const k=normCod(loteSel.lote)+"|"+normCod(volSel.cod)+"|"+normCod(x.cod);
+        if(x.qtd>0) FAL.map.set(k,{qtd:x.qtd, desc:x.desc, quando:new Date()});
+        else FAL.map.delete(k);
+      });
+      BASE=faltasDoVolume(loteSel.lote, volSel.cod);
       marcadas=new Map(); NIVEL="volumes"; render();
     } else {
       toast("Não gravou: "+((r&&r.erro)||"resposta inesperada"),"err");
@@ -1067,6 +1217,7 @@ async function carregar(){
     LOTES=rowsToLotes(parseCSV(txt));
     GRUPOS=agrupaPorInterno(LOTES);
     await carregarEstrutura();
+    await carregarFaltas();
     const est = EST.ativa
       ? ` · estrutura <b>${EST.aba}</b> ligada`
       : ` · <span style="color:var(--amber)">sem aba de estrutura — lançamento por código</span>`;
@@ -1086,7 +1237,7 @@ async function carregar(){
   }
   // recarregar troca os objetos: seguir dentro de um lote antigo mostraria
   // saldo velho, então a navegação volta para o começo
-  NIVEL="lotes"; grupoSel=loteSel=volSel=null; render();
+  NIVEL="lotes"; grupoSel=loteSel=volSel=null; marcadas=new Map(); BASE=new Map(); render();
 }
 
 /* ---------- eventos ---------- */
@@ -1095,11 +1246,12 @@ $("btnVoltar").onclick=()=>{
     /* Sair das peças descarta o que foi marcado. Dez peças contadas com a
        mão suja não podem sumir num toque errado no canto da tela — e o
        operador não tem como recuperar: não ficou gravado em lugar nenhum. */
-    if(marcadas.size && !confirm("Sair sem enviar? "+(marcadas.size===1
-        ? "A peça marcada será perdida."
-        : `As ${marcadas.size} peças marcadas serão perdidas.`)))
+    const nd=diffFaltas().length;
+    if(nd && !confirm("Sair sem enviar? "+(nd===1
+        ? "A alteração será perdida."
+        : `As ${nd} alterações serão perdidas.`)))
       return;
-    NIVEL="volumes"; marcadas=new Map();
+    NIVEL="volumes"; marcadas=new Map(); BASE=new Map();
   }
   // volta para onde veio: a tela de sublotes só existiu se havia mais de um
   else if(NIVEL==="volumes") NIVEL = (grupoSel && grupoSel.subs.length>1) ? "sublotes" : "lotes";
@@ -1129,13 +1281,15 @@ $("btnCfg").onclick=()=>{ const b=$("cfgBox"); b.hidden=!b.hidden; if(!b.hidden)
 $("cfgFechar").onclick=()=>{ $("cfgBox").hidden=true; };
 function pintaCfg(){
   $("cfgOper").value=CFG.operador||""; $("cfgUrl").value=CFG.url||"";
-  $("cfgSheet").value=CFG.sheet; $("cfgGid").value=CFG.gid; $("cfgEst").value=CFG.estrutura||""; $("cfgSemi").value=CFG.semi||"";
+  $("cfgSheet").value=CFG.sheet; $("cfgGid").value=CFG.gid; $("cfgEst").value=CFG.estrutura||"";
+  $("cfgSemi").value=CFG.semi||""; $("cfgFal").value=CFG.faltas||"";
 }
 $("cfgSalvar").onclick=()=>{
   const sheet=extraiId($("cfgSheet").value);
   if(!sheet){ toast("Informe a planilha","err"); return; }
   CFG={ sheet, gid:$("cfgGid").value.trim()||CFG_PADRAO.gid,
         estrutura:$("cfgEst").value.trim(), semi:$("cfgSemi").value.trim(),
+        faltas:$("cfgFal").value.trim()||CFG_PADRAO.faltas,
         url:$("cfgUrl").value.trim(),
         operador:$("cfgOper").value.trim() };
   try{ localStorage.setItem(CFG_KEY,JSON.stringify(CFG)); }catch(e){}
