@@ -197,6 +197,30 @@
   .lane.nb h3 .cnt{margin-left:0; color:var(--bg); background:var(--amber); border-radius:20px;
     padding:1px 8px; min-width:22px; text-align:center}
 
+  /* aba Peças em falta: um bloco por lote interno, peça em corpo grande */
+  .lane.fal{border-style:solid; border-color:rgba(255,159,10,.55);
+    background:linear-gradient(180deg,rgba(255,159,10,.05),transparent); margin:0 0 14px}
+  .lane.fal h3{color:#ff9f0a}
+  .lane.fal h3 .cnt{margin-left:0; color:var(--bg); background:#ff9f0a; border-radius:20px;
+    padding:1px 8px; min-width:22px; text-align:center}
+  .lane.fal h3 .tot{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:#ff9f0a}
+  .fl-lote{border:1px solid var(--line); border-left:4px solid #ff9f0a; border-radius:10px;
+    background:var(--panel2); padding:10px 12px; margin-bottom:10px}
+  .fl-cab{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap;
+    border-bottom:1px solid var(--line); padding-bottom:7px; margin-bottom:4px}
+  .fl-cab .in{font-family:"IBM Plex Mono"; font-size:19px; font-weight:600; color:var(--ink)}
+  .fl-cab .op{font-family:"IBM Plex Mono"; font-size:12px; color:var(--mut2)}
+  .fl-cab .pz{margin-left:auto; font-family:"IBM Plex Mono"; font-size:11px; color:var(--red); text-align:right}
+  .fl-pc{width:100%; border-collapse:collapse}
+  .fl-pc td{padding:5px 6px; border-bottom:1px solid rgba(255,255,255,.05);
+    font-size:12.5px; color:var(--ink); vertical-align:baseline}
+  .fl-pc tr:last-child td{border-bottom:none}
+  .fl-pc .q{font-family:"IBM Plex Mono"; font-size:16px; font-weight:700; color:#ff9f0a;
+    text-align:right; white-space:nowrap; width:44px}
+  .fl-pc .cd{font-family:"IBM Plex Mono"; font-size:10.5px; color:var(--mut2); white-space:nowrap}
+  .fl-pc .vl{font-size:10.5px; color:var(--mut); text-align:right;
+    max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
   /* faixa de atraso: lotes que passaram da embalagem com volume pendente */
   /* o atraso não é um KPI igual aos outros: é o único que cobra ação.
      Vira caixa vermelha e número maior; os outros três recuam para contexto. */
@@ -743,6 +767,7 @@
 <nav class="abas" id="abas">
   <button class="aba on" data-aba="elaboracao">Lotes em elaboração <span class="cnt" id="abaElabCnt">0</span></button>
   <button class="aba" data-aba="pendentes">Volumes pendentes <span class="cnt" id="abaPendCnt">0</span></button>
+  <button class="aba" data-aba="faltas">Peças em falta <span class="cnt" id="abaFaltasCnt">0</span></button>
   <button class="aba" data-aba="elaborados">Lotes elaborados <span class="cnt" id="abaDoneCnt">0</span></button>
   <button class="aba" data-aba="config">⚙ Configuração</button>
 </nav>
@@ -776,6 +801,25 @@
   </div>
 
   <div class="vazio-aba" id="pendVazio" hidden>Nenhum volume pendente nesta data — nada passou da embalagem sem sair.</div>
+</div>
+
+<!-- A mesma resposta da folha impressa, ao vivo: o que a Embalagem lançou no
+     celular, por lote interno, com a peça e o volume onde ela falta. É a tela
+     de quem decide o que buscar agora — e de quem cobra o lançamento que não
+     foi feito. -->
+<div class="painel" id="painel-faltas" hidden>
+  <div class="lane fal" id="falLane" hidden>
+    <h3>Lotes esperando peça <span class="cnt" id="falCnt">0</span>
+      <span style="font-weight:400;letter-spacing:.06em">· lançado pela Embalagem no app</span>
+      <span class="tot" id="falTot"></span></h3>
+    <div id="falList"></div>
+  </div>
+  <div class="lane nb" id="falSemLane" hidden>
+    <h3>Atrasados sem peça lançada <span class="cnt" id="falSemCnt">0</span>
+      <span style="font-weight:400;letter-spacing:.06em">· passaram da embalagem e ninguém registrou o que falta</span></h3>
+    <div id="falSemList"></div>
+  </div>
+  <div class="vazio-aba" id="falVazio" hidden></div>
 </div>
 
 <!-- Lote elaborado é o que fechou: passou a embalagem e a baixa não deixou
@@ -1491,6 +1535,74 @@ function situacao(l,i,ref){
 const ehHoje=(l,i,ref)=>{const d=pd(l[ETAPAS[i].key]); return !!(d&&+d===+ref);};
 
 const LATE_TOP=5;        // quantos lotes atrasados a faixa mostra sem abrir
+/* ---------- aba Peças em falta ----------
+   Todo lote com peça lançada entra — inclusive o que ainda não venceu a
+   embalagem: peça faltando é problema antes do atraso, não depois. Agrupado
+   por lote interno, como a fábrica chama o lote. Os atrasados SEM lançamento
+   ficam num bloco à parte: cobrar o registro também é ação. */
+function renderFaltasAba(ref, atras){
+  const lane=document.getElementById("falLane"), semLane=document.getElementById("falSemLane");
+  const vazio=document.getElementById("falVazio");
+  if(!FALTAS.ativa){
+    lane.hidden=semLane.hidden=true; vazio.hidden=false;
+    vazio.innerHTML=`Aba <b>FALTAS</b> não encontrada — o que a Embalagem lança no celular apareceria aqui.
+      Confira o gid em ⚙ Configuração.`;
+    document.getElementById("abaFaltasCnt").textContent=0;
+    return;
+  }
+
+  const g=new Map();
+  LOTES.forEach(l=>{
+    const fs=faltasDe(l); if(!fs.length) return;
+    const k=l.interno||(" op:"+l.lote);
+    if(!g.has(k)) g.set(k,{tit:l.interno||l.lote, interno:l.interno||"", subs:[], pecas:[], cores:[]});
+    const gr=g.get(k);
+    gr.subs.push(l); if(l.cor && !gr.cores.includes(l.cor)) gr.cores.push(l.cor);
+    const a=atrasoDe(l,ref);
+    fs.forEach(f=>gr.pecas.push(Object.assign({op:l.lote, emb:pd(l.emb), dias:a?a.dias:null},f)));
+  });
+  const grupos=[...g.values()];
+  grupos.forEach(gr=>{
+    gr.pecas.sort((a,b)=>b.qtd-a.qtd);
+    gr.dias=Math.max(...gr.pecas.map(f=>f.dias??-99));
+    gr.chave=norm([gr.interno,...gr.subs.map(l=>l.lote),...gr.cores].join(" "));
+  });
+  grupos.sort((a,b)=>b.dias-a.dias);   // o atrasado há mais tempo cobra primeiro
+  const totPecas=grupos.reduce((s,gr)=>s+gr.pecas.reduce((t,f)=>t+f.qtd,0),0);
+
+  lane.hidden=!grupos.length;
+  document.getElementById("falCnt").textContent=grupos.length;
+  document.getElementById("falTot").textContent=grupos.length?`${nBR(totPecas)} peças a buscar`:"";
+  document.getElementById("falList").innerHTML=grupos.map(gr=>{
+    const multi=gr.subs.length>1;
+    const pior=gr.pecas.find(f=>f.dias===gr.dias)||gr.pecas[0];
+    const prazo=pior.emb?`emb. ${fmt(pior.emb)}${gr.dias>0?` · ${gr.dias}d de atraso`:""}`:"";
+    return `<div class="fl-lote" data-busca="${gr.chave}">
+      <div class="fl-cab"><span class="in">${esc(gr.tit)}</span>
+        <span class="op">${gr.subs.map(l=>esc(l.lote)).join(" · ")}</span>
+        ${gr.cores.map(c=>`<span class="cor" style="${corGPS(c)}">${esc(c)}</span>`).join("")}
+        <span class="pz">${prazo}</span></div>
+      <table class="fl-pc">${gr.pecas.map(f=>
+        `<tr><td class="q">${nBR(f.qtd)}</td>
+           <td>${esc(f.pecaDesc||"—")} <span class="cd">${esc(f.peca)}</span></td>
+           <td class="vl">${multi?esc(f.op)+" · ":""}${esc(f.volDesc||f.vol||"")}</td></tr>`).join("")}</table>
+    </div>`;
+  }).join("");
+
+  // atrasado sem nenhuma peça lançada: ninguém sabe POR QUE ele está parado
+  const sem=atras.filter(a=>!faltasDe(a.l).length);
+  semLane.hidden=!sem.length;
+  document.getElementById("falSemCnt").textContent=sem.length;
+  document.getElementById("falSemList").innerHTML=sem.map(a=>
+    `<div class="row" data-busca="${chaveBusca(a.l)}"><b>${esc(a.l.lote)}</b>${a.l.interno?`<span class="int">${esc(a.l.interno)}</span>`:""}
+      ${a.l.cor?`<span class="cor" style="${corGPS(a.l.cor)}">${esc(a.l.cor)}</span>`:""}
+      <span class="tag">${nBR(a.pend)} vol. · ${a.dias}d de atraso</span></div>`).join("");
+
+  vazio.hidden=!!(grupos.length||sem.length);
+  if(!vazio.hidden) vazio.textContent="Nenhuma peça em falta lançada — e nenhum lote atrasado sem registro.";
+  document.getElementById("abaFaltasCnt").textContent=nBR(totPecas);
+}
+
 /* ---------- busca de lote ----------
    O lote é procurado por três nomes: a OP do ERP (25010), o lote interno da
    fábrica (139/26) e a cor. norm() tira a pontuação dos dois lados, então
@@ -1501,12 +1613,12 @@ const LATE_TOP=5;        // quantos lotes atrasados a faixa mostra sem abrir
    quando se digita no campo de busca é um KPI em que ninguém confia. */
 const chaveBusca = l => norm([l.lote,l.interno,l.cor].filter(Boolean).join(" "));
 const ABA_NOME = {elaboracao:"Lotes em elaboração", pendentes:"Volumes pendentes",
-                  elaborados:"Lotes elaborados"};
+                  faltas:"Peças em falta", elaborados:"Lotes elaborados"};
 let BUSCA="";
 
 function aplicaBusca(){
   const q=norm(BUSCA);
-  const cx={elaboracao:0, pendentes:0, elaborados:0};
+  const cx={elaboracao:0, pendentes:0, faltas:0, elaborados:0};
   document.querySelectorAll("[data-busca]").forEach(el=>{
     const ok = !q || el.dataset.busca.includes(q);
     el.classList.toggle("fora", !ok);
@@ -1520,7 +1632,7 @@ function aplicaBusca(){
     st.classList.toggle("fora", !!q && !tem);
   });
 
-  const cxTot=cx.elaboracao+cx.pendentes+cx.elaborados;
+  const cxTot=Object.values(cx).reduce((s,n)=>s+n,0);
   const box=document.getElementById("buscaRes");
   document.getElementById("buscaX").hidden = !BUSCA;
   if(!BUSCA){ box.hidden=true; return; }
@@ -1772,6 +1884,7 @@ function render(){
   document.getElementById("abaPendCnt").textContent  = nBR(volAtraso);
   document.getElementById("abaDoneCnt").textContent  = done.length;
   document.getElementById("pendVazio").hidden = !!(atras.length || sbaixa.length);
+  renderFaltasAba(ref, atras);
 
   // a busca é reaplicada a cada render: as linhas e cards são recriados
   aplicaBusca();
@@ -2225,7 +2338,7 @@ document.getElementById("painel-config").appendChild(cfgBox);
 cfgBox.hidden=false;
 
 const ABA_KEY="lotesElaboracaoAba";
-const ABAS=["elaboracao","pendentes","elaborados","config"];
+const ABAS=["elaboracao","pendentes","faltas","elaborados","config"];
 function irPara(nome){
   if(!ABAS.includes(nome)) nome="elaboracao";
   document.querySelectorAll(".aba").forEach(b=>b.classList.toggle("on", b.dataset.aba===nome));

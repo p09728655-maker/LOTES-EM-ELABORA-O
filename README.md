@@ -34,8 +34,14 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   |---|---|---|
   | **Lotes em elaboração** | quadro das 5 estações · Programados | lotes ativos |
   | **Volumes pendentes** | Em atraso · Sem baixa | **volumes** em atraso |
+  | **Peças em falta** | o que a Embalagem lançou, por lote interno · atrasados sem lançamento | **peças** a buscar |
   | **Lotes elaborados** | tabela do que fechou, mais recente primeiro | lotes |
   | **⚙ Configuração** | planilha e gids | — |
+
+  Na aba de peças entra **todo lote com peça lançada, inclusive o que ainda não venceu a
+  embalagem** — peça faltando é problema antes do atraso, não depois. Os atrasados **sem** nenhum
+  lançamento ficam num bloco à parte: ninguém sabe por que estão parados, e cobrar o registro
+  também é ação.
 
   Em elaboração conta **lote** (é o que se acompanha no quadro); em pendentes conta **volume**,
   que é a unidade da cobrança — `29 lotes` e `2.293 volumes` levam a prioridades diferentes. A aba
