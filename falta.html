@@ -1007,7 +1007,15 @@ async function enviar(){
      e gravar depois não resolve, porque a estrutura muda e o que a peça era no
      dia se perde. O lote interno vai pelo mesmo motivo: é por ele que a
      fábrica chama o lote. */
+  /* Identificador do envio, gerado UMA vez e reusado na tentativa por JSONP.
+     O POST para o Apps Script pode gravar e mesmo assim falhar na leitura da
+     resposta — o /exec responde por redirecionamento, e ler esse redirect nem
+     sempre dá certo do navegador. Aí o catch abaixo cai no JSONP e grava a
+     mesma peça de novo: o lote aparece com a falta em dobro e ninguém
+     desconfia, porque as duas linhas são idênticas. Com o id, o Apps Script
+     reconhece a segunda gravação e devolve ok sem escrever nada. */
   const payload={
+    envioId: "e"+Date.now().toString(36)+Math.random().toString(36).slice(2,8),
     lote: loteSel.lote, interno: loteSel.interno||"",
     volume: volSel.cod, volumeDesc: volSel.desc||"",
     operador: CFG.operador||"", obs:"",

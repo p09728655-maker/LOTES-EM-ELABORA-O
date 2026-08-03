@@ -40,7 +40,13 @@ var FALTAS_ABA = 'FALTAS';
 var FALTAS_CABECALHO = ['DATA_HORA', 'LOTE', 'LOTE_INTERNO',
                         'COD_VOLUME', 'DESC_VOLUME',
                         'COD_PECA', 'DESC_PECA',
-                        'QTD', 'OPERADOR', 'OBS'];
+                        'QTD', 'OPERADOR', 'OBS', 'ENVIO_ID'];
+
+// ENVIO_ID e a chave contra gravacao em dobro. O app manda um id por envio; se
+// o mesmo id ja esta na aba, a gravacao e recusada em silencio e a resposta
+// volta ok. Sem isso, um POST que grava mas falha na leitura da resposta faz o
+// app tentar de novo por JSONP e a peca aparece duas vezes, com as duas linhas
+// identicas - ninguem desconfia olhando a planilha.
 
 // Layout anterior, sem lote interno e sem descricao. Quem ja estava gravando
 // tem uma aba assim, com historico dentro: ela e migrada, nunca recriada.
@@ -103,8 +109,21 @@ function faltas_aba_() {
     sh.getRange(1, 1, 1, FALTAS_CABECALHO.length).setFontWeight('bold');
   } else {
     faltas_migraCabecalho_(sh);
+    faltas_completaCabecalho_(sh);
   }
   return sh;
+}
+
+// Coluna nova do FALTAS_CABECALHO que a aba ainda nao tem entra no fim, sem
+// mexer em nada. Encadear uma migracao posicional por versao nao escala; a
+// linha e montada pelo NOME da coluna, entao a ordem no fim nao importa.
+function faltas_completaCabecalho_(sh) {
+  var cab = faltas_cabecalhoAtual_(sh);
+  var faltando = FALTAS_CABECALHO.filter(function (n) { return cab.indexOf(n) < 0; });
+  if (!faltando.length) return false;
+  sh.getRange(1, cab.length + 1, 1, faltando.length)
+    .setValues([faltando]).setFontWeight('bold');
+  return true;
 }
 
 // Cabecalho antigo virando o novo sem tocar no que ja esta gravado:
@@ -140,6 +159,26 @@ function faltas_cabecalhoAtual_(sh) {
   return sh.getRange(1, 1, 1, larg).getValues()[0].map(function (v) {
     return String(v == null ? '' : v).trim().toUpperCase();
   });
+}
+
+// Esse envio ja foi gravado? Procura de tras para frente: uma repeticao chega
+// segundos depois da original, nunca no meio do historico. Olha so as ultimas
+// linhas para nao ficar mais lento conforme a aba cresce - retentativa que
+// demorasse mais que isso ja teria estourado o timeout do app.
+var FALTAS_JANELA_ID = 400;
+
+function faltas_jaGravado_(sh, cab, id) {
+  if (!id) return false;
+  var c = cab.indexOf('ENVIO_ID');
+  if (c < 0) return false;
+  var ultima = sh.getLastRow();
+  if (ultima < 2) return false;
+  var inicio = Math.max(2, ultima - FALTAS_JANELA_ID + 1);
+  var vals = sh.getRange(inicio, c + 1, ultima - inicio + 1, 1).getValues();
+  for (var i = vals.length - 1; i >= 0; i--) {
+    if (String(vals[i][0]).trim() === id) return true;
+  }
+  return false;
 }
 
 // JSONP quando o cliente pede callback: atravessa qualquer politica de CORS.
@@ -207,6 +246,15 @@ function faltas_gravar_(p) {
        deslocado uma casa. Titulo que a aba nao tem simplesmente nao e
        gravado - o lancamento passa, so sem aquele campo. */
     var cab = faltas_cabecalhoAtual_(sh);
+    var envio = String(p.envioId || '').trim();
+
+    /* Dentro da trava: entre conferir e escrever nao entra outra execucao,
+       entao duas chamadas do mesmo envio nunca passam as duas. Responde ok
+       porque, para quem mandou, gravou mesmo - so nao foi agora. */
+    if (faltas_jaGravado_(sh, cab, envio)) {
+      return { ok: true, gravadas: p.pecas.length, lote: lote, volume: vol, repetido: true };
+    }
+
     var linhas = p.pecas.map(function (it) {
       var v = {
         DATA_HORA:    agora,
@@ -218,7 +266,8 @@ function faltas_gravar_(p) {
         DESC_PECA:    String(it.desc || '').trim(),
         QTD:          Number(it.qtd),
         OPERADOR:     oper,
-        OBS:          obs
+        OBS:          obs,
+        ENVIO_ID:     envio
       };
       return cab.map(function (nome) {
         return Object.prototype.hasOwnProperty.call(v, nome) ? v[nome] : '';
@@ -306,6 +355,7 @@ function faltas_diagnostico_() {
 // Grava uma linha de teste (lote 000000). Apague-a da aba depois.
 function faltas_testar_() {
   var r = faltas_gravar_({
+    envioId: 'teste-' + new Date().getTime(),
     lote: '000000',
     interno: '000/00',
     volume: '501.000.000',

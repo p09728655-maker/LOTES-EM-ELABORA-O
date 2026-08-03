@@ -232,6 +232,16 @@ DATA_HORA | LOTE | LOTE_INTERNO | COD_VOLUME | DESC_VOLUME | COD_PECA | DESC_PEC
 `QTD` é **quantas peças faltam de fato**, não multiplicador por volume — há lote com 2 volumes
 pendentes e `QT=1`, e outro com 3 volumes e `QT=14`. É o número que a pessoa sabe de cabeça.
 
+Cada envio leva um **`ENVIO_ID`** e o Apps Script recusa, em silêncio, um id que já esteja na aba
+— respondendo `ok`, porque para quem mandou gravou mesmo, só não foi agora. Sem isso a falta saía
+em dobro: o POST para o `/exec` grava e **mesmo assim** pode falhar na leitura da resposta (ela vem
+por redirecionamento), o app cai no fallback por JSONP e escreve de novo. As duas linhas ficavam
+idênticas e ninguém desconfiava olhando a planilha. A conferência acontece **dentro da trava**, então
+duas chamadas do mesmo envio nunca passam as duas.
+
+O painel, de todo modo, usa o **último lançamento** de cada `lote+volume+peça` — nunca a soma — então
+duplicata que já esteja gravada não vira falta dobrada no relatório.
+
 As **descrições vão gravadas junto com os códigos**: só `479001001` não diz a ninguém o que
 faltou, e quem abre a aba para cobrar a peça tinha de procurar cada número em outra planilha.
 Gravar na hora também congela o que a peça **era naquele dia** — a estrutura muda, e uma
