@@ -10,7 +10,7 @@
 //   1. script.google.com/home/projects/create   (projeto novo, em branco)
 //   2. no editor: Ctrl+A e Delete para esvaziar, depois cole este arquivo
 //   3. Ctrl+S para salvar
-//   4. Executar -> faltas_diagnostico_ -> autorize quando pedir
+//   4. no menu ao lado de Executar escolha DIAGNOSTICO -> Executar -> autorize
 //   5. Implantar -> Nova implantacao -> App da Web
 //        Executar como:     Eu
 //        Quem pode acessar: Qualquer pessoa
@@ -311,3 +311,11 @@ function faltas_testar_() {
   Logger.log(r);
   return r;
 }
+
+
+// --- atalhos para o menu Executar do editor --------------------------------
+// O Apps Script trata nome terminado em _ como privado e nao o lista no menu
+// ao lado de Executar. Estes dois existem so para aparecerem la.
+
+function DIAGNOSTICO() { return faltas_diagnostico_(); }
+function TESTAR()      { return faltas_testar_(); }
