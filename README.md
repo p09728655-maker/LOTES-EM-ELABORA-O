@@ -381,7 +381,7 @@ olhando o que vem, e a barra já carrega três botões.
   itens de um setor encostava no título do seguinte e as duas etapas liam-se como uma só — quem
   bate o olho precisa ver onde um bloco acaba antes de ler o que tem dentro.
 
-- **🖨 imprimir**, no alto da aba **Programados** — folha do que ainda vai entrar, **A4 deitado**,
+- **Imprimir folha**, no alto da aba **Programados** — folha do que ainda vai entrar, **A4 deitado**,
   **um bloco por dia de corte**. O gerencial responde pelo dia de hoje; esta responde pela semana
   que vem, e quem lê decide compra de chapa, fita e sequência de corte, então vai com os produtos
   de cada lote. Agrupar por dia é o ponto: uma lista corrida de 18 lotes não diz quanto entra na

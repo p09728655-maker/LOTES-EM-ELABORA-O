@@ -193,6 +193,17 @@
   .lane .row b{font-family:"IBM Plex Mono"; color:var(--ink); font-size:14px}
   .lane .row .tag{margin-left:auto; font-family:"IBM Plex Mono"; font-size:11px}
   .lane.wait h3{color:var(--steel)}
+  /* Botão de impressão dentro do cabeçalho da faixa. Nasceu com a classe
+     .mini, que é do botão "recarregar" da linha de status — minúscula, mono e
+     cinza, ali no meio do relatório parecia controle de depuração esquecido.
+     Aqui ele fala a língua dos botões da barra (Oswald, caixa alta, borda que
+     preenche no hover), só que no corpo de um cabeçalho. */
+  .lane h3 button.imp{background:none; color:var(--steel);
+    border:1px solid rgba(91,139,176,.45); border-radius:6px;
+    padding:4px 12px 5px; font-family:"Oswald"; font-size:11.5px; font-weight:500;
+    letter-spacing:.12em; text-transform:uppercase; line-height:1.3;
+    cursor:pointer; transition:.14s; margin-left:14px; white-space:nowrap}
+  .lane h3 button.imp:hover{background:var(--steel); color:#0b0d10; border-color:var(--steel)}
   .lane.nb h3{color:var(--amber)} .lane.nb .row .tag{color:var(--amber)}
   /* sobe para o topo junto com o atraso: as duas faixas cobram ação */
   .lane.nb{margin:0 0 14px; border-color:var(--amber);
@@ -886,7 +897,7 @@
     <h3>Programados <span class="cnt" id="waitCnt">0</span>
       <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram no corte</span>
       <span class="tot" id="waitTot"></span>
-      <button class="mini" id="impProg" title="Folha A4 do que ainda vai entrar, por dia de corte">🖨 imprimir</button></h3>
+      <button class="imp" id="impProg" title="Folha A4 do que ainda vai entrar, por dia de corte">Imprimir folha</button></h3>
     <div id="waitList"></div>
   </div>
 </div>
