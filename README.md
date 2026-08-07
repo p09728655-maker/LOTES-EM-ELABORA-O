@@ -63,10 +63,13 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   Cada produto é uma **linha de verdade da tabela**, não um bloco solto — assim a quantidade cai
   sob a coluna `Volumes`. Pelo mesmo motivo o **código ocupa a primeira coluna**, junto do número
   do lote: é o identificador da linha, e solto no fim da descrição ele começava num ponto
-  diferente a cada produto, o que dá para ler mas não para conferir. O grupo fecha com o **total
-  do lote** — o cabeçalho já traz a soma, mas com 18 produtos abertos ele saiu da tela, e conferir
-  lista sem total no pé é somar de cabeça. O total soma os valores cheios e arredonda uma vez, então
-  ele pode diferir na última casa da soma das linhas, que arredondam cada uma por si.
+  diferente a cada produto, o que dá para ler mas não para conferir.
+
+  O grupo **não** fecha com linha de total: a linha do lote, logo acima, já é essa soma. Chegou a
+  ter uma, e um lote de três produtos abria repetindo os mesmos números duas vezes em quatro
+  linhas. Note que a soma do lote ignora item **sem cadastro** — ele vale zero ponto e zero quilo,
+  e aparece como `–` no detalhe. Um total que não bate com a conta das linhas costuma ser isso, e
+  a linha de status diz quantos itens ficaram de fora.
 
   Ela substituiu a aba **Lotes elaborados**, que vivia vazia. O motivo é a planilha, não o código:
   a `PROGRAMACAO_CONCLUIDA` arquiva **linha a linha**, e o painel só dava um lote por concluído se
@@ -76,9 +79,14 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   a aba repetiria lote que o quadro já mostra como atrasado.
 - A faixa de atraso **abre com a lista completa**. O corte nos `LATE_TOP` maiores existia porque
   ela disputava espaço com o quadro; em aba própria, lote atrasado escondido atrás de um botão é
-  lote que ninguém cobra. O botão continua para quem quiser encurtar. A lista **ordena por volume,
-  não por idade** — metade dos atrasos costuma ser sobra de 5 a 20 volumes em lote 96% feito, que
-  ordenada por dia ocupa o topo e esconde o lote que concentra o volume.
+  lote que ninguém cobra. O botão continua para quem quiser encurtar. A lista **ordena por data de
+  embalagem e, no mesmo dia, por lote** — é a ordem em que se percorre a lista cobrando lote a
+  lote, e a mesma da planilha, então quem confere as duas lado a lado não fica pulando linha.
+
+  Ela já ordenou por volume pendente, para o lote que concentra o volume não ficar embaixo das
+  sobras de 5 a 20 volumes. Quem faz a cobrança pediu a ordem de leitura, e o volume não se perde:
+  a tarja do topo acha o maior atraso **por varredura, não por posição** — mudar a ordem da lista
+  não troca quem ela aponta.
 - **Busca de lote** (atalho `/`): acha por OP (`25010`), lote interno (`139/26`) ou cor, e a
   pontuação não importa. Ela **esconde** o que não casa, **não recalcula nada** — os KPIs do topo e
   os contadores das abas continuam falando da fábrica inteira, porque número que muda quando se
@@ -358,14 +366,30 @@ A página é autossuficiente como o painel: nenhum arquivo `.js` externo, porque
 falhe ao carregar derrubaria a tela inteira.
 
 ## Impressão / WhatsApp
-Dois botões na barra de controles, sempre referentes à **data de referência** selecionada:
+Três folhas, sempre referentes à **data de referência** selecionada. Duas saem da barra de
+controles; a de programados sai de dentro da própria aba — imprimir o que vem é coisa que se faz
+olhando o que vem, e a barra já carrega três botões.
 
 - **🖨 Imprimir / PDF** — monta um relatório gerencial em **A4 deitado**, fundo branco: cabeçalho com
   logo e KPIs, **detalhamento por etapa** com a situação de cada lote, quadro de **carga por
   etapa** (lotes, volumes, pontos, peso e distribuição), bloco de **atraso** (com a peça que trava
-  cada lote) e as faixas de programados/sem baixa/concluídos. **Faixa vazia não é impressa** — três
+  cada lote) e as faixas de sem baixa/concluídos. **Faixa vazia não é impressa** — três
   caixas dizendo "nenhum" empurravam uma folha inteira só para elas. Em "Imprimir → Salvar como PDF" sai o arquivo para mandar
   no grupo. `Ctrl+P` direto do navegador também gera o relatório.
+
+  Cada etapa **fecha com um traço** e abre com um respiro de 17pt. Com 9pt e mais nada, o fim dos
+  itens de um setor encostava no título do seguinte e as duas etapas liam-se como uma só — quem
+  bate o olho precisa ver onde um bloco acaba antes de ler o que tem dentro.
+
+- **🖨 imprimir**, no alto da aba **Programados** — folha do que ainda vai entrar, **A4 deitado**,
+  **um bloco por dia de corte**. O gerencial responde pelo dia de hoje; esta responde pela semana
+  que vem, e quem lê decide compra de chapa, fita e sequência de corte, então vai com os produtos
+  de cada lote. Agrupar por dia é o ponto: uma lista corrida de 18 lotes não diz quanto entra na
+  segunda e quanto entra na quarta, que é a única pergunta que se faz aqui. Cada bloco traz lotes,
+  volumes, pontos e peso do dia; lote sem data de corte cai num grupo próprio no fim, porque sumir
+  da folha seria pior.
+
+  Programados **saiu do gerencial**, onde era uma caixinha com o número do lote e nada mais.
 
   Deitado porque são 8 colunas de tabela: em pé, `Feito` ficava espremido enquanto sobrava um vão
   de 3 cm entre `Embalagem` e `Atraso`. As larguras do bloco de atraso vêm de um `<colgroup>` — em

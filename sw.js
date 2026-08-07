@@ -8,7 +8,7 @@
    versao proprio: ele pergunta o desta linha por postMessage e mostra o que
    vier. Dois lugares para bumpar viram um lugar desatualizado. Subir esta
    linha a cada deploy e o que dispara o aviso de atualizacao na tela. */
-const VERSAO = 'v11';   // subiu ao detalhe ganhar coluna de codigo e total por lote
+const VERSAO = 'v12';   // subiu a folha dos programados e a separacao das etapas no impresso
 const CACHE = 'esteira-' + VERSAO;
 const SHELL = [
   './', './index.html', './falta.html', './estrutura.html',
