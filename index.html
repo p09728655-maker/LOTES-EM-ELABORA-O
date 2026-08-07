@@ -192,7 +192,7 @@
   .lane .row .cor{margin-left:0; font-size:9.5px; padding:2px 8px}
   .lane .row b{font-family:"IBM Plex Mono"; color:var(--ink); font-size:14px}
   .lane .row .tag{margin-left:auto; font-family:"IBM Plex Mono"; font-size:11px}
-  .lane.done h3{color:var(--green)} .lane.wait h3{color:var(--steel)}
+  .lane.wait h3{color:var(--steel)}
   .lane.nb h3{color:var(--amber)} .lane.nb .row .tag{color:var(--amber)}
   /* sobe para o topo junto com o atraso: as duas faixas cobram ação */
   .lane.nb{margin:0 0 14px; border-color:var(--amber);
@@ -294,8 +294,10 @@
   .tvlinks a{color:var(--steel); text-decoration:none} .tvlinks a:hover{color:var(--amber)}
   #tv{display:none}
   body.tv{padding:0; overflow:hidden}
-  body.tv header.top, body.tv .controls, body.tv .status, body.tv .lanes, body.tv .lane.late,
-  body.tv .lane.nb, body.tv .cfg, body.tv .foot, body.tv #board{display:none}
+  /* .painel cobre as abas inteiras: a aba lembrada no localStorage pode ser
+     qualquer uma, e no modo TV nenhuma delas entra na tela. */
+  body.tv header.top, body.tv .controls, body.tv .status, body.tv .abas, body.tv .painel,
+  body.tv .cfg, body.tv .foot{display:none}
   body.tv #tv{display:flex; flex-direction:column; height:100vh; padding:1vh 2.4vw 1.4vh}
   .tv-head{display:flex; align-items:center; gap:2vw; border-bottom:.4vh solid var(--wood); padding-bottom:1.1vh}
   .tv-head .tv-fase{font-family:"IBM Plex Mono"; font-size:1.5vw; letter-spacing:.2em; color:var(--mut); text-transform:uppercase}
@@ -383,6 +385,24 @@
     background:var(--panel2); border:1px solid var(--green); color:var(--green);
     font-size:13px; padding:10px 18px; border-radius:8px; box-shadow:0 6px 24px rgba(0,0,0,.6)}
 
+  /* Aviso de versão nova. A tela fica aberta o dia todo num monitor da
+     fábrica e ninguém recarrega — sem este aviso o deploy só chega no dia
+     seguinte. Fica até clicarem: um toast de 3 segundos passaria batido. */
+  .novaver{position:fixed; left:50%; bottom:26px; transform:translateX(-50%); z-index:100;
+    display:flex; align-items:center; gap:14px;
+    background:var(--panel2); border:1px solid var(--amber); color:var(--amber);
+    font-size:13px; padding:10px 12px 10px 18px; border-radius:8px;
+    box-shadow:0 6px 24px rgba(0,0,0,.6)}
+  .novaver[hidden]{display:none}
+  .novaver b{font-family:"IBM Plex Mono"; font-weight:600}
+  .novaver button{background:var(--amber); color:#12140f; border:none; cursor:pointer;
+    font-family:"Inter",system-ui,sans-serif; font-size:12.5px; font-weight:600;
+    padding:7px 14px; border-radius:6px}
+  .novaver .depois{background:none; color:var(--mut); font-weight:400; padding:7px 4px}
+  /* no modo TV não há quem clique: lá a atualização é automática */
+  body.tv .novaver{display:none}
+  .verfoot{font-family:"IBM Plex Mono"; font-size:10.5px; color:var(--mut2); letter-spacing:.08em}
+
   /* ---- busca ---- */
   .grp.busca{position:relative}
   #busca{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
@@ -427,19 +447,20 @@
   /* dentro da aba a caixa de configuração é a tela, não um painel flutuante */
   #painel-config .cfg{margin:0}
 
-  /* tabela dos lotes elaborados: confere o que saiu, não acompanha etapa */
-  .tab-done{width:100%; border-collapse:collapse; font-size:12.5px}
-  .tab-done th{font-family:"IBM Plex Mono"; font-size:9.5px; letter-spacing:.14em;
+  /* tabela de lista: uma linha por lote, sem card. Serve a quem confere e
+     soma, não a quem acompanha etapa — por isso o rodapé com os totais. */
+  .tab-lista{width:100%; border-collapse:collapse; font-size:12.5px}
+  .tab-lista th{font-family:"IBM Plex Mono"; font-size:9.5px; letter-spacing:.14em;
     text-transform:uppercase; color:var(--mut2); font-weight:400; text-align:left;
     padding:5px 8px; border-bottom:1px solid var(--line); white-space:nowrap}
-  .tab-done td{padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.045); vertical-align:baseline}
-  .tab-done tr:last-child td{border-bottom:none}
-  .tab-done .lt{font-family:"IBM Plex Mono"; font-size:13.5px; color:var(--ink); white-space:nowrap}
-  .tab-done .int{font-family:"IBM Plex Mono"; font-size:12.5px; font-weight:600; color:var(--ink); white-space:nowrap}
-  .tab-done .n{font-family:"IBM Plex Mono"; text-align:right; white-space:nowrap}
-  .tab-done .dt{font-family:"IBM Plex Mono"; font-size:11.5px; color:var(--mut); white-space:nowrap}
-  .tab-done .cor{margin-left:0}
-  .tab-done tfoot td{border-top:1px solid var(--line); color:var(--mut);
+  .tab-lista td{padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.045); vertical-align:baseline}
+  .tab-lista tr:last-child td{border-bottom:none}
+  .tab-lista .lt{font-family:"IBM Plex Mono"; font-size:13.5px; color:var(--ink); white-space:nowrap}
+  .tab-lista .int{font-family:"IBM Plex Mono"; font-size:12.5px; font-weight:600; color:var(--ink); white-space:nowrap}
+  .tab-lista .n{font-family:"IBM Plex Mono"; text-align:right; white-space:nowrap}
+  .tab-lista .dt{font-family:"IBM Plex Mono"; font-size:11.5px; color:var(--mut); white-space:nowrap}
+  .tab-lista .cor{margin-left:0}
+  .tab-lista tfoot td{border-top:1px solid var(--line); color:var(--mut);
     font-family:"IBM Plex Mono"; padding-top:8px}
 
   #printview{display:none}
@@ -765,21 +786,18 @@
      ficou para trás" (o que venceu a embalagem). Uma competia com a outra
      pela primeira dobra — o atraso empurrava o quadro para fora da tela, e
      encolher o atraso escondia lote atrasado. Separadas, cada uma tem a tela
-     inteira. O que já saiu serve para conferir, não para vigiar, e
+     inteira. O que ainda não entrou serve para planejar, não para vigiar, e
      configuração se mexe uma vez por ano. -->
 <nav class="abas" id="abas">
   <button class="aba on" data-aba="elaboracao">Lotes em elaboração <span class="cnt" id="abaElabCnt">0</span></button>
   <button class="aba" data-aba="pendentes">Volumes pendentes <span class="cnt" id="abaPendCnt">0</span></button>
   <button class="aba" data-aba="faltas">Peças em falta <span class="cnt" id="abaFaltasCnt">0</span></button>
-  <button class="aba" data-aba="elaborados">Lotes elaborados <span class="cnt" id="abaDoneCnt">0</span></button>
+  <button class="aba" data-aba="programados">Programados <span class="cnt" id="abaProgCnt">0</span></button>
   <button class="aba" data-aba="config">⚙ Configuração</button>
 </nav>
 
 <div class="painel" id="painel-elaboracao">
   <div class="board" id="board"></div>
-  <div class="lanes">
-    <div class="lane wait"><h3>Programados <span class="cnt" id="waitCnt">0</span> <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram</span></h3><div id="waitList"></div></div>
-  </div>
 </div>
 
 <!-- Volume pendente: passou a embalagem e não saiu. Numa aba só, cabe a lista
@@ -825,19 +843,29 @@
   <div class="vazio-aba" id="falVazio" hidden></div>
 </div>
 
-<!-- Lote elaborado é o que fechou: passou a embalagem e a baixa não deixou
-     saldo. Aqui vale a tabela, não o card - ninguém acompanha etapa de lote
-     pronto, só confere o que saiu e quando. -->
-<div class="painel" id="painel-elaborados" hidden>
-  <div class="lane done">
-    <h3>Lotes elaborados <span class="cnt" id="doneCnt">0</span>
-      <span style="font-weight:400;letter-spacing:.06em">· passaram a embalagem com a baixa completa</span>
-      <span class="tot" id="doneTot"></span></h3>
-    <div id="doneList"></div>
+<!-- Programado é o que ainda não entrou: a data de corte é futura. Saiu do pé
+     da aba de elaboração, onde vivia como faixa e ficava abaixo da dobra, para
+     uma aba própria. Com a tela inteira cabe a tabela - volume, pontos e peso
+     do que vem por aí é o que dimensiona a semana, e a faixa antiga só
+     mostrava o número do lote. -->
+<div class="painel" id="painel-programados" hidden>
+  <div class="lane wait">
+    <h3>Programados <span class="cnt" id="waitCnt">0</span>
+      <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram no corte</span>
+      <span class="tot" id="waitTot"></span></h3>
+    <div id="waitList"></div>
   </div>
 </div>
 
 <div class="painel" id="painel-config" hidden></div>
+
+<!-- Barra de versão nova. Filha direta de body de propósito: a regra de
+     impressão é `body > *{display:none}`, então ela não sai no papel. -->
+<div class="novaver" id="novaVer" hidden>
+  <span>Versão nova publicada <b id="novaVerNum"></b> — recarregue para usar</span>
+  <button id="novaVerOk">Atualizar agora</button>
+  <button class="depois" id="novaVerDepois">depois</button>
+</div>
 
 <!-- Fora dos painéis de propósito: o modo TV substitui a tela toda, e a regra
      de impressão é `body > #printview` — dentro de uma aba escondida a folha
@@ -858,6 +886,7 @@
     <a href="?setor=uv">Linha UV</a> ·
     <a href="?setor=emb">Embalagem</a>
   </div>
+  <div class="verfoot" id="verFoot" hidden></div>
 </div>
 
 <script>
@@ -1616,12 +1645,12 @@ function renderFaltasAba(ref, atras){
    quando se digita no campo de busca é um KPI em que ninguém confia. */
 const chaveBusca = l => norm([l.lote,l.interno,l.cor].filter(Boolean).join(" "));
 const ABA_NOME = {elaboracao:"Lotes em elaboração", pendentes:"Volumes pendentes",
-                  faltas:"Peças em falta", elaborados:"Lotes elaborados"};
+                  faltas:"Peças em falta", programados:"Programados"};
 let BUSCA="";
 
 function aplicaBusca(){
   const q=norm(BUSCA);
-  const cx={elaboracao:0, pendentes:0, faltas:0, elaborados:0};
+  const cx={elaboracao:0, pendentes:0, faltas:0, programados:0};
   document.querySelectorAll("[data-busca]").forEach(el=>{
     const ok = !q || el.dataset.busca.includes(q);
     el.classList.toggle("fora", !ok);
@@ -1847,45 +1876,43 @@ function render(){
     `<div class="row" data-busca="${chaveBusca(w.l)}"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}
       <span class="tag">emb. ${fmt(pd(w.l.emb))} · ${(w.l.qtd||0).toLocaleString("pt-BR")} vol. sem reporte</span></div>`).join("");
 
-  const wl=document.getElementById("waitList"),dl=document.getElementById("doneList");
+  /* Programados numa tabela: numa aba própria cabe o que a faixa antiga não
+     mostrava — lote interno, volumes, pontos, peso e o dia em que entra no
+     corte. É com isso que se dimensiona a semana que vem, e o total no pé é o
+     que se leva para a reunião. Quem entra antes vem primeiro: a pergunta
+     aqui é "o que vem agora", não "o que veio". */
+  const waitOrd=[...wait].sort((a,b)=>(a.dias??99)-(b.dias??99)
+    || (pd(a.l.corte)||0)-(pd(b.l.corte)||0));
+  const wVol =waitOrd.reduce((s,w)=>s+(w.l.qtd||0),0);
+  const wPts =waitOrd.reduce((s,w)=>s+(w.l.pontosTot||0),0);
+  const wPeso=waitOrd.reduce((s,w)=>s+(w.l.pesoTot||0),0);
   document.getElementById("waitCnt").textContent=wait.length;
-  document.getElementById("doneCnt").textContent=done.length;
-  wl.innerHTML=wait.length?wait.map(w=>
-    `<div class="row" data-busca="${chaveBusca(w.l)}"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}<span class="tag" style="color:var(--steel)">${w.dias!=null?"entra em "+w.dias+"d · "+fmt(pd(w.l.corte)):""}</span></div>`).join("")
-    :`<div class="row" style="color:var(--mut2);font-style:italic">nenhum</div>`;
-  /* Elaborados numa tabela: numa aba própria cabe o que a faixa antiga não
-     mostrava — lote interno, volumes, pontos, peso e quando embalou. É o que
-     se confere depois, e o total no pé é o que se leva para a reunião.
-     Mais recente primeiro: ninguém procura o lote de duas semanas atrás. */
-  const doneOrd=[...done].sort((a,b)=>(pd(b.l.emb)||0)-(pd(a.l.emb)||0));
-  const dVol=doneOrd.reduce((s,w)=>s+(w.l.qtd||0),0);
-  const dPts=doneOrd.reduce((s,w)=>s+(w.l.pontosTot||0),0);
-  const dPeso=doneOrd.reduce((s,w)=>s+(w.l.pesoTot||0),0);
-  document.getElementById("doneTot").textContent =
-    done.length ? `${nBR(dVol)} volumes${dPeso?" · "+pesoTxt(dPeso):""}` : "";
-  dl.innerHTML = doneOrd.length ? `<table class="tab-done">
+  document.getElementById("waitTot").textContent =
+    wait.length ? `${nBR(wVol)} volumes${wPeso?" · "+pesoTxt(wPeso):""}` : "";
+  document.getElementById("waitList").innerHTML = waitOrd.length ? `<table class="tab-lista">
     <thead><tr><th>Lote</th><th>Interno</th><th>Cor</th>
       <th style="text-align:right">Volumes</th><th style="text-align:right">Pontos</th>
-      <th style="text-align:right">Peso</th><th>Embalou</th></tr></thead>
-    <tbody>${doneOrd.map(w=>`<tr data-busca="${chaveBusca(w.l)}">
+      <th style="text-align:right">Peso</th><th>Entra no corte</th></tr></thead>
+    <tbody>${waitOrd.map(w=>`<tr data-busca="${chaveBusca(w.l)}">
       <td class="lt">${esc(w.l.lote)}</td>
       <td class="int">${esc(w.l.interno||"–")}</td>
       <td>${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${esc(w.l.cor)}</span>`:""}</td>
       <td class="n">${nBR(w.l.qtd)}</td>
       <td class="n">${w.l.pontosTot?nBR(w.l.pontosTot):"–"}</td>
       <td class="n">${w.l.pesoTot?pesoTxt(w.l.pesoTot):"–"}</td>
-      <td class="dt" style="color:var(--green)">${fmt(pd(w.l.emb))}</td></tr>`).join("")}</tbody>
-    <tfoot><tr><td colspan="3">${done.length} ${done.length===1?"lote":"lotes"}</td>
-      <td class="n">${nBR(dVol)}</td><td class="n">${dPts?nBR(dPts):"–"}</td>
-      <td class="n">${dPeso?pesoTxt(dPeso):"–"}</td><td></td></tr></tfoot></table>`
-    : `<div class="row" style="color:var(--mut2);font-style:italic">Nenhum lote concluído nesta data de referência.</div>`;
+      <td class="dt" style="color:var(--steel)">${w.dias!=null
+        ? `em ${w.dias}d · ${fmt(pd(w.l.corte))}` : "–"}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td colspan="3">${wait.length} ${wait.length===1?"lote":"lotes"}</td>
+      <td class="n">${nBR(wVol)}</td><td class="n">${wPts?nBR(wPts):"–"}</td>
+      <td class="n">${wPeso?pesoTxt(wPeso):"–"}</td><td></td></tr></tfoot></table>`
+    : `<div class="row" style="color:var(--mut2);font-style:italic">Nenhum lote programado à frente desta data de referência.</div>`;
 
   /* Contadores das abas. Em elaboração conta LOTE (é o que se acompanha no
      quadro); em pendentes conta VOLUME, que é a unidade da cobrança — "29
      lotes" e "2.293 volumes" são coisas bem diferentes na hora de priorizar. */
   document.getElementById("abaElabCnt").textContent  = ativos;
   document.getElementById("abaPendCnt").textContent  = nBR(volAtraso);
-  document.getElementById("abaDoneCnt").textContent  = done.length;
+  document.getElementById("abaProgCnt").textContent  = wait.length;
   document.getElementById("pendVazio").hidden = !!(atras.length || sbaixa.length);
   renderFaltasAba(ref, atras);
 
@@ -2341,7 +2368,7 @@ document.getElementById("painel-config").appendChild(cfgBox);
 cfgBox.hidden=false;
 
 const ABA_KEY="lotesElaboracaoAba";
-const ABAS=["elaboracao","pendentes","faltas","elaborados","config"];
+const ABAS=["elaboracao","pendentes","faltas","programados","config"];
 function irPara(nome){
   if(!ABAS.includes(nome)) nome="elaboracao";
   document.querySelectorAll(".aba").forEach(b=>b.classList.toggle("on", b.dataset.aba===nome));
@@ -2410,9 +2437,58 @@ setInterval(carregar, 5*60*1000); // recarrega a cada 5 min
 setInterval(pintaFrescor, 30000); // e conta quanto tempo faz que a última deu certo
 if(TVKEY){ setInterval(tvClock, 30000); setInterval(tvRotate, 14000); } // relógio + rotação de páginas
 
-/* PWA: registra o service worker (permite instalar e abrir offline) */
+/* ---------- PWA: service worker e aviso de versão nova ----------
+   O painel fica aberto dias seguidos num monitor da fábrica: ninguém fecha,
+   ninguém recarrega. Sem isto, um deploy só chega a quem abre a tela do zero
+   — e a pessoa continua olhando a versão de duas semanas atrás sem saber.
+
+   Quem manda no número da versão é o sw.js: a tela pergunta e mostra o que
+   vier. O aviso aparece quando o service worker NOVO assume o controle, o
+   que só acontece depois de ele instalar (o sw.js chama skipWaiting).
+   No modo TV não há quem clique, então lá a tela se recarrega sozinha. */
 if("serviceWorker" in navigator){
-  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  const SW = navigator.serviceWorker;
+  const barra = document.getElementById("novaVer");
+  const pedeVersao = alvo => { try{ alvo && alvo.postMessage({t:"versao"}); }catch(e){} };
+
+  let NOVA=false;   // true depois que um SW novo assume: o número que vier é o dele
+  SW.addEventListener("message", e=>{
+    if(!e.data || e.data.t!=="versao") return;
+    const v=e.data.v||"";
+    const foot=document.getElementById("verFoot");
+    foot.textContent = "painel "+v; foot.hidden=false;
+    if(NOVA) document.getElementById("novaVerNum").textContent = v;
+  });
+
+  /* A troca de controlador também acontece na PRIMEIRA instalação (de nenhum
+     para o primeiro), e essa não é atualização nenhuma. O estado precisa ser
+     uma variável viva, não uma foto tirada no carregamento: na primeira
+     visita ainda não há controlador quando este script roda, e a tela fica
+     aberta dias — se a marca ficasse congelada em "não tinha", a atualização
+     de amanhã passaria calada, que é justo o caso que este aviso existe para
+     resolver. */
+  let controlado = !!SW.controller;
+  SW.addEventListener("controllerchange", ()=>{
+    pedeVersao(SW.controller);
+    if(!controlado){ controlado=true; return; }   // primeira instalação
+    NOVA=true;
+    if(TVKEY){ setTimeout(()=>location.reload(), 8000); return; }
+    barra.hidden=false;
+  });
+
+  document.getElementById("novaVerOk").onclick=()=>location.reload();
+  document.getElementById("novaVerDepois").onclick=()=>{ barra.hidden=true; };
+
+  window.addEventListener("load", ()=>{
+    pedeVersao(SW.controller);
+    SW.register("sw.js").then(reg=>{
+      /* O navegador só procura versão nova sozinho de tempos em tempos, e o
+         nosso caso é justamente a aba que nunca é reaberta. Meia hora é bem
+         mais frequente que isso e continua sendo um pedido por hora e meia
+         de planilha — não pesa em nada. */
+      setInterval(()=>reg.update().catch(()=>{}), 30*60*1000);
+    }).catch(()=>{});
+  });
 }
 </script>
 </body>

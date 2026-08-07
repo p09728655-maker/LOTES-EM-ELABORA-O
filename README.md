@@ -32,10 +32,10 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
 
   | aba | o que tem | o contador conta |
   |---|---|---|
-  | **Lotes em elaboração** | quadro das 5 estações · Programados | lotes ativos |
+  | **Lotes em elaboração** | quadro das 5 estações | lotes ativos |
   | **Volumes pendentes** | Em atraso · Sem baixa | **volumes** em atraso |
   | **Peças em falta** | o que a Embalagem lançou, por lote interno · atrasados sem lançamento | **peças** a buscar |
-  | **Lotes elaborados** | tabela do que fechou, mais recente primeiro | lotes |
+  | **Programados** | tabela do que ainda não entrou no corte, quem entra antes primeiro | lotes |
   | **⚙ Configuração** | planilha e gids | — |
 
   Na aba de peças entra **todo lote com peça lançada, inclusive o que ainda não venceu a
@@ -46,6 +46,17 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   Em elaboração conta **lote** (é o que se acompanha no quadro); em pendentes conta **volume**,
   que é a unidade da cobrança — `29 lotes` e `2.293 volumes` levam a prioridades diferentes. A aba
   escolhida fica salva: a tela fica ligada o dia todo.
+- **Programados** era uma faixa no pé da aba de elaboração, abaixo da dobra, mostrando só o número
+  do lote. Em aba própria cabe a tabela: interno, cor, volumes, pontos, peso e o dia em que entra
+  no corte, com os totais no rodapé — é com isso que se dimensiona a semana que vem. A ordem é por
+  **quem entra antes**: a pergunta aqui é *o que vem agora*.
+
+  Ela substituiu a aba **Lotes elaborados**, que vivia vazia. O motivo é a planilha, não o código:
+  a `PROGRAMACAO_CONCLUIDA` arquiva **linha a linha**, e o painel só dava um lote por concluído se
+  ele ainda estivesse na `PROGRAMAÇÃO` com saldo zero — estado que dura os segundos entre a última
+  linha zerar e o arquivador levá-la embora. Na prática, nunca. Fazer a aba ler o arquivo também
+  não resolvia: dos 22 lotes com alguma linha arquivada, 20 continuavam em elaboração com saldo, e
+  a aba repetiria lote que o quadro já mostra como atrasado.
 - A faixa de atraso **abre com a lista completa**. O corte nos `LATE_TOP` maiores existia porque
   ela disputava espaço com o quadro; em aba própria, lote atrasado escondido atrás de um botão é
   lote que ninguém cobra. O botão continua para quem quiser encurtar. A lista **ordena por volume,
@@ -384,9 +395,31 @@ Um arquivo por finalidade, porque cada sistema recorta de um jeito:
 | `apple-touch-icon.png` | conteúdo a 92% | o iOS só arredonda os cantos |
 | `favicon-32.png` | conteúdo a 108% | a 32px precisa de massa para não virar borrão |
 
-Trocar os ícones exige subir `CACHE` no `sw.js` (hoje `esteira-v2`), senão quem já instalou
-continua com o ícone antigo em cache.
+Trocar os ícones exige subir a versão no `sw.js` (ver abaixo), senão quem já instalou continua com
+o ícone antigo em cache.
+
+## Versão e aviso de atualização
+A versão mora em **uma linha só**, o `VERSAO` do `sw.js` (hoje `v9`); o nome do cache sai dela
+(`esteira-v9`). O painel não tem número próprio: pergunta ao service worker por `postMessage` e
+mostra o que vier, no pé da tela (`painel v9`). Dois lugares para bumpar viram um lugar
+desatualizado.
+
+**Subir essa linha a cada deploy** é o que dispara o aviso. Sem ele, um deploy só chega a quem
+abre a tela do zero — e a tela fica ligada dias seguidos num monitor da fábrica, onde ninguém
+fecha e ninguém recarrega. Quando o service worker novo assume, aparece a barra
+`Versão nova publicada v10 — recarregue para usar`, com **Atualizar agora** e **depois**. Ela fica
+até clicarem: um toast de três segundos passaria batido. No **modo TV** não há quem clique, então
+lá a tela se recarrega sozinha em 8 s.
+
+O navegador só procura versão nova de tempos em tempos, e o caso aqui é a aba que nunca é
+reaberta — por isso o painel pede `registration.update()` de meia em meia hora.
+
+A primeira instalação **não** dispara o aviso: a troca de controlador ali é de nenhum para o
+primeiro, não é atualização. Esse estado é uma variável viva, não uma foto tirada no
+carregamento — na primeira visita ainda não há controlador quando o script roda, e congelar a
+marca faria a atualização do dia seguinte passar calada, que é justo o caso que o aviso resolve.
 
 ## Publicar
 Deploy estático (ex.: Vercel): basta apontar para este repositório; não há build.
 O acesso externo à planilha funciona no servidor/Vercel (o preview local pode bloquear).
+**Antes de publicar, suba o `VERSAO` do `sw.js`** — é o que avisa quem está com a tela aberta.
