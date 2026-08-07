@@ -462,6 +462,24 @@
   .tab-lista .cor{margin-left:0}
   .tab-lista tfoot td{border-top:1px solid var(--line); color:var(--mut);
     font-family:"IBM Plex Mono"; padding-top:8px}
+  /* Abrir o lote e ver os produtos: quem programa material precisa saber DE
+     QUÊ é o lote, não só quantos volumes ele tem. Mesmo gesto do quadro e da
+     faixa de atraso — clicar na linha. */
+  .tab-lista tr[hidden]{display:none}
+  .tab-lista tbody tr.tem{cursor:pointer}
+  .tab-lista .abre{display:inline-block; width:11px; color:var(--steel);
+    font-size:10px; transition:transform .14s}
+  .tab-lista tbody tr.aberto .abre{transform:rotate(90deg)}
+  .tab-lista tbody tr.aberto > td{border-bottom:none}
+  /* Cada produto é uma linha de verdade da tabela: assim a quantidade cai sob
+     a coluna Volumes, e não solta na borda direita. Somar de cabeça o que não
+     está numa coluna é onde o número passa despercebido. */
+  .tab-lista tr.det td{border-bottom:none; padding:2.5px 8px; font-size:12px}
+  /* a última do lote devolve o traço e o respiro que o grupo tirou */
+  .tab-lista tr.det.fim td{padding-bottom:9px; border-bottom:1px solid rgba(255,255,255,.045)}
+  .tab-lista tr.det .rid{color:var(--mut); padding-left:22px}
+  .tab-lista tr.det .ricd{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2); margin-left:9px}
+  .tab-lista tr.det .n{color:var(--mut)}
 
   #printview{display:none}
   @media print{
@@ -1688,6 +1706,7 @@ function aplicaBusca(){
    continua, para quem quiser encurtar; a escolha sobrevive às recargas. */
 let LATE_ABERTO=true;
 const LATE_DET=new Set();   // lotes da faixa de atraso abertos no detalhe
+const PROG_DET=new Set();   // idem na aba Programados
 
 /* ---------- veredito do dia ----------
    Uma frase só, com cor, no topo da tela: quem bate o olho precisa sair
@@ -1889,20 +1908,41 @@ function render(){
   document.getElementById("waitCnt").textContent=wait.length;
   document.getElementById("waitTot").textContent =
     wait.length ? `${nBR(wVol)} volumes${wPeso?" · "+pesoTxt(wPeso):""}` : "";
-  document.getElementById("waitList").innerHTML = waitOrd.length ? `<table class="tab-lista">
-    <thead><tr><th>Lote</th><th>Interno</th><th>Cor</th>
-      <th style="text-align:right">Volumes</th><th style="text-align:right">Pontos</th>
-      <th style="text-align:right">Peso</th><th>Entra no corte</th></tr></thead>
-    <tbody>${waitOrd.map(w=>`<tr data-busca="${chaveBusca(w.l)}">
-      <td class="lt">${esc(w.l.lote)}</td>
+  /* A linha abre nos produtos do lote. Volume só dimensiona a carga; quem
+     programa material, chapa e fita precisa saber DE QUÊ é o lote, e ia
+     procurar isso lote a lote no quadro. Aberto/fechado sobrevive à recarga
+     de 5 min pelo mesmo motivo do LATE_DET: a tela fica ligada o dia inteiro. */
+  const linhaProg = w => {
+    const its=w.l.itens||[];
+    const aberto=its.length && PROG_DET.has(w.l.lote);
+    const bq=chaveBusca(w.l);
+    const det = its.map((it,i)=>`<tr class="det${i===its.length-1?" fim":""}" data-lote="${esc(w.l.lote)}" data-busca="${bq}"${aberto?"":" hidden"}>
+      <td class="rid" colspan="3">${esc(it.desc||it.cod||"")}${
+        it.cod?`<span class="ricd">${esc(it.cod)}</span>`:""}</td>
+      <td></td>
+      <td class="n">${nBR(it.qtd)}</td>
+      <td class="n">${it.pontos?nBR(it.pontos*(it.qtd||0)):"–"}</td>
+      <td class="n">${it.peso?pesoTxt(it.peso*(it.qtd||0)):"–"}</td>
+      <td></td></tr>`).join("");
+    return `<tr class="${its.length?"tem":""}${aberto?" aberto":""}" data-lote="${esc(w.l.lote)}" data-busca="${bq}">
+      <td class="lt"><span class="abre">${its.length?"▸":""}</span>${esc(w.l.lote)}</td>
       <td class="int">${esc(w.l.interno||"–")}</td>
       <td>${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${esc(w.l.cor)}</span>`:""}</td>
+      <td class="n">${its.length||"–"}</td>
       <td class="n">${nBR(w.l.qtd)}</td>
       <td class="n">${w.l.pontosTot?nBR(w.l.pontosTot):"–"}</td>
       <td class="n">${w.l.pesoTot?pesoTxt(w.l.pesoTot):"–"}</td>
       <td class="dt" style="color:var(--steel)">${w.dias!=null
-        ? `em ${w.dias}d · ${fmt(pd(w.l.corte))}` : "–"}</td></tr>`).join("")}</tbody>
+        ? `em ${w.dias}d · ${fmt(pd(w.l.corte))}` : "–"}</td></tr>${det}`; };
+  const wIts=waitOrd.reduce((s,w)=>s+((w.l.itens||[]).length),0);
+  document.getElementById("waitList").innerHTML = waitOrd.length ? `<table class="tab-lista">
+    <thead><tr><th>Lote</th><th>Interno</th><th>Cor</th>
+      <th style="text-align:right">Itens</th><th style="text-align:right">Volumes</th>
+      <th style="text-align:right">Pontos</th>
+      <th style="text-align:right">Peso</th><th>Entra no corte</th></tr></thead>
+    <tbody>${waitOrd.map(linhaProg).join("")}</tbody>
     <tfoot><tr><td colspan="3">${wait.length} ${wait.length===1?"lote":"lotes"}</td>
+      <td class="n">${wIts||"–"}</td>
       <td class="n">${nBR(wVol)}</td><td class="n">${wPts?nBR(wPts):"–"}</td>
       <td class="n">${wPeso?pesoTxt(wPeso):"–"}</td><td></td></tr></tfoot></table>`
     : `<div class="row" style="color:var(--mut2);font-style:italic">Nenhum lote programado à frente desta data de referência.</div>`;
@@ -2331,6 +2371,19 @@ document.getElementById("lateLane").addEventListener("click",e=>{
   const det=r.querySelector(".row-det"); if(!det) return;
   det.hidden=!det.hidden; r.classList.toggle("aberto",!det.hidden);
   if(det.hidden) LATE_DET.delete(r.dataset.lote); else LATE_DET.add(r.dataset.lote);
+});
+/* Mesmo gesto na aba Programados. Aqui cada produto é um <tr> próprio — é o
+   que faz a quantidade cair sob a coluna Volumes — então o clique mexe em
+   todas as linhas daquele lote, não numa só. */
+document.getElementById("painel-programados").addEventListener("click",e=>{
+  const r=e.target.closest("tr.tem"); if(!r) return;
+  const lote=r.dataset.lote;
+  const det=document.querySelectorAll(`#waitList tr.det[data-lote="${CSS.escape(lote)}"]`);
+  if(!det.length) return;
+  const fechar=!det[0].hidden;
+  det.forEach(d=>{ d.hidden=fechar; });
+  r.classList.toggle("aberto",!fechar);
+  if(fechar) PROG_DET.delete(lote); else PROG_DET.add(lote);
 });
 refInput.addEventListener("change",render);
 

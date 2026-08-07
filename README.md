@@ -47,9 +47,15 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   que é a unidade da cobrança — `29 lotes` e `2.293 volumes` levam a prioridades diferentes. A aba
   escolhida fica salva: a tela fica ligada o dia todo.
 - **Programados** era uma faixa no pé da aba de elaboração, abaixo da dobra, mostrando só o número
-  do lote. Em aba própria cabe a tabela: interno, cor, volumes, pontos, peso e o dia em que entra
-  no corte, com os totais no rodapé — é com isso que se dimensiona a semana que vem. A ordem é por
-  **quem entra antes**: a pergunta aqui é *o que vem agora*.
+  do lote. Em aba própria cabe a tabela: interno, cor, itens, volumes, pontos, peso e o dia em que
+  entra no corte, com os totais no rodapé — é com isso que se dimensiona a semana que vem. A ordem
+  é por **quem entra antes**: a pergunta aqui é *o que vem agora*.
+
+  Cada linha com `▸` **abre no clique** e mostra os produtos do lote — descrição, código, volumes,
+  pontos e peso de cada um. Volume só dimensiona a carga; quem programa material, chapa e fita
+  precisa saber *de quê* é o lote, e ia procurar isso lote a lote no quadro. Cada produto é uma
+  linha de verdade da tabela, e não um bloco solto: assim a quantidade cai **sob a coluna
+  Volumes**. Aberto/fechado sobrevive à recarga de 5 min, como na faixa de atraso.
 
   Ela substituiu a aba **Lotes elaborados**, que vivia vazia. O motivo é a planilha, não o código:
   a `PROGRAMACAO_CONCLUIDA` arquiva **linha a linha**, e o painel só dava um lote por concluído se
