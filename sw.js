@@ -4,7 +4,12 @@
      da rede (o painel precisa estar online para atualizar os lotes).
    - Estratégia network-first no mesmo domínio: online pega sempre a versão
      nova; offline cai para o cache. */
-const CACHE = 'esteira-v8';   // subiu ao app de faltas passar a ler o que ja foi lancado
+/* A versao mora AQUI e em nenhum outro lugar. O painel nao tem numero de
+   versao proprio: ele pergunta o desta linha por postMessage e mostra o que
+   vier. Dois lugares para bumpar viram um lugar desatualizado. Subir esta
+   linha a cada deploy e o que dispara o aviso de atualizacao na tela. */
+const VERSAO = 'v9';   // subiu ao Programados virar aba e ganhar aviso de versao
+const CACHE = 'esteira-' + VERSAO;
 const SHELL = [
   './', './index.html', './falta.html', './estrutura.html',
   './manifest.webmanifest', './manifest-falta.webmanifest',
@@ -25,6 +30,11 @@ self.addEventListener('activate', e => {
       .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
+});
+
+/* Quem pergunta a versao e a tela, no rodape e no aviso de atualizacao. */
+self.addEventListener('message', e => {
+  if (e.data && e.data.t === 'versao' && e.source) e.source.postMessage({ t: 'versao', v: VERSAO });
 });
 
 self.addEventListener('fetch', e => {
