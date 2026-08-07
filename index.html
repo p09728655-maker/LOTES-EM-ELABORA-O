@@ -483,12 +483,6 @@
   .tab-lista tr.det .ricd{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2);
     padding-left:30px; white-space:nowrap}
   .tab-lista tr.det .n{color:var(--mut)}
-  /* fecho do grupo: mesma linguagem do rodapé da tabela */
-  .tab-lista tr.det.sub td{border-top:1px solid rgba(255,255,255,.07); padding-top:6px}
-  .tab-lista tr.det.sub .rid{color:var(--mut2); font-family:"IBM Plex Mono"; font-size:11px;
-    letter-spacing:.04em}
-  .tab-lista tr.det.sub .rid b{color:var(--mut); font-weight:600}
-  .tab-lista tr.det.sub .n{color:var(--ink); font-weight:600}
 
   #printview{display:none}
   @media print{
@@ -539,10 +533,18 @@
     .pv-h2{font-family:"Oswald"; font-size:11pt; font-weight:600; letter-spacing:.08em;
       text-transform:uppercase; color:#333; margin:12pt 0 4pt; border-bottom:.8pt solid #333; padding-bottom:2pt;
       page-break-after:avoid; break-after:avoid}
-    .pv-sec{margin-top:9pt}
-    .pv-sec h2{font-family:"Oswald"; font-size:12pt; font-weight:600; margin:0 0 3pt;
-      padding:3pt 6pt; background:#f0f0f0; border-left:3pt solid #ff5a1f;
+    /* Separação entre as etapas. Com 9pt de respiro e nada mais, o fim dos
+       itens de um setor encostava no título do seguinte e as duas etapas
+       liam-se como uma só — quem bate o olho precisa ver onde um bloco acaba
+       antes de ler o que tem dentro. O traço FECHA o bloco; o respiro maior
+       vem antes do próximo título, do lado de quem começa. */
+    .pv-sec{margin-top:17pt; padding-bottom:7pt; border-bottom:1pt solid #999}
+    .pv-h2 + .pv-sec{margin-top:6pt}
+    .pv-sec:last-of-type{border-bottom:none}
+    .pv-sec h2{font-family:"Oswald"; font-size:13pt; font-weight:600; margin:0 0 3pt;
+      padding:4pt 7pt; background:#e6e6e6; border-left:4.5pt solid #ff5a1f;
       display:flex; align-items:baseline; gap:8pt; letter-spacing:.02em;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;
       page-break-after:avoid; break-after:avoid}
     .pv-sec h2 .fase{font-family:"IBM Plex Mono"; font-size:7pt; color:#666; letter-spacing:.1em}
     .pv-sec h2 .det{font-family:"Inter"; font-size:7.5pt; font-weight:400; color:#777;
@@ -879,9 +881,12 @@
      mostrava o número do lote. -->
 <div class="painel" id="painel-programados" hidden>
   <div class="lane wait">
+    <!-- o botão mora aqui, e não na barra de controles: imprimir o que vem
+         é coisa que se faz olhando o que vem, e a barra já carrega três -->
     <h3>Programados <span class="cnt" id="waitCnt">0</span>
       <span style="font-weight:400;letter-spacing:.06em">· ainda não entraram no corte</span>
-      <span class="tot" id="waitTot"></span></h3>
+      <span class="tot" id="waitTot"></span>
+      <button class="mini" id="impProg" title="Folha A4 do que ainda vai entrar, por dia de corte">🖨 imprimir</button></h3>
     <div id="waitList"></div>
   </div>
 </div>
@@ -1577,10 +1582,12 @@ function computeBuckets(ref){
   const faltaHoje = embDia.reduce((s,x)=>s+(temApontamento(x.l)?pendentes(x.l):0),0);
   wait.sort((a,b)=>(a.dias??99)-(b.dias??99)); done.sort((a,b)=>a.dias-b.dias);
   sbaixa.sort((a,b)=>b.dias-a.dias);
-  /* Ordena por VOLUME pendente, não por idade. Metade dos atrasos costuma ser
-     sobra de 5 a 20 volumes em lote 96% feito; ordenado por dia, essas sobras
-     ocupam o topo e empurram para baixo o lote que concentra o volume. */
-  atras.sort((a,b)=>b.pend-a.pend || b.dias-a.dias);
+  /* Ordena por DATA de embalagem e, no mesmo dia, por lote. É a ordem em que
+     se percorre a lista cobrando lote a lote, e a mesma da planilha — quem
+     confere as duas lado a lado não fica pulando linha. O maior atraso não se
+     perde: a tarja do topo o encontra por varredura, não por posição. */
+  atras.sort((a,b)=>(pd(a.l.emb)||0)-(pd(b.l.emb)||0)
+    || String(a.l.lote).localeCompare(String(b.l.lote),"pt-BR",{numeric:true}));
   const volAtraso=atras.reduce((s,x)=>s+x.pend,0);
   return {buckets,wait,done,atras,sbaixa,ativos,vols,mov,volAtraso,
           volsEt,pendEt,pontosEt,pesoEt,loteEmbHoje,volEmbHoje,faltaHoje};
@@ -1735,8 +1742,9 @@ function pintaVeredito({atras,sbaixa,volAtraso,ativos,faltaHoje,volEmbHoje,loteE
   } else if(atras.length){
     cls="bad"; ico="⚠";
     frase=`${atras.length} ${atras.length===1?"lote atrasado":"lotes atrasados"} · ${nBR(volAtraso)} ${volAtraso===1?"volume pendente":"volumes pendentes"}`;
-    // a lista vem ordenada por volume: o primeiro é o que mais pesa
-    const maior=atras[0];
+    /* Os dois saem por varredura, não pela posição na lista: a ordem da faixa
+       é de leitura (data/lote) e mudá-la não pode trocar quem é o maior. */
+    const maior=atras.reduce((m,a)=>a.pend>m.pend?a:m, atras[0]);
     const velho=atras.reduce((m,a)=>a.dias>m.dias?a:m, atras[0]);
     sub=`maior: ${maior.l.lote} (${nBR(maior.pend)} vol.)`;
     if(velho!==maior) sub+=` · mais antigo: ${velho.l.lote} (${velho.dias}d)`;
@@ -1933,27 +1941,18 @@ function render(){
        produto e não formava coluna — dá para ler um, não para conferir a
        lista. A descrição segue nas colunas de interno e cor, que estão
        vazias no detalhe. */
-    const linha = (cls, cod, desc, q, pts, kg) =>
-      `<tr class="det ${cls}" data-lote="${esc(w.l.lote)}" data-busca="${bq}"${aberto?"":" hidden"}>
-        <td class="ricd">${cod}</td>
-        <td class="rid" colspan="2">${desc}</td>
+    /* Sem linha de total fechando o grupo: a linha do lote, logo acima, já é
+       essa soma. Um lote de três produtos abria e repetia os mesmos números
+       duas vezes em quatro linhas. */
+    const det = its.map((it,i)=>
+      `<tr class="det${i===its.length-1?" fim":""}" data-lote="${esc(w.l.lote)}" data-busca="${bq}"${aberto?"":" hidden"}>
+        <td class="ricd">${esc(it.cod||"–")}</td>
+        <td class="rid" colspan="2">${esc(it.desc||"")}</td>
         <td></td>
-        <td class="n">${q}</td>
-        <td class="n">${pts}</td>
-        <td class="n">${kg}</td>
-        <td></td></tr>`;
-    /* Soma dos produtos fechando o grupo. O cabeçalho do lote já traz o
-       total, mas com 18 produtos abertos ele saiu da tela — e conferir uma
-       lista sem o total no pé é somar de cabeça. */
-    const sPts=its.reduce((s,it)=>s+(it.pontos||0)*(it.qtd||0),0);
-    const sKg =its.reduce((s,it)=>s+(it.peso||0)*(it.qtd||0),0);
-    const det = its.map(it=>linha("", esc(it.cod||"–"), esc(it.desc||""),
-        nBR(it.qtd),
-        it.pontos?nBR(it.pontos*(it.qtd||0)):"–",
-        it.peso?pesoTxt(it.peso*(it.qtd||0)):"–")).join("")
-      + (its.length ? linha("sub fim","",
-        `total do lote <b>${esc(w.l.lote)}</b> · ${its.length} ${its.length===1?"produto":"produtos"}`,
-        nBR(w.l.qtd), sPts?nBR(sPts):"–", sKg?pesoTxt(sKg):"–") : "");
+        <td class="n">${nBR(it.qtd)}</td>
+        <td class="n">${it.pontos?nBR(it.pontos*(it.qtd||0)):"–"}</td>
+        <td class="n">${it.peso?pesoTxt(it.peso*(it.qtd||0)):"–"}</td>
+        <td></td></tr>`).join("");
     return `<tr class="${its.length?"tem":""}${aberto?" aberto":""}" data-lote="${esc(w.l.lote)}" data-busca="${bq}">
       <td class="lt"><span class="abre">${its.length?"▸":""}</span>${esc(w.l.lote)}</td>
       <td class="int">${esc(w.l.interno||"–")}</td>
@@ -2200,9 +2199,9 @@ function buildPrint(ref, comItens){
      empurravam uma folha inteira só para elas. */
   const faixa = (tit, arr, linha) => arr.length
     ? `<div class="pv-lane"><h3>${tit} · ${arr.length}</h3>${arr.map(linha).join("")}</div>` : "";
+  /* Programados saiu daqui: tem folha própria, e o que ainda não entrou no
+     corte não decide nada no dia que este relatório cobre. */
   const lanesHTML =
-    faixa("Programados", wait, w=>`<div class="r"><b>${esc(w.l.lote)}</b>${esc(w.l.cor||"")}
-        <span>${w.dias!=null?`entra em ${w.dias}d · ${fmt(pd(w.l.corte))}`:""}</span></div>`) +
     faixa("Sem baixa", sbaixa, w=>`<div class="r"><b>${esc(w.l.lote)}</b>${esc(w.l.cor||"")}
         <span>emb. ${fmt(pd(w.l.emb))} · ${nBR(w.l.qtd)} vol.</span></div>`) +
     faixa("Concluídos", done, w=>`<div class="r"><b>${esc(w.l.lote)}</b>${esc(w.l.cor||"")}
@@ -2334,6 +2333,86 @@ function buildPrintFaltas(ref){
     </td></tr></tbody></table>`;
 }
 
+/* ================== FOLHA DO QUE VEM: PROGRAMADOS ==================
+   Saiu do gerencial, onde era uma caixinha com o número do lote e nada mais,
+   e virou folha própria. O gerencial responde pelo dia de hoje; esta responde
+   pela semana que vem, e quem lê decide compra de chapa, fita e sequência de
+   corte — precisa do produto, não só do volume.
+
+   Agrupa por DIA DE ENTRADA no corte. É a separação que a folha antiga não
+   tinha: uma lista corrida de 18 lotes não diz quanto entra na segunda e
+   quanto entra na quarta, que é a única pergunta que se faz aqui. */
+const diaExt = d => d.toLocaleDateString("pt-BR",{weekday:"long", day:"2-digit", month:"2-digit"});
+function buildPrintProg(ref, comItens){
+  const {wait}=computeBuckets(ref);
+  const agora=new Date();
+  /* Um grupo por data de corte, do mais próximo ao mais distante. Lote sem
+     data entra num grupo próprio no fim: some da folha seria pior. */
+  const dias=new Map();
+  [...wait].sort((a,b)=>(pd(a.l.corte)||0)-(pd(b.l.corte)||0)
+    || String(a.l.lote).localeCompare(String(b.l.lote),"pt-BR",{numeric:true}))
+    .forEach(w=>{ const d=pd(w.l.corte); const k=d?isoOf(d):"—";
+      if(!dias.has(k)) dias.set(k,{d, dias:w.dias, lotes:[]});
+      dias.get(k).lotes.push(w); });
+
+  const tVol =wait.reduce((s,w)=>s+(w.l.qtd||0),0);
+  const tPts =wait.reduce((s,w)=>s+(w.l.pontosTot||0),0);
+  const tPeso=wait.reduce((s,w)=>s+(w.l.pesoTot||0),0);
+
+  const blocos=[...dias.values()].map(g=>{
+    const gVol =g.lotes.reduce((s,w)=>s+(w.l.qtd||0),0);
+    const gPts =g.lotes.reduce((s,w)=>s+(w.l.pontosTot||0),0);
+    const gPeso=g.lotes.reduce((s,w)=>s+(w.l.pesoTot||0),0);
+    const linhas=g.lotes.map(w=>{
+      const l=w.l;
+      const its=(comItens && l.itens && l.itens.length)
+        ? `<tr class="pv-its"><td colspan="7"><ul>${l.itens.map(it=>
+            `<li><span class="cd">${esc(it.cod||"")}</span><span>${esc(it.desc||"")}</span>
+             <span class="dq">${nBR(it.qtd)}</span></li>`).join("")}</ul></td></tr>` : "";
+      return `<tbody class="lote"><tr>
+        <td class="lt">${esc(l.lote)}${l.interno?`<span class="int">${esc(l.interno)}</span>`:""}</td>
+        <td class="cel-cor">${chipCor(l.cor)}</td>
+        <td class="n">${l.itens?l.itens.length:"–"}</td>
+        <td class="n">${nBR(l.qtd)}</td>
+        <td class="n">${l.pontosTot?nBR(l.pontosTot):"–"}</td>
+        <td class="n">${pesoTxt(l.pesoTot)}</td>
+        <td class="sit">${fmt(pd(l.emb))} na embalagem</td></tr>${its}</tbody>`;}).join("");
+    const quando = g.d
+      ? `${diaExt(g.d)}${g.dias!=null?` · entra em ${g.dias} ${g.dias===1?"dia útil":"dias úteis"}`:""}`
+      : "Sem data de corte";
+    return `<div class="pv-sec">
+      <table class="pv-tab"><thead>
+        <tr class="pv-tit"><td colspan="7"><h2>${esc(quando)}
+          <span class="qt">${g.lotes.length} lote${g.lotes.length>1?"s":""} · ${nBR(gVol)} vol.${
+            gPts?` · ${nBR(gPts)} pts`:""}${gPeso?` · ${pesoTxt(gPeso)}`:""}</span></h2></td></tr>
+        <tr><th>Lote</th><th>Cor</th><th style="text-align:right">Itens</th>
+        <th style="text-align:right">Volumes</th><th style="text-align:right">Pontos</th>
+        <th style="text-align:right">Peso</th><th>Previsão</th></tr></thead>
+      ${linhas}</table></div>`;}).join("");
+
+  document.getElementById("printview").innerHTML=`
+    <table class="pv-page">
+    <tfoot><tr><td><div class="pv-foot">
+      <span>PPCP Patrimar · Programados · ref. ${fmt(ref)}/${ref.getFullYear()}</span>
+      <span>Ainda não entraram no corte · data de corte estimada a partir da embalagem</span>
+      <span>Emitido ${agora.toLocaleDateString("pt-BR")} ${agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span>
+    </div></td></tr></tfoot>
+    <tbody><tr><td>
+      <div class="pv-head">
+        <img src="logo-patrimar.png" alt="Patrimar Móveis">
+        <div class="pv-title"><h1>Programados</h1>
+          <div class="pv-sub">O que ainda vai entrar no corte · ${dataExt(ref)}</div></div>
+        <div class="pv-kpis">
+          <div><b>${wait.length}</b><small>lotes</small></div>
+          <div><b>${nBR(tVol)}</b><small>volumes</small></div>
+          ${tPts?`<div><b>${nBR(tPts)}</b><small>pontos</small></div>`:""}
+          ${tPeso?`<div><b>${pesoTxt(tPeso)}</b><small>peso</small></div>`:""}
+        </div>
+      </div>
+      ${blocos || `<div class="pf-nada" style="margin-top:10pt">Nenhum lote programado à frente desta data de referência.</div>`}
+    </td></tr></tbody></table>`;
+}
+
 /* ================== SAÍDA GERENCIAL: TEXTO DO WHATSAPP ==================
    Resumo curto, na formatação do WhatsApp (*negrito*), pra colar no grupo. */
 function textoWhats(ref, comItens){
@@ -2425,12 +2504,14 @@ let IMPRESSO="gerencial";
 /* Gerencial deitado: são 8 colunas de tabela, e em pé Feito fica espremido
    enquanto sobra vão entre Embalagem e Atraso. A folha de faltas continua em
    pé — é uma lista para a parede, e lista se lê de cima para baixo. */
-const ORIENTACAO={gerencial:"landscape", faltas:"portrait"};
+const ORIENTACAO={gerencial:"landscape", faltas:"portrait", programados:"landscape"};
 function montarImpresso(){
   document.getElementById("pageCSS").textContent =
     `@page{size:A4 ${ORIENTACAO[IMPRESSO]||"portrait"}; margin:9mm 10mm}`;
-  if(IMPRESSO==="faltas") buildPrintFaltas(pd(refInput.value));
-  else buildPrint(pd(refInput.value), document.getElementById("pItens").checked);
+  const ref=pd(refInput.value), its=document.getElementById("pItens").checked;
+  if(IMPRESSO==="faltas") buildPrintFaltas(ref);
+  else if(IMPRESSO==="programados") buildPrintProg(ref, its);
+  else buildPrint(ref, its);
 }
 /* ---------- configurações ---------- */
 const cfgBox=document.getElementById("cfgBox");
@@ -2504,6 +2585,8 @@ pintaCfg();
 
 document.getElementById("imprimir").onclick=()=>{ IMPRESSO="gerencial"; montarImpresso(); setTimeout(()=>window.print(),60); };
 document.getElementById("impFaltas").onclick=()=>{ IMPRESSO="faltas"; montarImpresso(); setTimeout(()=>window.print(),60); };
+document.getElementById("impProg").onclick=e=>{ e.stopPropagation();   // não abre/fecha lote
+  IMPRESSO="programados"; montarImpresso(); setTimeout(()=>window.print(),60); };
 window.addEventListener("afterprint", ()=>{ IMPRESSO="gerencial"; });
 // Ctrl+P direto do navegador também sai com o relatório montado
 window.addEventListener("beforeprint", montarImpresso);
