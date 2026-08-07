@@ -38,6 +38,10 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   | **Programados** | tabela do que ainda não entrou no corte, quem entra antes primeiro | lotes |
   | **⚙ Configuração** | planilha e gids | — |
 
+  O botão `⚙ Configurações` que ficava na barra de controles **saiu**: ele e a aba abriam a mesma
+  tela, e o painel de configuração já mora dentro da aba. Duas portas para a mesma sala é uma
+  porta a mais para manter — e uma linha de controles mais curta.
+
   Na aba de peças entra **todo lote com peça lançada, inclusive o que ainda não venceu a
   embalagem** — peça faltando é problema antes do atraso, não depois. Os atrasados **sem** nenhum
   lançamento ficam num bloco à parte: ninguém sabe por que estão parados, e cobrar o registro
@@ -51,11 +55,18 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   entra no corte, com os totais no rodapé — é com isso que se dimensiona a semana que vem. A ordem
   é por **quem entra antes**: a pergunta aqui é *o que vem agora*.
 
-  Cada linha com `▸` **abre no clique** e mostra os produtos do lote — descrição, código, volumes,
+  Cada linha com `▸` **abre no clique** e mostra os produtos do lote — código, descrição, volumes,
   pontos e peso de cada um. Volume só dimensiona a carga; quem programa material, chapa e fita
-  precisa saber *de quê* é o lote, e ia procurar isso lote a lote no quadro. Cada produto é uma
-  linha de verdade da tabela, e não um bloco solto: assim a quantidade cai **sob a coluna
-  Volumes**. Aberto/fechado sobrevive à recarga de 5 min, como na faixa de atraso.
+  precisa saber *de quê* é o lote, e ia procurar isso lote a lote no quadro. Aberto/fechado
+  sobrevive à recarga de 5 min, como na faixa de atraso.
+
+  Cada produto é uma **linha de verdade da tabela**, não um bloco solto — assim a quantidade cai
+  sob a coluna `Volumes`. Pelo mesmo motivo o **código ocupa a primeira coluna**, junto do número
+  do lote: é o identificador da linha, e solto no fim da descrição ele começava num ponto
+  diferente a cada produto, o que dá para ler mas não para conferir. O grupo fecha com o **total
+  do lote** — o cabeçalho já traz a soma, mas com 18 produtos abertos ele saiu da tela, e conferir
+  lista sem total no pé é somar de cabeça. O total soma os valores cheios e arredonda uma vez, então
+  ele pode diferir na última casa da soma das linhas, que arredondam cada uma por si.
 
   Ela substituiu a aba **Lotes elaborados**, que vivia vazia. O motivo é a planilha, não o código:
   a `PROGRAMACAO_CONCLUIDA` arquiva **linha a linha**, e o painel só dava um lote por concluído se
@@ -124,7 +135,7 @@ jeito que a baixa — `501.041.001` e `501041001` são o mesmo produto.
 
 Se a aba for recriada e mudar de `gid`, o painel tenta os gids conhecidos e depois os nomes
 `CADASTRO`, `PRODUTOS`, `PONTOS`; vale a primeira que tiver `CODIGO` + `PONTOS`/`P B`. Dá para
-fixar outro gid em Configurações (⚙).
+fixar outro gid na aba ⚙ Configuração.
 
 Onde aparecem: KPI de pontos e de peso no cabeçalho, carga por etapa junto do volume, e no card
 de cada lote. No impresso entram como colunas no quadro de carga e no detalhamento por etapa.
