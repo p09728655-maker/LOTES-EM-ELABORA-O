@@ -477,9 +477,18 @@
   .tab-lista tr.det td{border-bottom:none; padding:2.5px 8px; font-size:12px}
   /* a última do lote devolve o traço e o respiro que o grupo tirou */
   .tab-lista tr.det.fim td{padding-bottom:9px; border-bottom:1px solid rgba(255,255,255,.045)}
-  .tab-lista tr.det .rid{color:var(--mut); padding-left:22px}
-  .tab-lista tr.det .ricd{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2); margin-left:9px}
+  .tab-lista tr.det .rid{color:var(--mut)}
+  /* o código ocupa a coluna do lote, recuado: é o identificador do produto,
+     e o recuo é o que diz que ele pertence ao lote de cima */
+  .tab-lista tr.det .ricd{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2);
+    padding-left:30px; white-space:nowrap}
   .tab-lista tr.det .n{color:var(--mut)}
+  /* fecho do grupo: mesma linguagem do rodapé da tabela */
+  .tab-lista tr.det.sub td{border-top:1px solid rgba(255,255,255,.07); padding-top:6px}
+  .tab-lista tr.det.sub .rid{color:var(--mut2); font-family:"IBM Plex Mono"; font-size:11px;
+    letter-spacing:.04em}
+  .tab-lista tr.det.sub .rid b{color:var(--mut); font-weight:600}
+  .tab-lista tr.det.sub .n{color:var(--ink); font-weight:600}
 
   #printview{display:none}
   @media print{
@@ -660,8 +669,11 @@
     .controls .grp:nth-of-type(3){grid-template-columns:1fr 1fr}
     .controls .grp:nth-of-type(3) .chk{grid-column:1/-1; justify-content:center; padding:5px 0;
       border:1px solid var(--line); border-radius:7px}
+    /* três botões em duas colunas deixariam um buraco na segunda linha: o do
+       WhatsApp ocupa a linha inteira, que é onde o rótulo comprido cabe */
+    .controls .grp:nth-of-type(3) #whats{grid-column:1/-1}
     /* configurações é coisa de desktop: no celular só atrapalha */
-    #cfgBtn, .cfg, .so-desktop{display:none !important}
+    .cfg, .so-desktop{display:none !important}
     .controls label{align-self:center}
     input[type=date]{width:100%}
     button.b{padding:10px 8px; font-size:13.5px; white-space:nowrap}
@@ -748,7 +760,6 @@
     <button class="b fal" id="impFaltas" title="Folha para a fábrica: o que falta de peça em cada lote parado">🔧 Peças em falta</button>
     <button class="b zap" id="whats" title="Monta o resumo em texto e abre o WhatsApp">Enviar no WhatsApp</button>
     <label class="chk" title="Lista os produtos de cada lote (desmarque para o resumo curto)"><input type="checkbox" id="pItens" checked> produtos</label>
-    <button class="b" id="cfgBtn" title="Endereço da planilha e das abas">⚙ Configurações</button>
   </div>
   <div class="grp busca">
     <input type="search" id="busca" autocomplete="off" spellcheck="false"
@@ -896,7 +907,7 @@
   Lê ao vivo a aba de elaboração no Google Sheets e posiciona cada lote pela <b>data prevista</b> de cada etapa
   (corte → furar → colar/PU → UV → embalagem). Clique num card para ver os itens (quando houver).
   Use ◀/▶ pra simular os próximos dias.<br>
-  <span class="so-desktop">O endereço da planilha fica em <b style="color:var(--mut)">⚙ Configurações</b>, no alto da tela.</span>
+  <span class="so-desktop">O endereço da planilha fica na aba <b style="color:var(--mut)">⚙ Configuração</b>.</span>
   <div class="tvlinks"><b style="color:var(--mut)">Modo TV</b> (um setor por tela, para pendurar):
     <a href="?setor=corte">Corte</a> ·
     <a href="?setor=furar">Furadeira laterais</a> ·
@@ -910,7 +921,7 @@
 <script>
 /* ================== CONFIGURAÇÃO ================== */
 /* Endereço da planilha e das abas. Os valores abaixo são o padrão de fábrica;
-   o que valer na tela de Configurações (botão ⚙) fica salvo neste navegador e
+   o que valer na aba ⚙ Configuração fica salvo neste navegador e
    tem precedência — dá para apontar o painel para outra planilha sem mexer no
    código. "Restaurar padrão" volta para estes valores. */
 const CFG_PADRAO = {
@@ -1916,14 +1927,33 @@ function render(){
     const its=w.l.itens||[];
     const aberto=its.length && PROG_DET.has(w.l.lote);
     const bq=chaveBusca(w.l);
-    const det = its.map((it,i)=>`<tr class="det${i===its.length-1?" fim":""}" data-lote="${esc(w.l.lote)}" data-busca="${bq}"${aberto?"":" hidden"}>
-      <td class="rid" colspan="3">${esc(it.desc||it.cod||"")}${
-        it.cod?`<span class="ricd">${esc(it.cod)}</span>`:""}</td>
-      <td></td>
-      <td class="n">${nBR(it.qtd)}</td>
-      <td class="n">${it.pontos?nBR(it.pontos*(it.qtd||0)):"–"}</td>
-      <td class="n">${it.peso?pesoTxt(it.peso*(it.qtd||0)):"–"}</td>
-      <td></td></tr>`).join("");
+    /* O código vai na PRIMEIRA coluna, junto do número do lote: é o
+       identificador da linha, do mesmo jeito que o lote é o da linha de cima.
+       Solto no fim da descrição ele começava num ponto diferente a cada
+       produto e não formava coluna — dá para ler um, não para conferir a
+       lista. A descrição segue nas colunas de interno e cor, que estão
+       vazias no detalhe. */
+    const linha = (cls, cod, desc, q, pts, kg) =>
+      `<tr class="det ${cls}" data-lote="${esc(w.l.lote)}" data-busca="${bq}"${aberto?"":" hidden"}>
+        <td class="ricd">${cod}</td>
+        <td class="rid" colspan="2">${desc}</td>
+        <td></td>
+        <td class="n">${q}</td>
+        <td class="n">${pts}</td>
+        <td class="n">${kg}</td>
+        <td></td></tr>`;
+    /* Soma dos produtos fechando o grupo. O cabeçalho do lote já traz o
+       total, mas com 18 produtos abertos ele saiu da tela — e conferir uma
+       lista sem o total no pé é somar de cabeça. */
+    const sPts=its.reduce((s,it)=>s+(it.pontos||0)*(it.qtd||0),0);
+    const sKg =its.reduce((s,it)=>s+(it.peso||0)*(it.qtd||0),0);
+    const det = its.map(it=>linha("", esc(it.cod||"–"), esc(it.desc||""),
+        nBR(it.qtd),
+        it.pontos?nBR(it.pontos*(it.qtd||0)):"–",
+        it.peso?pesoTxt(it.peso*(it.qtd||0)):"–")).join("")
+      + (its.length ? linha("sub fim","",
+        `total do lote <b>${esc(w.l.lote)}</b> · ${its.length} ${its.length===1?"produto":"produtos"}`,
+        nBR(w.l.qtd), sPts?nBR(sPts):"–", sKg?pesoTxt(sKg):"–") : "");
     return `<tr class="${its.length?"tem":""}${aberto?" aberto":""}" data-lote="${esc(w.l.lote)}" data-busca="${bq}">
       <td class="lt"><span class="abre">${its.length?"▸":""}</span>${esc(w.l.lote)}</td>
       <td class="int">${esc(w.l.interno||"–")}</td>
@@ -2454,7 +2484,6 @@ document.addEventListener("keydown",e=>{
 // a aba escolhida sobrevive à recarga: a tela fica aberta o dia todo
 try{ const a=localStorage.getItem(ABA_KEY); if(a && a!=="elaboracao") irPara(a); }catch(e){}
 
-document.getElementById("cfgBtn").onclick=()=>irPara("config");
 document.getElementById("cfgFechar").onclick=()=>irPara("elaboracao");
 document.getElementById("cfgSalvar").onclick=()=>{
   const sheet=extraiId(document.getElementById("cfgSheet").value);
