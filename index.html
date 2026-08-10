@@ -363,6 +363,166 @@
   .tv-foot span:last-child{margin-left:auto}
   .tv-foot .velho{color:var(--red); font-weight:600}
 
+  /* ===================== MODO TABLET (?tablet=1) =====================
+     O tablet fica preso na máquina — na furadeira, no corte — e responde uma
+     pergunta só: O QUE ESTA MÁQUINA FAZ HOJE. Por isso abre na lista de
+     PRODUTOS do dia daquele setor, não no quadro das cinco estações: o quadro
+     é de quem planeja a esteira inteira, e ninguém opera a máquina olhando as
+     outras quatro colunas.
+     Tudo é dimensionado para leitura em pé, a um braço de distância, e para
+     dedo com luva: nada que se toca abaixo de 46px. */
+  #tabapp{display:none}
+  body.tab{padding:0; overflow-x:hidden}
+  /* .painel cobre as abas inteiras (a lembrada no localStorage pode ser
+     qualquer uma) e a caixa de configuração mora dentro de uma delas */
+  body.tab header.top, body.tab .controls, body.tab .status, body.tab .abas,
+  body.tab .painel, body.tab .cfg, body.tab .foot, body.tab .busca-res{display:none}
+  body.tab #tabapp{display:block; min-height:100vh;
+    padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+
+  /* cabeçalho: gruda no topo com a barra de setores, que é a navegação toda */
+  .tb-head{position:sticky; top:0; z-index:40; background:var(--bg);
+    box-shadow:0 8px 14px -8px rgba(0,0,0,.9)}
+  .tb-top{display:flex; align-items:center; gap:12px; padding:8px 14px 7px;
+    border-bottom:2px solid var(--wood)}
+  .tb-top .tb-logo{height:34px; width:auto; flex:none}
+  .tb-tit{min-width:0; flex:1 1 auto}
+  .tb-tit .fase{font-family:"IBM Plex Mono"; font-size:10.5px; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--mut)}
+  .tb-tit .nm{font-family:"Oswald"; font-weight:600; font-size:25px; line-height:1.05;
+    letter-spacing:.01em; margin-top:2px}
+  .tb-tit .nm span{color:var(--amber)}
+  .tb-tit .det{font-size:12px; color:var(--mut2); margin-top:2px}
+  .tb-relogio{font-family:"IBM Plex Mono"; font-size:20px; color:var(--mut); flex:none}
+  .tb-dia{text-align:right; flex:none; line-height:1.1}
+  .tb-dia b{font-family:"Oswald"; font-size:20px; font-weight:600; display:block}
+  .tb-dia small{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut)}
+  .tb-nav{display:flex; gap:6px; flex:none}
+  .tb-nav button{min-width:50px; min-height:46px; background:var(--panel2); color:var(--ink);
+    border:1px solid var(--line); border-radius:9px; font-family:"Oswald"; font-size:16px;
+    letter-spacing:.03em; cursor:pointer; -webkit-tap-highlight-color:transparent}
+  .tb-nav button:active{background:var(--amber); color:#000; border-color:var(--amber)}
+
+  /* barra de setores: os cinco postos, sempre todos à vista. Rolagem lateral
+     esconderia opção — quem está na máquina não vai procurar a sua. */
+  .tb-setores{display:flex; flex-wrap:wrap; gap:7px; padding:8px 14px;
+    background:var(--panel); border-bottom:1px solid var(--line)}
+  .tb-set{flex:1 1 130px; min-height:52px; display:flex; flex-direction:column;
+    justify-content:center; gap:2px; padding:6px 10px; cursor:pointer;
+    background:var(--panel2); color:var(--mut); border:1px solid var(--line);
+    border-radius:10px; text-align:left; -webkit-tap-highlight-color:transparent}
+  .tb-set .nm{font-family:"Oswald"; font-size:15px; font-weight:600; letter-spacing:.02em;
+    line-height:1.1; color:var(--ink)}
+  .tb-set .q{font-family:"IBM Plex Mono"; font-size:11.5px; letter-spacing:.04em}
+  .tb-set.on{background:var(--amber); border-color:var(--amber)}
+  .tb-set.on .nm, .tb-set.on .q{color:#12140f}
+  .tb-set.atr{border-color:var(--red)} .tb-set.atr .q{color:var(--red)}
+  .tb-set.atr.on{background:var(--red); border-color:var(--red)}
+  .tb-set.atr.on .nm, .tb-set.atr.on .q{color:#000}
+  .tb-set.zero{opacity:.45}
+
+  /* filtros: o dia e o formato da lista. Dois botões, estado à vista —
+     um <select> no toque abre uma folha que tapa a tela inteira. */
+  .tb-filtros{display:flex; flex-wrap:wrap; align-items:center; gap:7px; padding:9px 14px 4px}
+  .tb-filtros .gp{display:flex; gap:0; border:1px solid var(--line); border-radius:9px; overflow:hidden}
+  .tb-filtros .gp button{min-height:44px; padding:0 14px; background:var(--panel2); color:var(--mut);
+    border:none; border-right:1px solid var(--line); font-family:"Oswald"; font-size:14px;
+    letter-spacing:.04em; cursor:pointer; -webkit-tap-highlight-color:transparent}
+  .tb-filtros .gp button:last-child{border-right:none}
+  .tb-filtros .gp button.on{background:var(--amber); color:#12140f}
+  .tb-carga{margin-left:auto; font-family:"IBM Plex Mono"; font-size:13px; color:var(--mut);
+    text-align:right; line-height:1.35}
+  .tb-carga b{color:var(--ink)} .tb-carga .fal{color:var(--red)}
+
+  /* faixa de atraso: só aparece quando existe, e leva ao setor de atraso */
+  .tb-alerta{margin:9px 14px 0; display:flex; align-items:center; gap:11px; cursor:pointer;
+    background:rgba(255,59,48,.13); border:1px solid var(--red); border-radius:10px;
+    padding:10px 13px; color:var(--red); font-family:"Oswald"; font-size:17px; letter-spacing:.03em}
+  .tb-alerta .ls{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:var(--mut);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:45%}
+
+  .tb-lista{padding:10px 14px 6px; display:grid; gap:11px; align-items:start;
+    grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+  .tb-vazio{padding:34px 14px; text-align:center; color:var(--mut2); font-size:17px; font-style:italic}
+
+  /* ---- lote: cabeçalho do grupo de produtos e card da vista de lotes ---- */
+  .tb-lote{background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    overflow:hidden; break-inside:avoid}
+  /* o que entra HOJE na máquina ganha a borda laranja: é o único que se olha
+     de longe para saber se a lista da tela ainda é a da produção do dia */
+  .tb-lote.hoje{border-color:var(--amber); box-shadow:0 0 0 1px var(--amber-dim) inset}
+  .tb-lote.atrasado{border-color:var(--red)}
+  .tb-lh{display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:9px 12px;
+    background:var(--panel2); border-bottom:1px solid var(--line)}
+  .tb-lh .lt{font-family:"IBM Plex Mono"; font-weight:600; font-size:24px; line-height:1}
+  .tb-lh .int{font-family:"IBM Plex Mono"; font-size:14px; font-weight:600;
+    background:rgba(255,255,255,.08); border-radius:6px; padding:3px 8px}
+  .tb-lh .cor{font-size:11.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    border:1px solid var(--line); border-radius:20px; padding:3px 10px; color:var(--mut); white-space:nowrap}
+  .tb-lh .qt{margin-left:auto; font-family:"Oswald"; font-size:22px; font-weight:600; white-space:nowrap}
+  .tb-lh .qt small{font-size:11px; color:var(--mut); letter-spacing:.08em; margin-left:3px}
+  .tb-ls{padding:7px 12px; font-size:13.5px; color:var(--steel); display:flex;
+    align-items:center; gap:8px; border-bottom:1px solid var(--line)}
+  .tb-lote.hoje .tb-ls{color:var(--amber)}
+  .tb-ls .dot{width:9px; height:9px; border-radius:50%; background:currentColor; flex:none}
+  .tb-ls .mt{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:var(--mut)}
+  /* peça em falta trava a máquina: é a linha que não pode se perder no meio */
+  .tb-fal{display:flex; align-items:baseline; gap:8px; padding:7px 12px; font-size:13px;
+    background:rgba(255,90,31,.1); border-bottom:1px solid var(--line); color:#ff9f0a}
+  .tb-fal b{font-family:"IBM Plex Mono"}
+  .tb-fal .ls{color:var(--mut); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+  /* ---- produtos: a lista que o operador lê ----
+     Descrição em corpo de leitura e quantidade em laranja, alinhada à direita:
+     de pé, a um metro, o que se procura é o número. */
+  .tb-prods{padding:2px 0}
+  .tb-pr{display:flex; align-items:center; gap:10px; min-height:46px; padding:6px 12px;
+    border-bottom:1px solid rgba(255,255,255,.05)}
+  .tb-pr:last-child{border-bottom:none}
+  .tb-pr .cd{font-family:"IBM Plex Mono"; font-size:12px; color:var(--mut2);
+    white-space:nowrap; flex:none; width:88px}
+  .tb-pr .ds{flex:1 1 0; min-width:0; font-size:15px; line-height:1.25}
+  .tb-pr .q{font-family:"IBM Plex Mono"; font-weight:600; font-size:21px; color:var(--amber);
+    white-space:nowrap; text-align:right}
+  .tb-pr .em{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2); display:block;
+    margin-top:2px; white-space:normal}
+  .tb-pr.semcad .cd{color:var(--red)}
+  /* rodapé do grupo: soma do que está na lista, para conferir com a máquina */
+  .tb-lt{display:flex; align-items:center; gap:10px; padding:8px 12px;
+    border-top:1px solid var(--line); background:rgba(255,255,255,.02);
+    font-family:"IBM Plex Mono"; font-size:12.5px; color:var(--mut)}
+  .tb-lt b{color:var(--ink); font-size:15px}
+  .tb-lt .tot{margin-left:auto}
+
+  /* vista de lotes: o card fecha nos produtos e abre no toque */
+  .tb-abre{display:flex; align-items:center; gap:8px; width:100%; min-height:46px;
+    padding:0 12px; background:none; border:none; border-top:1px solid var(--line);
+    color:var(--steel); font-family:"Oswald"; font-size:14px; letter-spacing:.05em;
+    text-transform:uppercase; cursor:pointer; -webkit-tap-highlight-color:transparent}
+  .tb-abre .cv{transition:transform .15s}
+  .tb-lote.aberto .tb-abre .cv{transform:rotate(90deg)}
+  .tb-tl{display:flex; gap:4px; padding:8px 12px; border-top:1px solid var(--line)}
+  .tb-tl .st{flex:1; text-align:center; font-family:"IBM Plex Mono"; font-size:10.5px; color:var(--mut2)}
+  .tb-tl .st .bd{display:block; height:5px; border-radius:3px; background:var(--line); margin-bottom:4px}
+  .tb-tl .st.past .bd{background:var(--mut2)} .tb-tl .st.cur .bd{background:var(--amber)}
+  .tb-tl .st.cur{color:var(--amber)}
+
+  .tb-foot{display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; margin:14px 14px 0;
+    padding-top:11px; border-top:1px solid var(--line);
+    font-family:"IBM Plex Mono"; font-size:11.5px; color:var(--mut2)}
+  .tb-foot .velho{color:var(--red); font-weight:600}
+  .tb-foot a{color:var(--steel); text-decoration:none; margin-left:auto}
+
+  /* tablet em pé (ou tela pequena): uma coluna e cabeçalho em duas linhas */
+  @media(max-width:780px){
+    .tb-top{flex-wrap:wrap; gap:8px 10px}
+    .tb-tit{flex:1 1 60%; order:1} .tb-top .tb-logo{order:0}
+    .tb-relogio{order:2; margin-left:auto} .tb-dia{order:3}
+    .tb-nav{order:4; flex:1 1 100%} .tb-nav button{flex:1}
+    .tb-lista{grid-template-columns:1fr}
+    .tb-carga{margin-left:0; flex:1 1 100%; text-align:left}
+  }
+
   /* ============ IMPRESSÃO / WHATSAPP ============ */
   .controls .chk{display:flex; align-items:center; gap:6px; font-size:11px;
     letter-spacing:.12em; text-transform:uppercase; color:var(--mut); cursor:pointer}
@@ -410,8 +570,10 @@
     font-family:"Inter",system-ui,sans-serif; font-size:12.5px; font-weight:600;
     padding:7px 14px; border-radius:6px}
   .novaver .depois{background:none; color:var(--mut); font-weight:400; padding:7px 4px}
-  /* no modo TV não há quem clique: lá a atualização é automática */
-  body.tv .novaver{display:none}
+  /* no modo TV não há quem clique: lá a atualização é automática. No tablet
+     há, mas versão de painel não é decisão de operador — recarrega sozinho
+     também (o estado todo mora no localStorage, nada se perde). */
+  body.tv .novaver, body.tab .novaver{display:none}
   .verfoot{font-family:"IBM Plex Mono"; font-size:10.5px; color:var(--mut2); letter-spacing:.08em}
 
   /* ---- busca ---- */
@@ -916,6 +1078,9 @@
      de impressão é `body > #printview` — dentro de uma aba escondida a folha
      sairia em branco. -->
 <div id="tv"></div>
+<!-- Modo tablet: mesma regra do modo TV — substitui a tela inteira, então
+     mora fora dos painéis. -->
+<div id="tabapp"></div>
 <div id="printview"></div>
 <style id="pageCSS">@page{size:A4 landscape; margin:9mm 10mm}</style>
 
@@ -930,6 +1095,15 @@
     <a href="?setor=cola">Coladeira/PU</a> ·
     <a href="?setor=uv">Linha UV</a> ·
     <a href="?setor=emb">Embalagem</a>
+  </div>
+  <!-- O tablet da máquina abre direto no setor dela e não sai mais de lá: o
+       endereço é o que fica salvo na tela inicial do aparelho. -->
+  <div class="tvlinks"><b style="color:var(--mut)">Modo tablet</b> (produtos do dia, no toque):
+    <a href="?tablet=1&amp;setor=corte">Corte</a> ·
+    <a href="?tablet=1&amp;setor=furar">Furadeira laterais</a> ·
+    <a href="?tablet=1&amp;setor=cola">Coladeira/PU</a> ·
+    <a href="?tablet=1&amp;setor=uv">Linha UV</a> ·
+    <a href="?tablet=1&amp;setor=emb">Embalagem</a>
   </div>
   <div class="verfoot" id="verFoot" hidden></div>
 </div>
@@ -1000,10 +1174,57 @@ const TV_ALIAS = { corte:"corte", furar:"furar", furadeira:"furar",
   uv:"uv", linhauv:"uv", pintuv:"uv", emb:"emb", embalagem:"emb" };
 const _tvp = new URLSearchParams(location.search);
 const _tvv = (_tvp.get("setor") || _tvp.get("tv") || "").toLowerCase().replace(/[^a-z]/g,"");
-const TVKEY = TV_ALIAS[_tvv] || null;
+/* O tablet usa o MESMO ?setor= da TV — por isso decide antes: com ?tablet=
+   na URL (ou gravado de uma visita anterior), o setor é do tablet, não da TV.
+   O parâmetro fica GRAVADO no aparelho: o tablet é aberto uma vez, preso na
+   máquina, e ninguém digita endereço de novo — nem depois de acabar a
+   bateria. `?tablet=0` desliga, que é a saída do rodapé. */
+const TAB_LIGADO_KEY="lotesElaboracaoTablet";
+const TABLET=(()=>{
+  const p=_tvp.get("tablet") ?? _tvp.get("tablete") ?? _tvp.get("tab");
+  if(p===null || p===undefined){ try{ return localStorage.getItem(TAB_LIGADO_KEY)==="1"; }catch(e){ return false; } }
+  const on=!/^(0|nao|n[aã]o|off|false)$/i.test(String(p).trim());
+  try{ on ? localStorage.setItem(TAB_LIGADO_KEY,"1") : localStorage.removeItem(TAB_LIGADO_KEY); }catch(e){}
+  return on;
+})();
+const TVKEY = TABLET ? null : (TV_ALIAS[_tvv] || null);
 if(TVKEY) document.body.classList.add("tv");
 let TV_PAGE=0, TV_PAGES=1;   // paginação/rotação do modo TV
 function tvRotate(){ if(TVKEY && TV_PAGES>1){ TV_PAGE++; render(); } }
+
+/* ---------- Modo tablet: o aparelho preso na máquina (?tablet=1&setor=furar) ----------
+   O modo TV é para pendurar e olhar de longe: não tem toque, gira sozinho e
+   só mostra lote. No tablet da furadeira a pergunta é outra — QUAIS PEÇAS
+   ENTRAM NA MÁQUINA HOJE — e quem lê está a um palmo, com a mão livre. Por
+   isso é modo próprio: abre na lista de produtos do dia daquele setor.
+   A chave TABLET nasce lá em cima, junto do TVKEY: os dois disputam o mesmo
+   `?setor=` e o tablet vence quando `?tablet=` está na URL ou gravado. */
+if(TABLET) document.body.classList.add("tab");
+const TAB_SETOR_KEY="lotesElaboracaoTabSetor";
+const TAB_VISTA_KEY="lotesElaboracaoTabVista";
+const TAB_DIA_KEY="lotesElaboracaoTabDia";
+
+const TAB_SETORES = ETAPAS.map(e=>e.key).concat("atraso");
+const guardaTab = (k,v) => { try{ localStorage.setItem(k,v); }catch(e){} };
+const lidoTab = (k,pad) => { try{ return localStorage.getItem(k)||pad; }catch(e){ return pad; } };
+/* O setor do endereço manda e fica salvo: o tablet da furadeira nasce em
+   `?tablet=1&setor=furar` e volta nele sozinho a cada recarga. Salvar importa
+   porque o atalho de tela inicial (PWA) abre o start_url SEM os parâmetros —
+   sem a gravação, o tablet fixado na furadeira acordaria no Corte. */
+let TAB_SETOR = TV_ALIAS[_tvv] || lidoTab(TAB_SETOR_KEY,"corte");
+if(!TAB_SETORES.includes(TAB_SETOR)) TAB_SETOR="corte";
+if(TABLET && TV_ALIAS[_tvv]) guardaTab(TAB_SETOR_KEY,TAB_SETOR);
+let TAB_VISTA = lidoTab(TAB_VISTA_KEY,"produtos");     // produtos | lotes
+if(TAB_VISTA!=="lotes") TAB_VISTA="produtos";
+/* Nasce no DIA, não no setor inteiro: "o que essa máquina fura hoje" é a
+   pergunta que põe o tablet ali. O setor inteiro é a segunda pergunta. */
+let TAB_DIA = lidoTab(TAB_DIA_KEY,"hoje");             // hoje | setor
+if(TAB_DIA!=="setor") TAB_DIA="hoje";
+/* Somar produtos iguais de lotes diferentes: quem prepara o setup quer o
+   total do código no dia; quem separa material quer por lote. Como tudo aqui,
+   a escolha fica no aparelho — a tela vive ligada e ninguém reconfigura. */
+let TAB_SOMA = lidoTab("lotesElaboracaoTabSoma","0")==="1";
+const TAB_ABERTO = new Set();      // lotes com os produtos abertos na vista de lotes
 
 /* Dados de exemplo (usados se a planilha ainda estiver vazia / sem acesso) */
 const DEMO = [{"lote": "138/26", "cor": "PRETO", "corte": "2026-07-24", "furar": "2026-07-27", "cola": "2026-07-28", "uv": "2026-07-29", "emb": "2026-07-30", "itens": [{"cod": "114.011.001", "desc": "PENTEADEIRA CAMARIM ELOA BRANCO", "qtd": 180}, {"cod": "114.011.006", "desc": "PENTEADEIRA CAMARIM ELOA OFF WHITE", "qtd": 80}, {"cod": "114.011.117", "desc": "PENTEADEIRA CAMARIM ELOA CINAMOMO/OFF WHITE", "qtd": 40}, {"cod": "105.038.118", "desc": "RACK URBAN 1.8 OFF WHITE/CINAMOMO", "qtd": 150}, {"cod": "114013006", "desc": "PENTEADEIRA CAMARIM 1PT 2GAV DIAMANTE OFF WHITE", "qtd": 30}, {"cod": "114.013.021", "desc": "PENTEADEIRA CAMARIM 1PT 2GAV DIAMANTE BRANCO AC", "qtd": 370}], "qtd": 850}, {"lote": "137/26", "cor": "AZUL", "corte": "2026-07-23", "furar": "2026-07-24", "cola": "2026-07-27", "uv": "2026-07-28", "emb": "2026-07-29", "itens": [{"cod": "114.010.001", "desc": "PENTEADEIRA CAMARIM MEL BRANCO", "qtd": 180}, {"cod": "114.010.006", "desc": "PENTEADEIRA CAMARIM MEL OFF WHITE", "qtd": 160}, {"cod": "114.010.117", "desc": "PENTEADEIRA CAMARIM MEL CINAMOMO/OFF WHIHTE", "qtd": 60}, {"cod": "108.008.001", "desc": "MESA COMPUTADOR MILLION BRANCO", "qtd": 35}, {"cod": "108.008.116", "desc": "MESA COMPUTADOR MILLION CINAMOMO", "qtd": 190}, {"cod": "108.008.118", "desc": "MESA COMPUTADOR MILLION OFF WHHITE/CINAMOMO", "qtd": 60}, {"cod": "108.008.120", "desc": "MESA COMPUTADOR MILLION PRETO ACETINADO/CINAMOMO", "qtd": 55}, {"cod": "108.008.121", "desc": "MESA COMPUTADOR MILLION BRANCO/CINAMOMO", "qtd": 160}, {"cod": "109.046.006", "desc": "MESA CENTRO LUNA 670 OFF WHITE", "qtd": 170}, {"cod": "109.046.021", "desc": "MESA CENTRO LUNA 670 BRANCO ACETINADO", "qtd": 15}, {"cod": "109.046.073", "desc": "MESA CENTRO LUNA 670 CUMARU", "qtd": 65}, {"cod": "109.047.006", "desc": "MESA CENTRO LUNA 590 OFF WHITE", "qtd": 75}, {"cod": "109.047.073", "desc": "MESA CENTRO LUNA 590 CUMARU", "qtd": 25}, {"cod": "110.041.006", "desc": "MESA APOIO LUNA 530 OFF WHITE", "qtd": 90}, {"cod": "110.041.073", "desc": "MESA APOIO LUNA 530 CUMARU", "qtd": 10}, {"cod": "110.042.006", "desc": "MESA LATERAL LUNA 440 OFF WHITE", "qtd": 125}, {"cod": "110.042.073", "desc": "MESA LATERAL LUNA 440 CUMARU", "qtd": 55}, {"cod": "110.042.111", "desc": "MESA LATERAL LUNA 440 ALECRIM", "qtd": 20}], "qtd": 1550}, {"lote": "136/26", "cor": "AMARELO", "corte": "2026-07-22", "furar": "2026-07-23", "cola": "2026-07-24", "uv": "2026-07-27", "emb": "2026-07-28", "itens": [{"cod": "114.003.001", "desc": "PENTEADEIRA PRINCESA BRANCO", "qtd": 225}, {"cod": "114.003.002", "desc": "PENTEADEIRA PRINCESA ROSA", "qtd": 225}, {"cod": "113.006.116", "desc": "CRISTALEIRA ORION CINAMOMO", "qtd": 50}, {"cod": "113.006.118", "desc": "CRISTALEIRA ORION OFF WHITE/CINAMOMO", "qtd": 100}, {"cod": "106.066.116", "desc": "PAINEL ON 1.8 CINAMOMO", "qtd": 150}], "qtd": 750}, {"lote": "135/26", "cor": "VERMELHO", "corte": "2026-07-21", "furar": "2026-07-22", "cola": "2026-07-23", "uv": "2026-07-24", "emb": "2026-07-27", "itens": [{"cod": "109.044.001", "desc": "MESA CENTRO SLIM BRANCO", "qtd": 15}, {"cod": "109.044.006", "desc": "MESA CENTRO SLIM OFF WHITE", "qtd": 225}, {"cod": "109.044.070", "desc": "MESA CENTRO SLIM PRETO ACETINADO", "qtd": 20}, {"cod": "109.044.116", "desc": "MESA CENTRO SLIM CINAMOMO", "qtd": 190}, {"cod": "102.004.001", "desc": "SAPATEIRA SPAZIO BRANCO", "qtd": 10}, {"cod": "102.004.116", "desc": "SAPATEIRA SPAZIO CINAMOMO", "qtd": 120}, {"cod": "102.004.117", "desc": "SAPATEIRA SPAZIO CINAMOMO/OFF WHITE", "qtd": 220}, {"cod": "106.062.117", "desc": "HOME ANGEL 1.8 CINAMOMO/OFF WHITE", "qtd": 35}, {"cod": "106.062.118", "desc": "HOME ANGEL 1.8 OFF WHITE/CINAMOMO", "qtd": 115}, {"cod": "106.057.117", "desc": "HOME RIPADO ANTARES 1.4 CINAMOMO/OFF WHITE", "qtd": 100}], "qtd": 1050}, {"lote": "134/26", "cor": "BRANCO", "corte": "2026-07-20", "furar": "2026-07-21", "cola": "2026-07-22", "uv": "2026-07-23", "emb": "2026-07-24", "itens": [{"cod": "501.141.007", "desc": "VOL 1/1 BUFFET 4 PT PRISM CINAMOMO", "qtd": 250}, {"cod": "501.141.008", "desc": "VOL 1/1 BUFFET 4 PT PRISM OFF WHITE/CINAMOMO", "qtd": 375}, {"cod": "501.141.009", "desc": "VOL 1/1 BUFFET 4 PT PRISM BRANCO AC/CINAMOMO", "qtd": 25}, {"cod": "501.118.001", "desc": "VOL 1/1 ESCRIVANINHA TAURUS OFF WHITE", "qtd": 250}, {"cod": "501.118.002", "desc": "VOL 1/1 ESCRIVANINHA TAURUS BRANCO AC", "qtd": 50}, {"cod": "501.118.005", "desc": "VOL 1/1 ESCRIVANINHA TAURUS CINAMOMO", "qtd": 200}, {"cod": "501.115.001", "desc": "VOL 1/1 MESA COMP SPACE BRANCO", "qtd": 10}, {"cod": "501.115.002", "desc": "VOL 1/1 MESA COMP SPACE CINAMOMO", "qtd": 130}, {"cod": "501.115.004", "desc": "VOL 1/1 MESA COMP SPACE OFF WHITE/CINAMOMO", "qtd": 180}, {"cod": "501.115.003", "desc": "VOL 1/1 MESA COMP SPACE BRANCO/CINAMOMO", "qtd": 80}], "qtd": 1550}];
@@ -2000,6 +2221,7 @@ function render(){
   aplicaBusca();
 
   if(TVKEY) renderTV(buckets, ref, atras, volAtraso);
+  if(TABLET) renderTab({buckets,atras,volAtraso}, ref);
 }
 
 /* ---------- modo TV: renderiza só o setor escolhido, em tela cheia ---------- */
@@ -2053,6 +2275,226 @@ function renderTV(buckets, ref, atras, volAtraso){
       <span>${fmt(ref)}/${ref.getFullYear()}</span></div>`;
   tvClock();
 }
+
+/* ================== MODO TABLET ==================
+   Uma tela por máquina. O conteúdo é a lista de PRODUTOS que entram naquele
+   setor na data escolhida — código, descrição e quantidade — agrupada pelo
+   lote a que pertencem, porque é o lote que chega na máquina em cima do
+   carrinho. A vista de lotes fica ao lado, para quem precisa do prazo e do
+   caminho do lote em vez da peça. */
+function tabClock(){ const c=document.getElementById("tabRelogio");
+  if(c) c.textContent=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }
+
+/* Lotes do setor escolhido: quem ENTROU HOJE primeiro (é a produção do dia),
+   depois o que está parado há mais tempo. */
+function tabLotesDoSetor(dados, ref){
+  if(TAB_SETOR==="atraso") return dados.atras.map(a=>({l:a.l, idx:4, atr:a}));
+  const i=ETAPAS.findIndex(e=>e.key===TAB_SETOR);
+  const arr=(dados.buckets[i]||[]).map(x=>({l:x.l, idx:x.idx}));
+  arr.sort((a,b)=>{
+    const ha=ehHoje(a.l,i,ref)?0:1, hb=ehHoje(b.l,i,ref)?0:1;
+    return ha-hb || (pd(a.l[ETAPAS[i].key])||0)-(pd(b.l[ETAPAS[i].key])||0)
+      || String(a.l.lote).localeCompare(String(b.l.lote),"pt-BR",{numeric:true});
+  });
+  return (TAB_DIA==="hoje") ? arr.filter(x=>ehHoje(x.l,i,ref)) : arr;
+}
+
+/* A coluna de pendente só faz sentido onde ela é medida: PRODUZIDO e SALDO da
+   planilha são volumes EMBALADOS. Na furadeira, "falta 120" seria lido como
+   peça que não passou pela máquina — e é outra conta, que ninguém aponta. */
+const tabMedePend = l => (TAB_SETOR==="emb"||TAB_SETOR==="atraso") && temApontamento(l);
+
+function tabLinhaProd(it, l, extra){
+  const pend = tabMedePend(l) ? pendItem(it,l) : null;
+  const q = pend===null ? (it.qtd||0) : pend;
+  return `<div class="tb-pr"><span class="cd">${esc(it.cod||"–")}</span>
+    <span class="ds">${esc(it.desc||"")}${extra?`<span class="em">${extra}</span>`:""}</span>
+    <span class="q"${pend!==null&&pend<=0?' style="color:var(--green)"':""}>${pend!==null&&pend<=0?"ok":nBR(q)}</span></div>`;
+}
+
+/* Cabeçalho do lote: o número grande, a cor do GPS e o volume. É por esses
+   três que se confere se o carrinho parado na máquina é o desta lista. */
+function tabCabecalhoLote(x, ref){
+  const l=x.l, i=x.idx, et=ETAPAS[i], hoje=!x.atr && ehHoje(l,i,ref);
+  const fal=faltasDe(l);
+  let st, mt;
+  if(x.atr){
+    st=`Embalagem venceu ${fmt(pd(l.emb))} · ${x.atr.dias} ${x.atr.dias===1?"dia":"dias"} em atraso`;
+    mt=`falta ${nBR(x.atr.pend)} vol.`;
+  }else{
+    st=situacao(l,i,ref);
+    mt=`${et.curto} ${fmt(pd(l[et.key]))}`;
+  }
+  const linhaFal = fal.length ? `<div class="tb-fal">⚠ <b>${fal.length}</b>
+    ${fal.length===1?"peça em falta":"peças em falta"}
+    <span class="ls">${fal.slice(0,3).map(f=>esc(f.pecaDesc||f.peca)).join(" · ")}${fal.length>3?" …":""}</span></div>` : "";
+  return {hoje, fal, html:`<div class="tb-lh">
+      <span class="lt">${esc(l.lote)}</span>
+      ${l.interno?`<span class="int">${esc(l.interno)}</span>`:""}
+      ${l.cor?`<span class="cor" style="${corGPS(l.cor)}">${esc(l.cor)}</span>`:""}
+      <span class="qt">${nBR(l.qtd)}<small>vol</small></span></div>
+    <div class="tb-ls"><span class="dot"></span>${esc(st)}<span class="mt">${esc(mt)}</span></div>
+    ${linhaFal}`};
+}
+
+// rodapé do grupo: a soma do que está na tela, para conferir com a máquina
+function tabRodapeLote(l){
+  return `<div class="tb-lt"><span>${(l.itens||[]).length} ${(l.itens||[]).length===1?"produto":"produtos"}</span>
+    ${l.pontosTot?`<span>${nBR(l.pontosTot)} pts</span>`:""}
+    ${l.pesoTot?`<span>${pesoTxt(l.pesoTot)}</span>`:""}
+    <span class="tot"><b>${nBR(l.qtd)}</b> vol.</span></div>`;
+}
+
+function tabGrupoProdutos(x, ref){
+  const l=x.l, c=tabCabecalhoLote(x,ref);
+  const its=(l.itens||[]);
+  const linhas = its.length ? its.map(it=>tabLinhaProd(it,l,"")).join("")
+    : `<div class="tb-pr"><span class="ds" style="color:var(--mut2);font-style:italic">Lote sem produtos na planilha</span></div>`;
+  return `<article class="tb-lote${c.hoje?" hoje":""}${x.atr?" atrasado":""}" data-busca="${chaveBusca(l)}">
+    ${c.html}<div class="tb-prods">${linhas}</div>${tabRodapeLote(l)}</article>`;
+}
+
+function tabCardLote(x, ref){
+  const l=x.l, i=x.idx, c=tabCabecalhoLote(x,ref);
+  const aberto=TAB_ABERTO.has(l.lote);
+  const its=(l.itens||[]);
+  const tl=ETAPAS.map((e,k)=>`<span class="st ${k<i?"past":(k===i?"cur":"")}">
+    <span class="bd"></span>${e.abrev} ${fmt(pd(l[e.key]))}</span>`).join("");
+  const prods = its.length ? `<button class="tb-abre" data-lote="${esc(l.lote)}">
+      <span class="cv">▸</span>${its.length} ${its.length===1?"produto":"produtos"}</button>
+    <div class="tb-prods"${aberto?"":" hidden"}>${its.map(it=>tabLinhaProd(it,l,"")).join("")}</div>` : "";
+  return `<article class="tb-lote${c.hoje?" hoje":""}${x.atr?" atrasado":""}${aberto?" aberto":""}" data-busca="${chaveBusca(l)}">
+    ${c.html}<div class="tb-tl">${tl}</div>${prods}${tabRodapeLote(l)}</article>`;
+}
+
+/* Somado: o mesmo código em lotes diferentes vira uma linha só. É o número de
+   quem prepara o setup da máquina — 370 peças daquele modelo no dia, não
+   "180 num carrinho e 190 noutro". Quem separa material desliga e vê por lote. */
+function tabSomado(lista){
+  const map=new Map();
+  lista.forEach(x=>(x.l.itens||[]).forEach(it=>{
+    const k=normCod(it.cod)||norm(it.desc);
+    if(!k) return;
+    const cur=map.get(k)||{cod:it.cod,desc:it.desc,qtd:0,lotes:new Set()};
+    // onde o pendente é medido (Embalagem/Atraso), soma o que FALTA — é o
+    // número que fecha o dia; nos demais setores, o programado
+    cur.qtd += tabMedePend(x.l) ? pendItem(it,x.l) : (it.qtd||0);
+    cur.lotes.add(x.l.lote);
+    if(!cur.desc) cur.desc=it.desc;
+    map.set(k,cur);
+  }));
+  const its=[...map.values()].filter(i=>i.qtd>0).sort((a,b)=>b.qtd-a.qtd);
+  const tot=its.reduce((s,i)=>s+i.qtd,0);
+  const linhas=its.map(it=>`<div class="tb-pr"><span class="cd">${esc(it.cod||"–")}</span>
+    <span class="ds">${esc(it.desc||"")}<span class="em">${[...it.lotes].join(" · ")}</span></span>
+    <span class="q">${nBR(it.qtd)}</span></div>`).join("");
+  return `<article class="tb-lote hoje">
+    <div class="tb-lh"><span class="lt">Somado</span>
+      <span class="cor">${lista.length} ${lista.length===1?"lote":"lotes"}</span>
+      <span class="qt">${nBR(tot)}<small>vol</small></span></div>
+    <div class="tb-prods">${linhas}</div>
+    <div class="tb-lt"><span>${its.length} ${its.length===1?"código":"códigos"}</span>
+      <span class="tot"><b>${nBR(tot)}</b> vol.</span></div></article>`;
+}
+
+function renderTab(dados, ref){
+  const i=ETAPAS.findIndex(e=>e.key===TAB_SETOR);
+  const et=i>=0?ETAPAS[i]:null;
+  const lista=tabLotesDoSetor(dados,ref);
+  const hojeEh = +ref===+pd(isoOf(new Date()));
+
+  // barra de setores: quantos lotes entram hoje e quantos estão no setor
+  const chips=ETAPAS.map((e,k)=>{
+    const tot=(dados.buckets[k]||[]).length;
+    const hj=(dados.buckets[k]||[]).filter(x=>ehHoje(x.l,k,ref)).length;
+    return `<button class="tb-set${TAB_SETOR===e.key?" on":""}${tot?"":" zero"}" data-setor="${e.key}">
+      <span class="nm">${e.curto}</span>
+      <span class="q">${hj} hoje · ${tot} no setor</span></button>`;
+  }).join("")+
+  `<button class="tb-set atr${TAB_SETOR==="atraso"?" on":""}${dados.atras.length?"":" zero"}" data-setor="atraso">
+      <span class="nm">⚠ Atraso</span>
+      <span class="q">${dados.atras.length} lotes · ${nBR(dados.volAtraso)} vol</span></button>`;
+
+  // soma do que está na tela — é o que se compara com o apontamento da máquina
+  const vol=lista.reduce((s,x)=>s+(x.l.qtd||0),0);
+  const pts=lista.reduce((s,x)=>s+(x.l.pontosTot||0),0);
+  const kg=lista.reduce((s,x)=>s+(x.l.pesoTot||0),0);
+  const nProd=lista.reduce((s,x)=>s+((x.l.itens||[]).length),0);
+  const pend=TAB_SETOR==="atraso"?lista.reduce((s,x)=>s+(x.atr?x.atr.pend:0),0):0;
+
+  const filtros=`<div class="tb-filtros">
+    ${TAB_SETOR!=="atraso"?`<div class="gp">
+      <button class="${TAB_DIA==="hoje"?"on":""}" data-dia="hoje">${hojeEh?"Hoje":fmt(ref)}</button>
+      <button class="${TAB_DIA==="setor"?"on":""}" data-dia="setor">Todo o setor</button></div>`:""}
+    <div class="gp">
+      <button class="${TAB_VISTA==="produtos"?"on":""}" data-vista="produtos">Produtos</button>
+      <button class="${TAB_VISTA==="lotes"?"on":""}" data-vista="lotes">Lotes</button></div>
+    ${TAB_VISTA==="produtos"?`<div class="gp">
+      <button class="${TAB_SOMA?"on":""}" data-soma="1">Somar iguais</button></div>`:""}
+    <div class="tb-carga"><b>${lista.length}</b> ${lista.length===1?"lote":"lotes"} ·
+      <b>${nBR(vol)}</b> vol · <b>${nBR(nProd)}</b> ${nProd===1?"produto":"produtos"}
+      ${pts?` · ${nBR(pts)} pts`:""}${kg?` · ${pesoTxt(kg)}`:""}
+      ${pend?`<span class="fal"> · falta ${nBR(pend)} vol</span>`:""}</div>
+  </div>`;
+
+  /* O atraso é do painel inteiro, não do setor: a peça que não saiu ontem é o
+     que vai voltar para esta máquina hoje. Fica de aviso, e leva até a lista. */
+  const alerta=(TAB_SETOR!=="atraso" && dados.atras.length)?`<div class="tb-alerta" data-setor="atraso">
+    <span>⚠</span><span>${dados.atras.length} ${dados.atras.length===1?"lote atrasado":"lotes atrasados"} · ${nBR(dados.volAtraso)} vol.</span>
+    <span class="ls">${dados.atras.slice(0,3).map(a=>esc(a.l.lote)).join(" · ")}${dados.atras.length>3?" …":""}</span></div>`:"";
+
+  let corpo;
+  if(!lista.length){
+    corpo=`<div class="tb-vazio">${TAB_SETOR==="atraso"
+      ? "Nenhum lote em atraso — tudo que venceu a embalagem saiu."
+      : (TAB_DIA==="hoje"
+        ? `Nenhum lote entra ${hojeEh?"hoje":"em "+fmt(ref)} ${et?"na "+et.curto:"neste setor"}. Toque em <b>Todo o setor</b> para ver o que já está parado aqui.`
+        : `Nenhum lote ${et?"na "+et.curto:"neste setor"} nesta data.`)}</div>`;
+  }else if(TAB_VISTA==="produtos"){
+    corpo=`<div class="tb-lista">${TAB_SOMA?tabSomado(lista):lista.map(x=>tabGrupoProdutos(x,ref)).join("")}</div>`;
+  }else{
+    corpo=`<div class="tb-lista">${lista.map(x=>tabCardLote(x,ref)).join("")}</div>`;
+  }
+
+  const ver=(document.getElementById("verFoot")||{}).textContent||"";
+  const titulo = TAB_SETOR==="atraso"
+    ? {fase:"Volumes pendentes", nome:'Em <span>atraso</span>', det:"passou a embalagem e não saiu"}
+    : {fase:et.fase, nome:esc(et.nome), det:et.detalhe};
+
+  document.getElementById("tabapp").innerHTML=`
+    <div class="tb-head">
+      <div class="tb-top">
+        <img class="tb-logo" src="logo-patrimar.png" alt="Patrimar">
+        <div class="tb-tit"><div class="fase">${esc(titulo.fase)}</div>
+          <div class="nm">${titulo.nome}</div>
+          ${titulo.det?`<div class="det">${esc(titulo.det)}</div>`:""}</div>
+        <div class="tb-relogio" id="tabRelogio"></div>
+        <div class="tb-dia"><b>${fmt(ref)}</b><small>${diaSemana(ref)}</small></div>
+        <div class="tb-nav">
+          <button data-nav="-1">◀</button>
+          <button data-nav="0">Hoje</button>
+          <button data-nav="1">▶</button>
+          <button data-nav="rec" title="recarregar a planilha">⟳</button>
+        </div>
+      </div>
+      <div class="tb-setores">${chips}</div>
+    </div>
+    ${alerta}
+    ${filtros}
+    ${corpo}
+    <div class="tb-foot">
+      <span>PPCP · Patrimar · ${hojeEh?"":`vendo ${fmt(ref)} — `}${esc(txtAtualizado())}</span>
+      ${txtFrescorTV()?`<span class="velho">${txtFrescorTV()}</span>`:""}
+      ${ver?`<span>${esc(ver)}</span>`:""}
+      <a href="?tablet=0">painel completo ↗</a>
+    </div>`;
+  tabClock();
+}
+const DIAS_SEM=["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
+const diaSemana = d => DIAS_SEM[d.getDay()]||"";
+const txtAtualizado = () => ULTIMA_OK
+  ? "atualizado "+ULTIMA_OK.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})
+  : "sem leitura da planilha";
 
 function cardEl(l,idx,ref,cont){
   const et=ETAPAS[idx], hoje=(()=>{const d=pd(l[et.key]);return d&&+d===+ref;})();
@@ -2608,10 +3050,34 @@ document.getElementById("whats").onclick=async ()=>{
   if(navigator.share){ try{ await navigator.share({text:txt}); return; }catch(e){ if(e.name==="AbortError") return; } }
   window.open("https://wa.me/?text="+encodeURIComponent(txt), "_blank", "noopener");
 };
+/* ---------- eventos do modo tablet ----------
+   Um listener na tela toda: o HTML é recriado a cada render, o listener não.
+   Cada escolha é gravada na hora — a próxima recarga (ou queda de energia)
+   devolve o tablet exatamente onde ele estava. */
+if(TABLET) document.getElementById("tabapp").addEventListener("click",e=>{
+  const setor=e.target.closest("[data-setor]");
+  if(setor){ TAB_SETOR=setor.dataset.setor; guardaTab(TAB_SETOR_KEY,TAB_SETOR); render(); return; }
+  const dia=e.target.closest("[data-dia]");
+  if(dia){ TAB_DIA=dia.dataset.dia; guardaTab(TAB_DIA_KEY,TAB_DIA); render(); return; }
+  const vista=e.target.closest("[data-vista]");
+  if(vista){ TAB_VISTA=vista.dataset.vista; guardaTab(TAB_VISTA_KEY,TAB_VISTA); render(); return; }
+  const soma=e.target.closest("[data-soma]");
+  if(soma){ TAB_SOMA=!TAB_SOMA; guardaTab("lotesElaboracaoTabSoma",TAB_SOMA?"1":"0"); render(); return; }
+  const abre=e.target.closest(".tb-abre");
+  if(abre){ const lt=abre.dataset.lote;
+    if(TAB_ABERTO.has(lt)) TAB_ABERTO.delete(lt); else TAB_ABERTO.add(lt);
+    render(); return; }
+  const nav=e.target.closest("[data-nav]");
+  if(nav){ const n=nav.dataset.nav;
+    if(n==="rec"){ carregar(); return; }
+    if(n==="0") irParaHoje(); else shift(+n);
+    return; }
+});
 carregar();
 setInterval(carregar, 5*60*1000); // recarrega a cada 5 min
 setInterval(pintaFrescor, 30000); // e conta quanto tempo faz que a última deu certo
 if(TVKEY){ setInterval(tvClock, 30000); setInterval(tvRotate, 14000); } // relógio + rotação de páginas
+if(TABLET) setInterval(tabClock, 30000);   // relógio do tablet
 
 /* ---------- PWA: service worker e aviso de versão nova ----------
    O painel fica aberto dias seguidos num monitor da fábrica: ninguém fecha,
@@ -2648,7 +3114,8 @@ if("serviceWorker" in navigator){
     pedeVersao(SW.controller);
     if(!controlado){ controlado=true; return; }   // primeira instalação
     NOVA=true;
-    if(TVKEY){ setTimeout(()=>location.reload(), 8000); return; }
+    // TV e tablet se atualizam sozinhos: ninguém ali decide versão de painel
+    if(TVKEY||TABLET){ setTimeout(()=>location.reload(), 8000); return; }
     barra.hidden=false;
   });
 
