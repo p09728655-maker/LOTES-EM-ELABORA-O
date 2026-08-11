@@ -141,20 +141,26 @@ do carrinho. O cabeçalho do grupo traz o número do lote, a OP, a cor do GPS e 
   não fica pulando linha. No Atraso a fila é a da cobrança: embalagem vencida há mais tempo
   primeiro, com selo vermelho.
 - **Faixa de sequência de operação** fixa no cabeçalho: o critério é o que custa **setup**
-  em cada posto — Corte: troca de chapa (um material por vez, grossa→fina); Furadeira:
-  gabarito (batelada por tipo); Coladeira: troca de fita (clara→escura); UV: limpeza de
-  linha (claro→escuro);
+  em cada posto — Corte: troca de chapa (só MDP, um material por vez, grossa→fina);
+  Furadeira: gabarito (batelada por tipo); Coladeira: troca de fita (clara→escura); UV:
+  limpeza de linha (claro→escuro);
   Embalagem: fecha o 1º da fila, maior volume primeiro. O texto mora na constante
   `SEQ_OPER` do `index.html`.
 - **Vista Peças (Corte e Furadeira)**: com a aba **ESTRUTURA** na planilha (a mesma
   `CODIGO · PECA · QTD · DESCRICAO` da tela de faltas, achada pelo nome), o tablet explode
   os produtos do lote nas **peças que a máquina de fato processa**, com a conta feita
   (225 penteadeiras × 2 prateleiras = 450) e agrupadas na ordem de operação: no Corte por
-  **chapa**, em **bloco de material — MDF e MDP nunca se misturam**: todo o MDF e só então
-  todo o MDP (`MDF 25 → MDF 15 → MDF 12 → MDP 15 → MDP 12`), grossa→fina dentro do bloco.
-  Ordenar só por espessura misturaria os dois e pagaria a troca de material três vezes no
-  mesmo dia — trocar de chapa é o setup caro da seccionadora, e trocar de material é o mais
-  caro deles. Abre o dia o bloco da chapa mais grossa; empatados, o de mais peças.
+  **chapa** — e **a seccionadora daqui só corta MDP**: o **MDF é serrado na Unidade II**,
+  então peça de MDF não entra na fila, não conta no total de peças do setor e não aparece
+  na faixa de Sequência. Ela **não some da tela**: sai num bloco apagado no fim do lote,
+  `↗ Corta na Unidade II`, sem número de ordem, e o volume fica escrito ao lado do total
+  (`400 peças (+300 em outra unidade)`) — quem confere a programação precisa ver que a peça
+  existe e para onde foi. A unidade de cada chapa mora na constante `CORTA_FORA` do
+  `index.html`; mudou de unidade, é uma linha. **Dois materiais nunca se misturam na fila**:
+  a ordem é por bloco de material, grossa→fina dentro do bloco (`MDP 25 → MDP 15 → MDP 12`)
+  — ordenar só por espessura alternaria os materiais e pagaria a troca de material várias
+  vezes no mesmo dia, e trocar de material é o setup mais caro da serra. Abre o dia o bloco
+  da chapa mais grossa; empatados, o de mais peças.
   Na Furadeira por **tipo** (Tampos → Laterais → Bases → Prateleiras → Divisórias →
   Gavetas). A faixa de sequência passa a mostrar os grupos REAIS do dia. Regras de dados:
   quem separa peça de máquina de insumo é o token `MDP|MDF` da descrição (caixa, fita e
