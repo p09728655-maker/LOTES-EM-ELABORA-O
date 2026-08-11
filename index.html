@@ -452,6 +452,7 @@
   .tb-carga{margin-left:auto; font-family:"IBM Plex Mono"; font-size:13px; color:var(--mut);
     text-align:right; line-height:1.35}
   .tb-carga b{color:var(--ink)} .tb-carga .fal{color:var(--red)}
+  .tb-carga .fora{color:var(--mut2)}   /* peça de outra unidade: existe, mas não é deste turno */
 
   /* faixa de atraso: só aparece quando existe, e leva ao setor de atraso */
   .tb-alerta{margin:9px 14px 0; display:flex; align-items:center; gap:11px; cursor:pointer;
@@ -525,6 +526,12 @@
   .tb-prods .tb-pgh:first-child{border-top:none}
   .tb-pgh .s{color:var(--mut); letter-spacing:.04em; text-transform:none}
   .tb-pgh.warn{color:#ff9f0a}
+  /* peça que NÃO se corta aqui (MDF vai para a Unidade II): fica à vista, mas
+     apagada, com traço tracejado e SEM número de ordem — não é passo da fila
+     desta máquina, e quem lê não pode confundir com trabalho do turno */
+  .tb-pgh.fora{color:var(--mut2); border-top-style:dashed}
+  .tb-pr.fora{opacity:.5}
+  .tb-pr.fora .q{color:var(--mut)}
   /* rodapé do grupo: soma do que está na lista, para conferir com a máquina */
   .tb-lt{display:flex; align-items:center; gap:10px; padding:8px 12px;
     border-top:1px solid var(--line); background:rgba(255,255,255,.02);
@@ -1332,15 +1339,17 @@ const TAB_VISTA_KEY="lotesElaboracaoTabVista";
 const TAB_DIA_KEY="lotesElaboracaoTabDia";
 
 /* Sequência de operação DENTRO do setor: o critério é sempre o que custa
-   SETUP na máquina. Corte: troca de chapa (grossa→fina; fundos são
-   TERCEIRIZADOS e ficam fora). Furadeira: gabarito (batelada por tipo).
+   SETUP na máquina. Corte: troca de chapa — a seccionadora daqui só corta MDP
+   (MDF é serrado na Unidade II, ver CORTA_FORA), um material inteiro por vez e
+   grossa→fina dentro dele; fundos são TERCEIRIZADOS e ficam fora.
+   Furadeira: gabarito (batelada por tipo).
    Coladeira: troca de fita, clara→escura. UV: limpeza de linha, claro→
    escuro no turno. Embalagem: fecha o 1º da fila, maior volume primeiro.
    É regra de processo, não vem da planilha: mora aqui e aparece como faixa
    fixa no cabeçalho do tablet. Na vista de peças (corte/furar) a faixa é
    substituída pelos grupos REAIS do dia. */
 const SEQ_OPER = {
-  corte:["Chapa 25","Chapa 15","Chapa 12"],
+  corte:["Só MDP — MDF na Unid. II","Grossa → fina"],
   furar:["Tampos","Bases","Laterais","Prateleiras","Gavetas"],
   cola:["Fita branca","Off white","Cinamomo","Cumaru","Preto"],
   uv:["Branco","Off white","Cores","Preto"],
@@ -1780,6 +1789,16 @@ const TIPOS_PECA=[
 /* ordem da furadeira: TAMPO e BASE primeiro (é o par que abre o lote na
    máquina), depois laterais e o resto em batelada */
 const ORDEM_FURAR=["Tampos","Bases","Laterais","Prateleiras","Divisórias","Fundos","Gavetas","Travessas","Pés","Outras"];
+/* ONDE CADA CHAPA É SERRADA. O MDF é cortado na UNIDADE II — a seccionadora
+   daqui só corta MDP. Peça de MDF então NÃO entra na fila do Corte deste
+   tablet, não conta no total de peças do setor (que é o número que dimensiona
+   este turno) e não aparece na faixa de Sequência.
+   Mas não some da tela: sai num bloco à parte, apagado, com a unidade escrita
+   — quem confere a programação precisa ver que a peça existe e para onde foi,
+   senão a tela vira "esqueceram de programar".
+   Vale só para o CORTE: a peça volta da Unidade II e segue o fluxo normal nos
+   outros postos daqui. Mudar de unidade é mudar esta linha. */
+const CORTA_FORA = { MDF:"Unidade II" };
 function infoPeca(desc){
   const D=String(desc||"").toUpperCase();
   const m=D.match(RE_CHAPA);
@@ -2676,9 +2695,11 @@ function tabSomado(lista){
    Transforma os PRODUTOS do lote nas PEÇAS que a máquina de fato processa,
    com a conta feita: qtd do produto × peças por unidade. O agrupamento segue
    o que custa setup em cada posto:
-     corte → por CHAPA (material+espessura, grossa→fina) — o setup caro da
-             seccionadora é a troca de chapa; dentro, peça maior primeiro
-             (o plano de corte nasce dela);
+     corte → por CHAPA (material+espessura), um material inteiro por vez e
+             grossa→fina dentro dele — o setup caro da seccionadora é a troca de
+             chapa, e trocar de material é o mais caro deles; dentro do grupo,
+             peça maior primeiro (o plano de corte nasce dela). O MDF não entra:
+             é serrado na Unidade II (CORTA_FORA) e sai num bloco à parte;
      furar → por TIPO na ordem de operação (tampos → laterais → …), peças
              iguais em batelada.
    FUNDOS ficam FORA: são terceirizados — não passam pelo corte nem pela
@@ -2702,19 +2723,44 @@ function explodePecas(itens, setor){
       porPeca.set(r.peca,cur);
     });
   });
-  const gmap=new Map();
+  const gmap=new Map(), fora=[];
   porPeca.forEach(p=>{
+    /* chapa serrada em outra unidade sai da fila desta máquina (ver CORTA_FORA) */
+    const outra = setor==="corte" ? CORTA_FORA[p.mat] : null;
+    if(outra){ fora.push(Object.assign({},p,{unidade:outra})); return; }
     const chave = setor==="corte" ? p.chapa : p.tipo;
-    if(!gmap.has(chave)) gmap.set(chave,{chave, pecas:[], tot:0});
+    if(!gmap.has(chave)) gmap.set(chave,{chave, mat:p.mat||"", esp:p.esp||0, pecas:[], tot:0});
     const g=gmap.get(chave); g.pecas.push(p); g.tot+=p.qtdTot;
   });
+  fora.sort((a,b)=>a.unidade.localeCompare(b.unidade)||(b.esp||0)-(a.esp||0)||(b.area-a.area));
   const grupos=[...gmap.values()];
-  if(setor==="corte")
-    grupos.sort((a,b)=>((b.pecas[0].esp||0)-(a.pecas[0].esp||0)) || a.chave.localeCompare(b.chave));
-  else
+  if(setor==="corte"){
+    /* Dois materiais NUNCA se misturam na fila. Hoje o MDF nem chega aqui (é
+       serrado na Unidade II), então na prática a fila é MDP puro — mas a regra
+       fica, e é ela que impede a mistura no dia em que duas chapas dividirem a
+       serra. Ordenar só por espessura (25 → 15 → 12) parece certo e não é: com
+       duas chapas no mesmo dia a fila sairia MDF 25 → MDF 15 → MDP 15 → MDF 12
+       → MDP 12, trocando de material três vezes — e trocar de material é
+       esvaziar a mesa e trazer outra pilha, o setup mais caro da seccionadora.
+       Então a fila é por BLOCO de material: tudo de um, depois tudo do outro, e
+       DENTRO do bloco grossa→fina como sempre. Abre o dia o bloco da chapa mais
+       grossa; empatados, o de mais peças — a batelada longa cai no começo do
+       turno. */
+    const blocos=new Map();
+    grupos.forEach(g=>{
+      const b=blocos.get(g.mat)||{espMax:0, tot:0};
+      b.espMax=Math.max(b.espMax,g.esp); b.tot+=g.tot; blocos.set(g.mat,b);
+    });
+    const ordemMat=[...blocos.entries()]
+      .sort((a,b)=>(b[1].espMax-a[1].espMax)||(b[1].tot-a[1].tot)||a[0].localeCompare(b[0]))
+      .map(e=>e[0]);
+    grupos.sort((a,b)=>(ordemMat.indexOf(a.mat)-ordemMat.indexOf(b.mat))
+                    || (b.esp-a.esp) || a.chave.localeCompare(b.chave));
+  } else
     grupos.sort((a,b)=>ORDEM_FURAR.indexOf(a.chave)-ORDEM_FURAR.indexOf(b.chave));
   grupos.forEach(g=>g.pecas.sort((a,b)=>(b.area-a.area)||(b.qtdTot-a.qtdTot)));
-  return {grupos, sem, totPecas:grupos.reduce((s,g)=>s+g.tot,0),
+  return {grupos, sem, fora, totPecas:grupos.reduce((s,g)=>s+g.tot,0),
+          totFora:fora.reduce((s,p)=>s+p.qtdTot,0),
           cobertos, total:(itens||[]).length};
 }
 
@@ -2730,22 +2776,39 @@ function pecasHTML(ex){
         <span class="ds">${esc(p.desc)}${em?`<span class="em">${esc(em)}</span>`:""}</span>
         <span class="q">${nBR(p.qtdTot)}</span></div>`;
     }).join("")).join("");
+  /* o que não se corta aqui vem DEPOIS da fila e sem número de ordem: está na
+     tela para conferência, não para a máquina pegar */
+  const un=new Map();
+  (ex.fora||[]).forEach(p=>{ if(!un.has(p.unidade)) un.set(p.unidade,[]); un.get(p.unidade).push(p); });
+  const foraB=[...un.entries()].map(([u,ps])=>{
+    const t=ps.reduce((s,p)=>s+p.qtdTot,0);
+    return `<div class="tb-pgh fora"><b>↗ Corta na ${esc(u)}</b>
+      <span class="s">${ps.length} ${ps.length===1?"peça":"peças"} · ${nBR(t)} un · fora desta fila</span></div>`+
+      ps.map(p=>`<div class="tb-pr fora"><span class="cd">${esc(p.peca)}</span>
+        <span class="ds">${esc(p.desc)}<span class="em">${esc(p.chapa)} · ${esc(u)}</span></span>
+        <span class="q">${nBR(p.qtdTot)}</span></div>`).join("");
+  }).join("");
   const semB=ex.sem.length?`<div class="tb-pgh warn"><b>⚠ Sem estrutura</b>
       <span class="s">quantidade em PRODUTOS, não em peças</span></div>`+
     ex.sem.map(s=>`<div class="tb-pr semcad"><span class="cd">${esc(s.it.cod||"–")}</span>
       <span class="ds">${esc(s.it.desc||"")}<span class="em">${esc(s.motivo)}</span></span>
       <span class="q">${nBR(s.it.qtd)}</span></div>`).join(""):"";
-  return gs+semB;
+  return gs+foraB+semB;
 }
+/* rodapé: o total do setor NÃO conta o que se corta em outra unidade, mas o
+   número fica escrito ao lado — some da fila, não da conferência */
+const txtFora = ex => (ex.totFora?` · ${nBR(ex.totFora)} em outra unidade`:"");
 
 function tabGrupoPecas(x, ref){
   const l=x.l, c=tabCabecalhoLote(x,ref);
   const ex=explodePecas(l.itens, TAB_SETOR);
-  const corpo=(ex.grupos.length||ex.sem.length)?pecasHTML(ex)
+  /* lote inteiro de outra unidade tem grupos ZERO e ainda assim tem o que
+     mostrar — sem o `fora` aqui ele mentiria "sem produtos na planilha" */
+  const corpo=(ex.grupos.length||ex.fora.length||ex.sem.length)?pecasHTML(ex)
     :`<div class="tb-pr"><span class="ds" style="color:var(--mut2);font-style:italic">Lote sem produtos na planilha</span></div>`;
   return `<article class="tb-lote${c.hoje?" hoje":""}${x.atr?" atrasado":""}${x.seq===1?" prim":""}" data-busca="${chaveBusca(l)}">
     ${c.html}<div class="tb-prods">${corpo}</div>
-    <div class="tb-lt"><span>${nBR(ex.totPecas)} peças · ${ex.cobertos}/${ex.total} produtos c/ estrutura</span>
+    <div class="tb-lt"><span>${nBR(ex.totPecas)} peças${txtFora(ex)} · ${ex.cobertos}/${ex.total} produtos c/ estrutura</span>
       <span class="tot"><b>${nBR(l.qtd)}</b> vol.</span></div></article>`;
 }
 
@@ -2759,7 +2822,7 @@ function tabPecasSomado(lista){
       <span class="cor">${lista.length} ${lista.length===1?"lote":"lotes"}</span>
       <span class="qt">${nBR(ex.totPecas)}<small>peças</small></span></div>
     <div class="tb-prods">${pecasHTML(ex)}</div>
-    <div class="tb-lt"><span>${ex.cobertos}/${ex.total} produtos c/ estrutura</span>
+    <div class="tb-lt"><span>${ex.cobertos}/${ex.total} produtos c/ estrutura${txtFora(ex)}</span>
       <span class="tot"><b>${nBR(ex.totPecas)}</b> peças</span></div></article>`;
 }
 
@@ -2813,7 +2876,8 @@ function renderTab(dados, ref){
     ${(vista==="produtos"||vista==="pecas")?`<div class="gp">
       <button class="${TAB_SOMA?"on":""}" data-soma="1">Somar iguais</button></div>`:""}
     <div class="tb-carga"><b>${lista.length}</b> ${lista.length===1?"lote":"lotes"} ·
-      <b>${nBR(vol)}</b> vol · ${exDia?`<b>${nBR(exDia.totPecas)}</b> peças`
+      <b>${nBR(vol)}</b> vol · ${exDia?`<b>${nBR(exDia.totPecas)}</b> peças${
+          exDia.totFora?` <span class="fora">(+${nBR(exDia.totFora)} em outra unidade)</span>`:""}`
         :`<b>${nBR(nProd)}</b> ${nProd===1?"produto":"produtos"}`}
       ${pts?` · ${nBR(pts)} pts`:""}${kg?` · ${pesoTxt(kg)}`:""}
       ${pend?`<span class="fal"> · falta ${nBR(pend)} vol</span>`:""}</div>
