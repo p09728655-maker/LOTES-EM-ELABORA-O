@@ -518,15 +518,15 @@ Trocar os ícones exige subir a versão no `sw.js` (ver abaixo), senão quem já
 o ícone antigo em cache.
 
 ## Versão e aviso de atualização
-A versão mora em **uma linha só**, o `VERSAO` do `sw.js` (hoje `v9`); o nome do cache sai dela
-(`esteira-v9`). O painel não tem número próprio: pergunta ao service worker por `postMessage` e
-mostra o que vier, no pé da tela (`painel v9`). Dois lugares para bumpar viram um lugar
+A versão mora em **uma linha só**, o `VERSAO` do `sw.js` (hoje `v26`); o nome do cache sai dela
+(`esteira-v26`). O painel não tem número próprio: pergunta ao service worker por `postMessage` e
+mostra o que vier, no pé da tela (`painel v26`). Dois lugares para bumpar viram um lugar
 desatualizado.
 
 **Subir essa linha a cada deploy** é o que dispara o aviso. Sem ele, um deploy só chega a quem
 abre a tela do zero — e a tela fica ligada dias seguidos num monitor da fábrica, onde ninguém
 fecha e ninguém recarrega. Quando o service worker novo assume, aparece a barra
-`Versão nova publicada v10 — recarregue para usar`, com **Atualizar agora** e **depois**. Ela fica
+`Versão nova publicada v27 — recarregue para usar`, com **Atualizar agora** e **depois**. Ela fica
 até clicarem: um toast de três segundos passaria batido. No **modo TV** não há quem clique, então
 lá a tela se recarrega sozinha em 8 s.
 

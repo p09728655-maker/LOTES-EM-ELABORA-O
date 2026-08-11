@@ -8,7 +8,7 @@
    versao proprio: ele pergunta o desta linha por postMessage e mostra o que
    vier. Dois lugares para bumpar viram um lugar desatualizado. Subir esta
    linha a cada deploy e o que dispara o aviso de atualizacao na tela. */
-const VERSAO = 'v25';   // subiu ao alinhar os nomes das etapas com os cabecalhos da folha + filtro de linha-fantasma
+const VERSAO = 'v26';   // subiu ao separar MDP de MDF na fila do Corte (bloco de material, grossa->fina dentro dele)
 const CACHE = 'esteira-' + VERSAO;
 const SHELL = [
   './', './index.html', './falta.html', './estrutura.html',
