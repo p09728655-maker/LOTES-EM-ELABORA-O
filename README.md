@@ -115,6 +115,41 @@ faz quem lê rápido somar o que não soma.
 No card, o que falta produzir no dia é **`falta N vol.`**; **`pendente`/`atraso`** ficam
 reservados para lote que já passou da embalagem. São números diferentes e não devem bater.
 
+## Modo tablet (`?tablet=1&setor=furar`)
+O tablet preso na máquina responde uma pergunta só: **o que esta máquina faz hoje**. O modo TV
+não serve para isso — é para pendurar e olhar de longe, não tem toque e só mostra lote. O modo
+tablet abre direto na **lista de produtos do dia** do setor (código, descrição e quantidade em
+corpo grande), agrupada pelo lote a que pertencem, porque é o lote que chega na máquina em cima
+do carrinho. O cabeçalho do grupo traz o número do lote, a OP, a cor do GPS e o total de volumes
+— os três pontos por onde se confere se o carrinho parado ali é o da lista.
+
+- **Links no rodapé do painel**, um por setor: `?tablet=1&setor=corte|furar|cola|uv|emb`.
+- O parâmetro **fica gravado no aparelho** (localStorage): abre-se o endereço uma vez, prende-se
+  o tablet na máquina e ele volta sozinho ao seu setor a cada recarga — inclusive quando o
+  atalho de tela inicial (PWA) abre o `start_url` sem parâmetros, que é o que o Android faz.
+  `?tablet=0` desliga, e é a saída do link `painel completo ↗` no rodapé.
+- Os dois mesmos `?setor=` disputados com o modo TV: com `?tablet=` presente (ou gravado), o
+  setor é do tablet; sem ele, da TV.
+- **Barra de setores** sempre à vista, com `N hoje · N no setor` em cada um, mais o chip
+  vermelho de **Atraso** — o tablet da furadeira pode espiar a coladeira, e o toque volta.
+- Filtros de estado à vista (nada de `<select>`, que no toque cobre a tela):
+  - **Hoje / Todo o setor** — nasce em Hoje, que é a pergunta que põe o tablet ali; Todo o
+    setor mostra também o que já está parado na etapa.
+  - **Produtos / Lotes** — produtos é a lista de operação; lotes traz prazo, linha do tempo
+    das etapas e os produtos abrindo no toque.
+  - **Somar iguais** — o mesmo código em lotes diferentes vira uma linha só, do maior para o
+    menor: é o número de quem prepara o setup (370 peças do modelo no dia, não "180 num
+    carrinho e 190 noutro"). Na Embalagem/Atraso a soma é do que **falta**, não do programado.
+- A coluna de quantidade é o **programado** do lote em todos os setores, menos na Embalagem e
+  no Atraso, onde vira o **pendente** (o `PRODUZIDO`/`SALDO` da planilha mede volume embalado —
+  na furadeira, "falta 120" seria lido como peça que não passou pela máquina, conta que ninguém
+  aponta).
+- Peça em falta lançada pela Embalagem entra como faixa âmbar no grupo do lote.
+- Tudo que se toca tem no mínimo **46px** — dedo com luva. Cada escolha (setor, vista, dia,
+  soma) sobrevive a recarga e queda de energia.
+- Versão nova **recarrega sozinha**, como na TV: versão de painel não é decisão de operador, e
+  o estado todo mora no localStorage — nada se perde.
+
 ## Baixa: volumes embalados
 A baixa real não está na planilha, está no ERP: relatório **Transação 3 – REPORTE, Tipo L –
 VOLUMES**, que lista por dia o código do volume (`501.*`) e a quantidade reportada.
