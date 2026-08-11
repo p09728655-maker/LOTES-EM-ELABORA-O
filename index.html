@@ -1316,7 +1316,7 @@ const TAB_DIA_KEY="lotesElaboracaoTabDia";
    substituída pelos grupos REAIS do dia. */
 const SEQ_OPER = {
   corte:["Chapa 25","Chapa 15","Chapa 12"],
-  furar:["Tampos","Laterais","Bases","Prateleiras","Gavetas"],
+  furar:["Tampos","Bases","Laterais","Prateleiras","Gavetas"],
   cola:["Fita branca","Off white","Cinamomo","Cumaru","Preto"],
   uv:["Branco","Off white","Cores","Preto"],
   emb:["Fechar o 1º da fila","Maior volume primeiro"]
@@ -1744,7 +1744,9 @@ const TIPOS_PECA=[
   [/\bPES?\b/,"Pés"],
   [/\bTRAV/,"Travessas"],
 ];
-const ORDEM_FURAR=["Tampos","Laterais","Bases","Prateleiras","Divisórias","Gavetas","Travessas","Pés","Outras"];
+/* ordem da furadeira: TAMPO e BASE primeiro (é o par que abre o lote na
+   máquina), depois laterais e o resto em batelada */
+const ORDEM_FURAR=["Tampos","Bases","Laterais","Prateleiras","Divisórias","Gavetas","Travessas","Pés","Outras"];
 function infoPeca(desc){
   const D=String(desc||"").toUpperCase();
   const m=D.match(RE_CHAPA);
