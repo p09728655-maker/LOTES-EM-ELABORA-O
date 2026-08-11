@@ -1734,6 +1734,7 @@ const faltasDe = l => FALTAS.ativa ? (FALTAS.map.get(normCod(l.lote))||[]) : [];
    a conta feita (200 racks × 2 laterais = 400 laterais).
    Sem a aba, nada muda: a vista de peças simplesmente não existe. */
 const ESTRUTURA = { map:new Map(), ativa:false, aba:"", erro:"", linhas:0, codigos:0 };
+const GIDS_ESTR = ["662403781"];        // gid real da aba ESTRUTURA na planilha
 const ABAS_ESTR = ["ESTRUTURA","ESTRUTURAS"];
 const estruturaURL = aba => /^\d+$/.test(aba)
   ? `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&gid=${aba}`
@@ -1754,22 +1755,24 @@ function numEstr(x){ let s=String(x??"").trim(); if(!s) return 0;
    Caixa, isomanta e ferragem também têm medidas na descrição — mas não têm
    material de chapa, e não são trabalho de corte nem de furadeira. */
 const RE_CHAPA=/(\d+(?:[.,]\d+)?)\s*X\s*(\d+(?:[.,]\d+)?)\s*X\s*(\d+(?:[.,]\d+)?)\s+(MDP|MDF)\b/i;
-/* Primeira regex que casar vence. GAV vem ANTES de LAT de propósito: a
-   "LAT GAV 300X90X12" é peça de gaveta, não lateral do móvel. */
+/* Primeira regex que casar vence — a ordem é parte da regra, validada nos
+   nomes REAIS da aba ESTRUTURA: GAV antes de LAT ("LAT GAV 290X100X12" é
+   peça de gaveta, não lateral) e TRAV antes de LAT ("TRAV LAT 360X100X15"
+   é travessa lateral, não lateral). */
 const TIPOS_PECA=[
   [/\bGAV\b/,"Gavetas"],
+  [/\bTRAV/,"Travessas"],
   [/\bTAMPO/,"Tampos"],
   [/\bLAT\b/,"Laterais"],
   [/\bPRAT/,"Prateleiras"],
-  [/\bDIV/,"Divisórias"],
+  [/\bDIV\b/,"Divisórias"],
   [/\bBASE\b/,"Bases"],
-  [/\bFUNDO\b/,"Fundos"],
+  [/\bFUNDO/,"Fundos"],
   [/\bPES?\b/,"Pés"],
-  [/\bTRAV/,"Travessas"],
 ];
 /* ordem da furadeira: TAMPO e BASE primeiro (é o par que abre o lote na
    máquina), depois laterais e o resto em batelada */
-const ORDEM_FURAR=["Tampos","Bases","Laterais","Prateleiras","Divisórias","Gavetas","Travessas","Pés","Outras"];
+const ORDEM_FURAR=["Tampos","Bases","Laterais","Prateleiras","Divisórias","Fundos","Gavetas","Travessas","Pés","Outras"];
 function infoPeca(desc){
   const D=String(desc||"").toUpperCase();
   const m=D.match(RE_CHAPA);
@@ -1807,7 +1810,7 @@ function parseEstrutura(rows){
 async function carregarEstrutura(){
   ESTRUTURA.map=new Map(); ESTRUTURA.ativa=false; ESTRUTURA.aba=""; ESTRUTURA.erro="";
   ESTRUTURA.linhas=0; ESTRUTURA.codigos=0;
-  const cand=[...new Set([CFG.estrutura,...ABAS_ESTR].filter(Boolean))];
+  const cand=[...new Set([CFG.estrutura,...GIDS_ESTR,...ABAS_ESTR].filter(Boolean))];
   for(const aba of cand){
     try{
       const res=await fetch(estruturaURL(aba),{cache:"no-store"});
@@ -2678,7 +2681,11 @@ function explodePecas(itens, setor){
   (itens||[]).forEach(it=>{
     const rows=estruturaDe(it.cod);
     if(!rows){ sem.push({it, motivo:"produto sem estrutura cadastrada"}); return; }
-    const paineis=rows.filter(r=>r.painel && r.tipo!=="Fundos");
+    /* Fundo TERCEIRIZADO é o fino (HDF ≤5mm) — esse fica fora, e em geral já
+       cai no portão do MDP|MDF ("HDF NATURAL 2,5MM" não tem o token). O
+       fundo ESTRUTURAL de 15mm MDF ("FUNDO TRAS 1070X360X15 MDF", grupo de
+       semiacabado) é feito em casa e ENTRA na fila. */
+    const paineis=rows.filter(r=>r.painel && (r.tipo!=="Fundos" || (r.esp||0)>5));
     if(!paineis.length){ sem.push({it, motivo:"estrutura sem peça de chapa própria"}); return; }
     cobertos++;
     paineis.forEach(r=>{
