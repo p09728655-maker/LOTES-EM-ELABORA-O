@@ -138,11 +138,25 @@ do carrinho. O cabeçalho do grupo traz o número do lote, a OP, a cor do GPS e 
   planilha**, que é a sequência do PCP — quem confere a tela com a programação lado a lado
   não fica pulando linha. No Atraso a fila é a da cobrança: embalagem vencida há mais tempo
   primeiro, com selo vermelho.
-- **Faixa de sequência de operação** fixa no cabeçalho: a ordem das **peças** dentro do
-  trabalho — o Corte começa pelos tampos, depois laterais; a Furadeira fura tampos, depois
-  laterais. É regra de processo, não vem da planilha: mora na constante `SEQ_OPER` do
-  `index.html`, e setor com a lista vazia não mostra a faixa — preencher a lista faz a faixa
-  nascer.
+- **Faixa de sequência de operação** fixa no cabeçalho: o critério é o que custa **setup**
+  em cada posto — Corte: troca de chapa (grossa→fina); Furadeira: gabarito (batelada por
+  tipo); Coladeira: troca de fita (clara→escura); UV: limpeza de linha (claro→escuro);
+  Embalagem: fecha o 1º da fila, maior volume primeiro. O texto mora na constante
+  `SEQ_OPER` do `index.html`.
+- **Vista Peças (Corte e Furadeira)**: com a aba **ESTRUTURA** na planilha (a mesma
+  `CODIGO · PECA · QTD · DESCRICAO` da tela de faltas, achada pelo nome), o tablet explode
+  os produtos do lote nas **peças que a máquina de fato processa**, com a conta feita
+  (225 penteadeiras × 2 prateleiras = 450) e agrupadas na ordem de operação: no Corte por
+  **chapa** (MDP 25 → MDP 15 → MDP 12 — a troca de chapa é o setup caro da seccionadora),
+  na Furadeira por **tipo** (Tampos → Laterais → Bases → Prateleiras → Divisórias →
+  Gavetas). A faixa de sequência passa a mostrar os grupos REAIS do dia. Regras de dados:
+  quem separa peça de máquina de insumo é o token `MDP|MDF` da descrição (caixa, fita e
+  ferragem têm medidas mas não têm chapa); **fundos ficam fora — são terceirizados**, não
+  passam pelo corte nem pela furadeira; `LAT GAV` é peça de gaveta, não lateral. Produto
+  sem estrutura cadastrada aparece num bloco **⚠ Sem estrutura** com a quantidade em
+  produtos — visível, nunca some. Sem a aba ESTRUTURA o botão Peças não existe e a tela
+  fica como sempre foi. "Somar iguais" na vista Peças soma o dia inteiro: o número do
+  setup, não do carrinho.
 - Filtros de estado à vista (nada de `<select>`, que no toque cobre a tela):
   - **Hoje / Todo o setor** — nasce em Hoje, que é a pergunta que põe o tablet ali; Todo o
     setor mostra também o que já está parado na etapa.
