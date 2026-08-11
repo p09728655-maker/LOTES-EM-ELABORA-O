@@ -8,7 +8,7 @@
    versao proprio: ele pergunta o desta linha por postMessage e mostra o que
    vier. Dois lugares para bumpar viram um lugar desatualizado. Subir esta
    linha a cada deploy e o que dispara o aviso de atualizacao na tela. */
-const VERSAO = 'v24';   // subiu com o classificador validado nos nomes reais da aba ESTRUTURA
+const VERSAO = 'v25';   // subiu ao alinhar os nomes das etapas com os cabecalhos da folha + filtro de linha-fantasma
 const CACHE = 'esteira-' + VERSAO;
 const SHELL = [
   './', './index.html', './falta.html', './estrutura.html',
