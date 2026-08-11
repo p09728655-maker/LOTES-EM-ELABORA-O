@@ -1339,10 +1339,12 @@ const TAB_VISTA_KEY="lotesElaboracaoTabVista";
 const TAB_DIA_KEY="lotesElaboracaoTabDia";
 
 /* Sequência de operação DENTRO do setor: o critério é sempre o que custa
-   SETUP na máquina. Corte: troca de chapa — a seccionadora daqui só corta MDP
-   (MDF é serrado na Unidade II, ver CORTA_FORA), um material inteiro por vez e
+   SETUP na máquina. Corte: troca de chapa — um material inteiro por vez e
    grossa→fina dentro dele; fundos são TERCEIRIZADOS e ficam fora.
    Furadeira: gabarito (batelada por tipo).
+   Nos dois, a chapa daqui é MDP: o MDF é cortado E furado na Unidade II, que
+   tem as duas máquinas (ver USINA_FORA) — por isso os dois abrem dizendo de
+   quem é o trabalho, antes de dizer a ordem dele.
    Coladeira: troca de fita, clara→escura. UV: limpeza de linha, claro→
    escuro no turno. Embalagem: fecha o 1º da fila, maior volume primeiro.
    É regra de processo, não vem da planilha: mora aqui e aparece como faixa
@@ -1350,7 +1352,7 @@ const TAB_DIA_KEY="lotesElaboracaoTabDia";
    substituída pelos grupos REAIS do dia. */
 const SEQ_OPER = {
   corte:["Só MDP — MDF na Unid. II","Grossa → fina"],
-  furar:["Tampos","Bases","Laterais","Prateleiras","Gavetas"],
+  furar:["Só MDP — MDF na Unid. II","Tampos","Bases","Laterais","Prateleiras","Gavetas"],
   cola:["Fita branca","Off white","Cinamomo","Cumaru","Preto"],
   uv:["Branco","Off white","Cores","Preto"],
   emb:["Fechar o 1º da fila","Maior volume primeiro"]
@@ -1789,16 +1791,19 @@ const TIPOS_PECA=[
 /* ordem da furadeira: TAMPO e BASE primeiro (é o par que abre o lote na
    máquina), depois laterais e o resto em batelada */
 const ORDEM_FURAR=["Tampos","Bases","Laterais","Prateleiras","Divisórias","Fundos","Gavetas","Travessas","Pés","Outras"];
-/* ONDE CADA CHAPA É SERRADA. O MDF é cortado na UNIDADE II — a seccionadora
-   daqui só corta MDP. Peça de MDF então NÃO entra na fila do Corte deste
+/* ONDE CADA CHAPA É USINADA. A UNIDADE II tem serra E furadeira próprias: o
+   MDF é cortado e furado lá, do começo ao fim. As máquinas daqui só trabalham
+   MDP. Peça de MDF então NÃO entra na fila de nenhum dos dois postos deste
    tablet, não conta no total de peças do setor (que é o número que dimensiona
    este turno) e não aparece na faixa de Sequência.
    Mas não some da tela: sai num bloco à parte, apagado, com a unidade escrita
    — quem confere a programação precisa ver que a peça existe e para onde foi,
    senão a tela vira "esqueceram de programar".
-   Vale só para o CORTE: a peça volta da Unidade II e segue o fluxo normal nos
-   outros postos daqui. Mudar de unidade é mudar esta linha. */
-const CORTA_FORA = { MDF:"Unidade II" };
+   Vale para os postos de USINAGEM (Corte e Furadeira), que são os que falam em
+   peça. Mudar de unidade é mudar esta linha. */
+const USINA_FORA = { MDF:"Unidade II" };
+/* o que a máquina faz com a peça, para o bloco dizer "corta" ou "fura" lá */
+const VERBO_POSTO = { corte:"Corta", furar:"Fura" };
 function infoPeca(desc){
   const D=String(desc||"").toUpperCase();
   const m=D.match(RE_CHAPA);
@@ -2698,10 +2703,12 @@ function tabSomado(lista){
      corte → por CHAPA (material+espessura), um material inteiro por vez e
              grossa→fina dentro dele — o setup caro da seccionadora é a troca de
              chapa, e trocar de material é o mais caro deles; dentro do grupo,
-             peça maior primeiro (o plano de corte nasce dela). O MDF não entra:
-             é serrado na Unidade II (CORTA_FORA) e sai num bloco à parte;
+             peça maior primeiro (o plano de corte nasce dela);
      furar → por TIPO na ordem de operação (tampos → laterais → …), peças
              iguais em batelada.
+   Antes da ordem vem a PERGUNTA DE QUEM É O TRABALHO: peça de MDF não é dos
+   dois postos daqui — a Unidade II tem serra e furadeira e faz o ciclo dela
+   inteiro (USINA_FORA). Sai da fila e vai para um bloco à parte.
    FUNDOS ficam FORA: são terceirizados — não passam pelo corte nem pela
    furadeira daqui. Só semiacabados produzidos em casa entram na fila. */
 function explodePecas(itens, setor){
@@ -2712,7 +2719,8 @@ function explodePecas(itens, setor){
     /* Fundo TERCEIRIZADO é o fino (HDF ≤5mm) — esse fica fora, e em geral já
        cai no portão do MDP|MDF ("HDF NATURAL 2,5MM" não tem o token). O
        fundo ESTRUTURAL de 15mm MDF ("FUNDO TRAS 1070X360X15 MDF", grupo de
-       semiacabado) é feito em casa e ENTRA na fila. */
+       semiacabado) NÃO é terceirizado: é peça da casa e entra na conta — só
+       que, sendo MDF, cai no bloco da Unidade II logo abaixo, não na fila. */
     const paineis=rows.filter(r=>r.painel && (r.tipo!=="Fundos" || (r.esp||0)>5));
     if(!paineis.length){ sem.push({it, motivo:"estrutura sem peça de chapa própria"}); return; }
     cobertos++;
@@ -2725,8 +2733,9 @@ function explodePecas(itens, setor){
   });
   const gmap=new Map(), fora=[];
   porPeca.forEach(p=>{
-    /* chapa serrada em outra unidade sai da fila desta máquina (ver CORTA_FORA) */
-    const outra = setor==="corte" ? CORTA_FORA[p.mat] : null;
+    /* chapa usinada em outra unidade sai da fila desta máquina — vale nos dois
+       postos que falam em peça, e explodePecas só roda neles (ver USINA_FORA) */
+    const outra = USINA_FORA[p.mat];
     if(outra){ fora.push(Object.assign({},p,{unidade:outra})); return; }
     const chave = setor==="corte" ? p.chapa : p.tipo;
     if(!gmap.has(chave)) gmap.set(chave,{chave, mat:p.mat||"", esp:p.esp||0, pecas:[], tot:0});
@@ -2782,7 +2791,9 @@ function pecasHTML(ex){
   (ex.fora||[]).forEach(p=>{ if(!un.has(p.unidade)) un.set(p.unidade,[]); un.get(p.unidade).push(p); });
   const foraB=[...un.entries()].map(([u,ps])=>{
     const t=ps.reduce((s,p)=>s+p.qtdTot,0);
-    return `<div class="tb-pgh fora"><b>↗ Corta na ${esc(u)}</b>
+    /* o verbo é o do posto que está lendo: no Corte "corta lá", na Furadeira
+       "fura lá" — a tela responde a pergunta DESTA máquina */
+    return `<div class="tb-pgh fora"><b>↗ ${esc(VERBO_POSTO[TAB_SETOR]||"Faz")} na ${esc(u)}</b>
       <span class="s">${ps.length} ${ps.length===1?"peça":"peças"} · ${nBR(t)} un · fora desta fila</span></div>`+
       ps.map(p=>`<div class="tb-pr fora"><span class="cd">${esc(p.peca)}</span>
         <span class="ds">${esc(p.desc)}<span class="em">${esc(p.chapa)} · ${esc(u)}</span></span>
