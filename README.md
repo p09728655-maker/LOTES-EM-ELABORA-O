@@ -127,7 +127,9 @@ do carrinho. O cabeçalho do grupo traz o número do lote, a OP, a cor do GPS e 
 - O parâmetro **fica gravado no aparelho** (localStorage): abre-se o endereço uma vez, prende-se
   o tablet na máquina e ele volta sozinho ao seu setor a cada recarga — inclusive quando o
   atalho de tela inicial (PWA) abre o `start_url` sem parâmetros, que é o que o Android faz.
-  `?tablet=0` desliga, e é a saída do link `painel completo ↗` no rodapé.
+  `?tablet=0` desliga. **Não há link de saída na tela**: o tablet do setor é do operador, e
+  o operador vê o setor dele — quem precisa do painel inteiro (PCP) digita `?tablet=0` no
+  endereço. A tela de erro é a única que mantém a saída, como recuperação.
 - Os dois mesmos `?setor=` disputados com o modo TV: com `?tablet=` presente (ou gravado), o
   setor é do tablet; sem ele, da TV.
 - **Barra de setores** sempre à vista, com `N hoje · N no setor` em cada um, mais o chip
