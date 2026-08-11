@@ -138,6 +138,11 @@ do carrinho. O cabeçalho do grupo traz o número do lote, a OP, a cor do GPS e 
   planilha**, que é a sequência do PCP — quem confere a tela com a programação lado a lado
   não fica pulando linha. No Atraso a fila é a da cobrança: embalagem vencida há mais tempo
   primeiro, com selo vermelho.
+- **Faixa de sequência de operação** fixa no cabeçalho: a ordem das **peças** dentro do
+  trabalho — o Corte começa pelos tampos, depois laterais; a Furadeira fura tampos, depois
+  laterais. É regra de processo, não vem da planilha: mora na constante `SEQ_OPER` do
+  `index.html`, e setor com a lista vazia não mostra a faixa — preencher a lista faz a faixa
+  nascer.
 - Filtros de estado à vista (nada de `<select>`, que no toque cobre a tela):
   - **Hoje / Todo o setor** — nasce em Hoje, que é a pergunta que põe o tablet ali; Todo o
     setor mostra também o que já está parado na etapa.
@@ -157,12 +162,15 @@ do carrinho. O cabeçalho do grupo traz o número do lote, a OP, a cor do GPS e 
   o estado todo mora no localStorage — nada se perde.
 
 ### Instalar nos tablets
-Um botão flutuante **📲 Instalar app** aparece (no painel e no modo tablet) sempre que o
-navegador oferece a instalação — é o `beforeinstallprompt` do Chrome/Android guardado e
-disparado no toque. O fluxo por aparelho é: abrir o endereço do setor uma vez, tocar em
-Instalar, e o ícone nasce na tela inicial já com o setor gravado. Onde não dá para instalar
-(app já instalado, navegador sem suporte, iPad — que instala pelo menu compartilhar do
-Safari), o convite nunca chega e o botão não aparece — botão que não funciona não existe.
+Um botão flutuante **📲 Instalar app** aparece (no painel e no modo tablet) **sempre que a
+tela roda num navegador** — só some dentro do app já instalado (standalone) e na TV. No
+toque: se o Chrome mandou o convite (`beforeinstallprompt`), dispara a instalação em um
+toque; sem convite (Firefox, iPad, Chrome que ainda não decidiu), abre o **caminho manual
+por aparelho** (menu `⋮` → Adicionar à tela inicial; compartilhar → Tela de Início no
+Safari). Ele já foi só-com-convite, e o resultado em campo foi "não achei o botão" — botão
+que aparece sempre e sempre faz algo é melhor que botão perfeito escondido. O fluxo por
+aparelho continua: abrir o endereço do setor uma vez, tocar em Instalar, e o ícone nasce na
+tela inicial já com o setor gravado.
 
 ## Baixa: volumes embalados
 A baixa real não está na planilha, está no ERP: relatório **Transação 3 – REPORTE, Tipo L –
