@@ -454,6 +454,17 @@
   .tb-lote.atrasado{border-color:var(--red)}
   .tb-lh{display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:9px 12px;
     background:var(--panel2); border-bottom:1px solid var(--line)}
+  /* a posição na fila é a resposta da tela: número grande, e só o 1º vem
+     preenchido — de longe já se vê qual carrinho entra agora na máquina */
+  .tb-lh .seq{font-family:"Oswald"; font-weight:700; font-size:22px; line-height:1;
+    color:var(--amber); border:2px solid var(--amber); border-radius:9px;
+    padding:5px 9px; min-width:46px; text-align:center; white-space:nowrap; flex:none}
+  .tb-lh .seq.um{background:var(--amber); color:#12140f}
+  .tb-lote.atrasado .tb-lh .seq{color:var(--red); border-color:var(--red)}
+  .tb-lote.atrasado .tb-lh .seq.um{background:var(--red); color:#000}
+  /* o próximo da fila leva a borda mais forte da tela */
+  .tb-lote.prim{border-width:2px}
+  .tb-lote.prim:not(.atrasado){border-color:var(--amber)}
   .tb-lh .lt{font-family:"IBM Plex Mono"; font-weight:600; font-size:24px; line-height:1}
   .tb-lh .int{font-family:"IBM Plex Mono"; font-size:14px; font-weight:600;
     background:rgba(255,255,255,.08); border-radius:6px; padding:3px 8px}
@@ -1167,7 +1178,7 @@ const ETAPAS = [
   {key:"corte", nome:"Corte · Furadeira",            curto:"Corte",
    detalhe:"tampo / base",                    fase:"Fase 50-55",   abrev:"C"},
   {key:"furar", nome:"Furadeira laterais · Coladeira", curto:"Furadeira laterais",
-   detalhe:"tampos · fresadora · fundo PU",   fase:"Fase 55-60",   abrev:"F"},
+   detalhe:"furar as laterais do produto · fresadora · fundo PU", fase:"Fase 55-60", abrev:"F"},
   {key:"cola",  nome:"Coladeira · Pintura PU",       curto:"Coladeira/PU",
    detalhe:"pintura UV dos ripados",          fase:"Fase 65-70",   abrev:"L"},
   {key:"uv",    nome:"Linha UV",                     curto:"Linha UV",
@@ -2324,18 +2335,22 @@ function renderTV(buckets, ref, atras, volAtraso){
 function tabClock(){ const c=document.getElementById("tabRelogio");
   if(c) c.textContent=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }
 
-/* Lotes do setor escolhido: quem ENTROU HOJE primeiro (é a produção do dia),
-   depois o que está parado há mais tempo. */
+/* Lotes do setor na ORDEM DE EXECUÇÃO — a lista É a sequência: o de cima é o
+   que a máquina pega agora. Primeiro quem está mais atrás na data da etapa
+   (deveria ter entrado antes); no mesmo dia vale a ordem da PLANILHA, que é
+   a sequência do PCP — a mesma que se confere lado a lado com a programação.
+   O sort do JS é estável, então o empate preserva a ordem em que os lotes
+   vieram da planilha. Cada lote sai numerado (seq) para a tela dizer 1º, 2º…
+   — no atraso a ordem é a da cobrança: embalagem vencida há mais tempo antes. */
 function tabLotesDoSetor(dados, ref){
-  if(TAB_SETOR==="atraso") return dados.atras.map(a=>({l:a.l, idx:4, atr:a}));
+  if(TAB_SETOR==="atraso")
+    return dados.atras.map((a,n)=>({l:a.l, idx:4, atr:a, seq:n+1}));
   const i=ETAPAS.findIndex(e=>e.key===TAB_SETOR);
   const arr=(dados.buckets[i]||[]).map(x=>({l:x.l, idx:x.idx}));
-  arr.sort((a,b)=>{
-    const ha=ehHoje(a.l,i,ref)?0:1, hb=ehHoje(b.l,i,ref)?0:1;
-    return ha-hb || (pd(a.l[ETAPAS[i].key])||0)-(pd(b.l[ETAPAS[i].key])||0)
-      || String(a.l.lote).localeCompare(String(b.l.lote),"pt-BR",{numeric:true});
-  });
-  return (TAB_DIA==="hoje") ? arr.filter(x=>ehHoje(x.l,i,ref)) : arr;
+  arr.sort((a,b)=>(pd(a.l[ETAPAS[i].key])||0)-(pd(b.l[ETAPAS[i].key])||0));
+  const lst=(TAB_DIA==="hoje") ? arr.filter(x=>ehHoje(x.l,i,ref)) : arr;
+  lst.forEach((x,n)=>{ x.seq=n+1; });
+  return lst;
 }
 
 /* A coluna de pendente só faz sentido onde ela é medida: PRODUZIDO e SALDO da
@@ -2351,8 +2366,10 @@ function tabLinhaProd(it, l, extra){
     <span class="q"${pend!==null&&pend<=0?' style="color:var(--green)"':""}>${pend!==null&&pend<=0?"ok":nBR(q)}</span></div>`;
 }
 
-/* Cabeçalho do lote: o número grande, a cor do GPS e o volume. É por esses
-   três que se confere se o carrinho parado na máquina é o desta lista. */
+/* Cabeçalho do lote: a POSIÇÃO NA FILA vem primeiro e maior — a pergunta da
+   máquina é "qual eu pego agora", e a resposta é o 1º. Depois o número do
+   lote, a cor do GPS e o volume, que é por onde se confere se o carrinho
+   parado na máquina é o desta lista. */
 function tabCabecalhoLote(x, ref){
   const l=x.l, i=x.idx, et=ETAPAS[i], hoje=!x.atr && ehHoje(l,i,ref);
   const fal=faltasDe(l);
@@ -2367,8 +2384,9 @@ function tabCabecalhoLote(x, ref){
   const linhaFal = fal.length ? `<div class="tb-fal">⚠ <b>${fal.length}</b>
     ${fal.length===1?"peça em falta":"peças em falta"}
     <span class="ls">${fal.slice(0,3).map(f=>esc(f.pecaDesc||f.peca)).join(" · ")}${fal.length>3?" …":""}</span></div>` : "";
+  const seq = x.seq ? `<span class="seq${x.seq===1?" um":""}">${x.seq}º</span>` : "";
   return {hoje, fal, html:`<div class="tb-lh">
-      <span class="lt">${esc(l.lote)}</span>
+      ${seq}<span class="lt">${esc(l.lote)}</span>
       ${l.interno?`<span class="int">${esc(l.interno)}</span>`:""}
       ${l.cor?`<span class="cor" style="${corGPS(l.cor)}">${esc(l.cor)}</span>`:""}
       <span class="qt">${nBR(l.qtd)}<small>vol</small></span></div>
@@ -2389,7 +2407,7 @@ function tabGrupoProdutos(x, ref){
   const its=(l.itens||[]);
   const linhas = its.length ? its.map(it=>tabLinhaProd(it,l,"")).join("")
     : `<div class="tb-pr"><span class="ds" style="color:var(--mut2);font-style:italic">Lote sem produtos na planilha</span></div>`;
-  return `<article class="tb-lote${c.hoje?" hoje":""}${x.atr?" atrasado":""}" data-busca="${chaveBusca(l)}">
+  return `<article class="tb-lote${c.hoje?" hoje":""}${x.atr?" atrasado":""}${x.seq===1?" prim":""}" data-busca="${chaveBusca(l)}">
     ${c.html}<div class="tb-prods">${linhas}</div>${tabRodapeLote(l)}</article>`;
 }
 
@@ -2402,7 +2420,7 @@ function tabCardLote(x, ref){
   const prods = its.length ? `<button class="tb-abre" data-lote="${esc(l.lote)}">
       <span class="cv">▸</span>${its.length} ${its.length===1?"produto":"produtos"}</button>
     <div class="tb-prods"${aberto?"":" hidden"}>${its.map(it=>tabLinhaProd(it,l,"")).join("")}</div>` : "";
-  return `<article class="tb-lote${c.hoje?" hoje":""}${x.atr?" atrasado":""}${aberto?" aberto":""}" data-busca="${chaveBusca(l)}">
+  return `<article class="tb-lote${c.hoje?" hoje":""}${x.atr?" atrasado":""}${aberto?" aberto":""}${x.seq===1?" prim":""}" data-busca="${chaveBusca(l)}">
     ${c.html}<div class="tb-tl">${tl}</div>${prods}${tabRodapeLote(l)}</article>`;
 }
 

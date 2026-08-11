@@ -132,6 +132,12 @@ do carrinho. O cabeçalho do grupo traz o número do lote, a OP, a cor do GPS e 
   setor é do tablet; sem ele, da TV.
 - **Barra de setores** sempre à vista, com `N hoje · N no setor` em cada um, mais o chip
   vermelho de **Atraso** — o tablet da furadeira pode espiar a coladeira, e o toque volta.
+- **A lista é a fila de execução**: cada lote sai numerado (`1º`, `2º`, `3º`…) e o **1º vem
+  preenchido em laranja com a borda mais forte da tela** — é o que a máquina pega agora.
+  A ordem é: quem está mais atrás na data da etapa primeiro e, no mesmo dia, a **ordem da
+  planilha**, que é a sequência do PCP — quem confere a tela com a programação lado a lado
+  não fica pulando linha. No Atraso a fila é a da cobrança: embalagem vencida há mais tempo
+  primeiro, com selo vermelho.
 - Filtros de estado à vista (nada de `<select>`, que no toque cobre a tela):
   - **Hoje / Todo o setor** — nasce em Hoje, que é a pergunta que põe o tablet ali; Todo o
     setor mostra também o que já está parado na etapa.
