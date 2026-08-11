@@ -8,7 +8,7 @@
    versao proprio: ele pergunta o desta linha por postMessage e mostra o que
    vier. Dois lugares para bumpar viram um lugar desatualizado. Subir esta
    linha a cada deploy e o que dispara o aviso de atualizacao na tela. */
-const VERSAO = 'v17';   // subiu com a fila de execucao numerada no modo tablet (1., 2., 3.)
+const VERSAO = 'v18';   // subiu com Instalar app sempre visivel + faixa de sequencia de pecas do setor
 const CACHE = 'esteira-' + VERSAO;
 const SHELL = [
   './', './index.html', './falta.html', './estrutura.html',

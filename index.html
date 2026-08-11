@@ -407,6 +407,20 @@
      esconderia opção — quem está na máquina não vai procurar a sua. */
   .tb-setores{display:flex; flex-wrap:wrap; gap:7px; padding:8px 14px;
     background:var(--panel); border-bottom:1px solid var(--line)}
+
+  /* sequência de operação do setor: a ordem das PEÇAS no trabalho (tampos →
+     laterais…). Instrução permanente da máquina: mora no cabeçalho fixo,
+     em corpo que se lê em pé, e não rola para fora da tela */
+  .tb-seqop{display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; padding:9px 14px;
+    background:var(--panel2); border-bottom:2px solid var(--amber)}
+  .tb-seqop .lbl{font-family:"IBM Plex Mono"; font-size:10.5px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--mut); margin-right:2px}
+  .tb-seqop .passo{display:flex; align-items:center; gap:8px; font-family:"Oswald";
+    font-weight:600; font-size:19px; letter-spacing:.02em; white-space:nowrap}
+  .tb-seqop .passo b{width:28px; height:28px; border-radius:50%; background:var(--amber);
+    color:#12140f; display:flex; align-items:center; justify-content:center;
+    font-size:15px; flex:none}
+  .tb-seqop .seta{color:var(--mut2); font-size:18px}
   .tb-set{flex:1 1 130px; min-height:52px; display:flex; flex-direction:column;
     justify-content:center; gap:2px; padding:6px 10px; cursor:pointer;
     background:var(--panel2); color:var(--mut); border:1px solid var(--line);
@@ -535,6 +549,25 @@
   .instapp[hidden]{display:none}
   body.tab .instapp{padding:16px 24px; font-size:18px; bottom:calc(18px + env(safe-area-inset-bottom))}
   body.tv .instapp{display:none}   /* na TV não há quem toque */
+
+  /* Ajuda de instalação: quando o navegador não oferece o convite automático
+     (Firefox, iPad, Chrome que ainda não decidiu), o botão abre o caminho
+     manual — em corpo grande, um caminho por aparelho. */
+  .instajuda{position:fixed; inset:0; z-index:120; background:rgba(0,0,0,.72);
+    display:flex; align-items:center; justify-content:center; padding:20px}
+  .instajuda[hidden]{display:none}
+  .instajuda .cx{background:var(--panel2); border:1px solid var(--amber); border-radius:14px;
+    max-width:560px; width:100%; padding:20px 22px 16px; box-shadow:0 12px 40px rgba(0,0,0,.7)}
+  .instajuda h3{font-family:"Oswald"; font-weight:600; font-size:20px; letter-spacing:.03em;
+    color:var(--amber); margin:0 0 12px}
+  .instajuda .cam{display:flex; gap:10px; align-items:baseline; padding:9px 0;
+    border-top:1px solid var(--line); font-size:15px; line-height:1.45}
+  .instajuda .cam b{color:var(--amber); white-space:nowrap}
+  .instajuda .cam code{font-family:"IBM Plex Mono"; font-size:13px; background:rgba(255,255,255,.07);
+    border-radius:5px; padding:1px 7px}
+  .instajuda .fechar{margin-top:14px; width:100%; min-height:48px; background:var(--amber);
+    color:#12140f; border:none; border-radius:10px; font-family:"Oswald"; font-weight:600;
+    font-size:16px; letter-spacing:.04em; cursor:pointer}
 
   /* tablet em pé (ou tela pequena): uma coluna e cabeçalho em duas linhas */
   @media(max-width:780px){
@@ -1103,6 +1136,20 @@
 <!-- Instalar o app: filho direto de body (a impressão o esconde junto com o
      resto) e fora dos painéis, para aparecer também no modo tablet. -->
 <button class="instapp" id="instApp" hidden>📲 Instalar app</button>
+<!-- Caminho manual, para navegador que não manda o convite automático -->
+<div class="instajuda" id="instAjuda" hidden>
+  <div class="cx">
+    <h3>📲 Instalar o painel como app</h3>
+    <div class="cam"><b>Tablet/celular Android</b><span>no Chrome, menu <code>⋮</code> (canto de cima)
+      → <code>Adicionar à tela inicial</code> ou <code>Instalar app</code></span></div>
+    <div class="cam"><b>iPad/iPhone</b><span>no Safari, botão de compartilhar
+      → <code>Adicionar à Tela de Início</code></span></div>
+    <div class="cam"><b>Computador</b><span>no Chrome/Edge, ícone de instalar no fim da
+      barra de endereço (ou menu <code>⋮</code> → <code>Instalar</code>)</span></div>
+    <div class="cam"><b>Firefox</b><span>não instala app — abra o endereço no Chrome</span></div>
+    <button class="fechar" id="instAjudaOk">Entendi</button>
+  </div>
+</div>
 
 <div id="tv"></div>
 <!-- Modo tablet: mesma regra do modo TV — substitui a tela inteira, então
@@ -1242,6 +1289,19 @@ if(TABLET){
 const TAB_SETOR_KEY="lotesElaboracaoTabSetor";
 const TAB_VISTA_KEY="lotesElaboracaoTabVista";
 const TAB_DIA_KEY="lotesElaboracaoTabDia";
+
+/* Sequência de operação DENTRO do setor: a ordem das peças no trabalho — o
+   corte começa pelos tampos, depois laterais; a furadeira fura tampos,
+   depois laterais. É regra de processo, não vem da planilha: mora aqui e
+   aparece como faixa fixa no cabeçalho do tablet. Setor sem sequência
+   definida não mostra a faixa — basta preencher a lista para ela nascer. */
+const SEQ_OPER = {
+  corte:["Tampos","Laterais"],
+  furar:["Tampos","Laterais"],
+  cola:[],   // ex.: ["Ripados","Fundos"]
+  uv:[],
+  emb:[]
+};
 
 const TAB_SETORES = ETAPAS.map(e=>e.key).concat("atraso");
 const guardaTab = (k,v) => { try{ localStorage.setItem(k,v); }catch(e){} };
@@ -2518,6 +2578,13 @@ function renderTab(dados, ref){
     ? {fase:"Volumes pendentes", nome:'Em <span>atraso</span>', det:"passou a embalagem e não saiu"}
     : {fase:et.fase, nome:esc(et.nome), det:et.detalhe};
 
+  /* a ordem das peças dentro do trabalho, fixa no cabeçalho: o corte começa
+     pelos tampos, depois laterais — quem chega na máquina lê antes da fila */
+  const ops=SEQ_OPER[TAB_SETOR]||[];
+  const seqop=ops.length?`<div class="tb-seqop"><span class="lbl">Sequência</span>${
+    ops.map((o,n)=>`<span class="passo"><b>${n+1}</b>${esc(o)}</span>`)
+       .join(`<span class="seta">→</span>`)}</div>`:"";
+
   document.getElementById("tabapp").innerHTML=`
     <div class="tb-head">
       <div class="tb-top">
@@ -2535,6 +2602,7 @@ function renderTab(dados, ref){
         </div>
       </div>
       <div class="tb-setores">${chips}</div>
+      ${seqop}
     </div>
     ${alerta}
     ${filtros}
@@ -3140,27 +3208,35 @@ if(TVKEY){ setInterval(tvClock, 30000); setInterval(tvRotate, 14000); } // reló
 if(TABLET) setInterval(tabClock, 30000);   // relógio do tablet
 
 /* ---------- instalação do app (PWA) ----------
-   O Android só instala pelo gesto do usuário: o navegador dispara o convite
-   (beforeinstallprompt), este código o guarda e o botão o aciona no toque.
-   É o caminho dos tablets de setor: abrir o endereço uma vez, tocar em
-   Instalar — o setor já fica gravado e o ícone nasce na tela inicial.
-   Onde não dá para instalar (app já instalado, navegador sem suporte, iPad —
-   que instala pelo menu compartilhar do Safari), o convite nunca chega e o
-   botão simplesmente não aparece. */
+   O botão aparece SEMPRE que a tela roda num navegador — só some dentro do
+   app já instalado (standalone) e na TV. Ele começou aparecendo apenas
+   quando o Chrome mandava o convite (beforeinstallprompt), e o resultado em
+   campo foi "não achei o botão": no app já instalado, no Firefox e no Chrome
+   que ainda não decidiu, o convite nunca chega. Agora o toque usa o convite
+   quando ele existe (instalação em um toque) e, sem convite, abre o caminho
+   manual por aparelho — botão que aparece sempre e sempre faz algo. */
 let INSTALAR=null;
 const bInst=document.getElementById("instApp");
+const ajuda=document.getElementById("instAjuda");
+// dentro do app instalado o botão não faz sentido — a tela JÁ é o app
+const JA_APP = matchMedia("(display-mode: standalone)").matches || navigator.standalone===true;
+bInst.hidden = JA_APP;
 window.addEventListener("beforeinstallprompt", e=>{
-  e.preventDefault(); INSTALAR=e; bInst.hidden=false;
+  e.preventDefault(); INSTALAR=e; bInst.hidden=JA_APP;
 });
 bInst.onclick=async ()=>{
-  if(!INSTALAR) return;
-  const ev=INSTALAR; INSTALAR=null;   // o convite só vale um prompt()
-  bInst.hidden=true;                   // recusou? o navegador manda outro convite depois
-  ev.prompt();
-  await ev.userChoice.catch(()=>null);
+  if(INSTALAR){
+    const ev=INSTALAR; INSTALAR=null;   // o convite só vale um prompt()
+    ev.prompt();
+    await ev.userChoice.catch(()=>null);
+    return;
+  }
+  ajuda.hidden=false;                    // sem convite: mostra o caminho manual
 };
+document.getElementById("instAjudaOk").onclick=()=>{ ajuda.hidden=true; };
+ajuda.addEventListener("click",e=>{ if(e.target===ajuda) ajuda.hidden=true; });
 window.addEventListener("appinstalled", ()=>{
-  bInst.hidden=true; INSTALAR=null;
+  bInst.hidden=true; INSTALAR=null; ajuda.hidden=true;
   toast("App instalado — abra pelo ícone da tela inicial");
 });
 
