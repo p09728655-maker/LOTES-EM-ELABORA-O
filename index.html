@@ -397,6 +397,11 @@
   .tb-dia{text-align:right; flex:none; line-height:1.1}
   .tb-dia b{font-family:"Oswald"; font-size:20px; font-weight:600; display:block}
   .tb-dia small{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut)}
+  /* total geral de peças do setor: o número que dimensiona o turno da
+     máquina, sempre no cabeçalho — com a soma por lote no rótulo */
+  .tb-tot{text-align:right; flex:none; line-height:1.05; margin-left:4px}
+  .tb-tot b{font-family:"Oswald"; font-size:27px; font-weight:700; color:var(--amber); display:block}
+  .tb-tot small{font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--mut); white-space:nowrap}
   .tb-nav{display:flex; gap:6px; flex:none}
   .tb-nav button{min-width:50px; min-height:46px; background:var(--panel2); color:var(--ink);
     border:1px solid var(--line); border-radius:9px; font-family:"Oswald"; font-size:16px;
@@ -581,7 +586,7 @@
   @media(max-width:780px){
     .tb-top{flex-wrap:wrap; gap:8px 10px}
     .tb-tit{flex:1 1 60%; order:1} .tb-top .tb-logo{order:0}
-    .tb-relogio{order:2; margin-left:auto} .tb-dia{order:3}
+    .tb-relogio{order:2; margin-left:auto} .tb-dia{order:3} .tb-tot{order:3}
     .tb-nav{order:4; flex:1 1 100%} .tb-nav button{flex:1}
     .tb-lista{grid-template-columns:1fr}
     .tb-carga{margin-left:0; flex:1 1 100%; text-align:left}
@@ -1294,13 +1299,16 @@ if(TABLET){
   /* Esqueleto imediato: o modo tablet esconde a tela normal inteira, então
      até a primeira leitura da planilha não haveria NADA — e uma leitura
      travada é um tablet preto sem explicação nem saída. Aparece já no load. */
+  /* sem saída para o painel completo aqui: o tablet do setor é do operador,
+     e o operador vê o setor DELE. O PCP sai digitando ?tablet=0 no endereço
+     (dentro do app instalado nem barra de endereço existe). A tela de erro
+     mantém a saída — lá é recuperação, não navegação. */
   document.getElementById("tabapp").innerHTML=`<div class="tb-head"><div class="tb-top">
       <img class="tb-logo" src="logo-patrimar.png" alt="Patrimar">
       <div class="tb-tit"><div class="fase">PPCP · Patrimar</div><div class="nm">Lendo a planilha…</div></div>
     </div></div>
     <div class="tb-vazio">Buscando os lotes do dia. Se esta tela ficar assim,
-      confira a rede do aparelho.<br><br>
-      <a href="?tablet=0" style="color:var(--steel)">abrir o painel completo ↗</a></div>`;
+      confira a rede do aparelho.</div>`;
 }
 const TAB_SETOR_KEY="lotesElaboracaoTabSetor";
 const TAB_VISTA_KEY="lotesElaboracaoTabVista";
@@ -2756,9 +2764,14 @@ function renderTab(dados, ref){
   const nProd=lista.reduce((s,x)=>s+((x.l.itens||[]).length),0);
   const pend=TAB_SETOR==="atraso"?lista.reduce((s,x)=>s+(x.atr?x.atr.pend:0),0):0;
 
-  /* na vista de peças a explosão do dia alimenta a faixa de sequência (os
-     grupos REAIS na ordem) e o total de peças da linha de carga */
-  const exDia = (vista==="pecas") ? explodePecas(lista.flatMap(x=>x.l.itens||[]), TAB_SETOR) : null;
+  /* A explosão do dia roda SEMPRE que o setor tem peças (corte/furar com a
+     ESTRUTURA viva), não só na vista de peças: o TOTAL GERAL de peças fica
+     no cabeçalho o tempo todo, com a soma por lote (12.950 + 18.300) — é o
+     número que dimensiona o turno da máquina. Na vista de peças ela também
+     alimenta a faixa de sequência e a linha de carga. */
+  const exDia = podePecas ? explodePecas(lista.flatMap(x=>x.l.itens||[]), TAB_SETOR) : null;
+  const pecasLote = (podePecas && lista.length>1)
+    ? lista.map(x=>explodePecas(x.l.itens,TAB_SETOR).totPecas) : [];
 
   const filtros=`<div class="tb-filtros">
     ${TAB_SETOR!=="atraso"?`<div class="gp">
@@ -2821,6 +2834,9 @@ function renderTab(dados, ref){
           ${titulo.det?`<div class="det">${esc(titulo.det)}</div>`:""}</div>
         <div class="tb-relogio" id="tabRelogio"></div>
         <div class="tb-dia"><b>${fmt(ref)}</b><small>${diaSemana(ref)}</small></div>
+        ${exDia?`<div class="tb-tot"><b>${nBR(exDia.totPecas)}</b>
+          <small>peças ${TAB_DIA==="hoje"&&TAB_SETOR!=="atraso"?"hoje":"no setor"}${
+            (pecasLote.length>1&&pecasLote.length<=4)?` · ${pecasLote.map(nBR).join(" + ")}`:""}</small></div>`:""}
         <div class="tb-nav">
           <button data-nav="-1">◀</button>
           <button data-nav="0">Hoje</button>
@@ -2838,7 +2854,6 @@ function renderTab(dados, ref){
       <span>PPCP · Patrimar · ${hojeEh?"":`vendo ${fmt(ref)} — `}${esc(txtAtualizado())}</span>
       ${txtFrescorTV()?`<span class="velho">${txtFrescorTV()}</span>`:""}
       ${ver?`<span>${esc(ver)}</span>`:""}
-      <a href="?tablet=0">painel completo ↗</a>
     </div>`;
   tabClock();
 }
