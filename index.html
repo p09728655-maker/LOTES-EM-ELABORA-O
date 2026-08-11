@@ -1332,15 +1332,16 @@ const TAB_VISTA_KEY="lotesElaboracaoTabVista";
 const TAB_DIA_KEY="lotesElaboracaoTabDia";
 
 /* Sequência de operação DENTRO do setor: o critério é sempre o que custa
-   SETUP na máquina. Corte: troca de chapa (grossa→fina; fundos são
-   TERCEIRIZADOS e ficam fora). Furadeira: gabarito (batelada por tipo).
+   SETUP na máquina. Corte: troca de chapa — um material inteiro por vez (MDF
+   e MDP nunca alternam) e, dentro dele, grossa→fina; fundos são
+   TERCEIRIZADOS e ficam fora. Furadeira: gabarito (batelada por tipo).
    Coladeira: troca de fita, clara→escura. UV: limpeza de linha, claro→
    escuro no turno. Embalagem: fecha o 1º da fila, maior volume primeiro.
    É regra de processo, não vem da planilha: mora aqui e aparece como faixa
    fixa no cabeçalho do tablet. Na vista de peças (corte/furar) a faixa é
    substituída pelos grupos REAIS do dia. */
 const SEQ_OPER = {
-  corte:["Chapa 25","Chapa 15","Chapa 12"],
+  corte:["Um material por vez","Grossa → fina"],
   furar:["Tampos","Bases","Laterais","Prateleiras","Gavetas"],
   cola:["Fita branca","Off white","Cinamomo","Cumaru","Preto"],
   uv:["Branco","Off white","Cores","Preto"],
@@ -2676,8 +2677,10 @@ function tabSomado(lista){
    Transforma os PRODUTOS do lote nas PEÇAS que a máquina de fato processa,
    com a conta feita: qtd do produto × peças por unidade. O agrupamento segue
    o que custa setup em cada posto:
-     corte → por CHAPA (material+espessura, grossa→fina) — o setup caro da
-             seccionadora é a troca de chapa; dentro, peça maior primeiro
+     corte → por CHAPA (material+espessura) em BLOCO de material: todo o MDF,
+             depois todo o MDP (nunca alternando), grossa→fina dentro do bloco
+             — o setup caro da seccionadora é a troca de chapa, e trocar de
+             material é o mais caro deles; dentro do grupo, peça maior primeiro
              (o plano de corte nasce dela);
      furar → por TIPO na ordem de operação (tampos → laterais → …), peças
              iguais em batelada.
@@ -2705,13 +2708,30 @@ function explodePecas(itens, setor){
   const gmap=new Map();
   porPeca.forEach(p=>{
     const chave = setor==="corte" ? p.chapa : p.tipo;
-    if(!gmap.has(chave)) gmap.set(chave,{chave, pecas:[], tot:0});
+    if(!gmap.has(chave)) gmap.set(chave,{chave, mat:p.mat||"", esp:p.esp||0, pecas:[], tot:0});
     const g=gmap.get(chave); g.pecas.push(p); g.tot+=p.qtdTot;
   });
   const grupos=[...gmap.values()];
-  if(setor==="corte")
-    grupos.sort((a,b)=>((b.pecas[0].esp||0)-(a.pecas[0].esp||0)) || a.chave.localeCompare(b.chave));
-  else
+  if(setor==="corte"){
+    /* MDP e MDF NÃO se misturam. Ordenar só por espessura (25 → 15 → 12) parece
+       certo e não é: com as duas chapas no mesmo dia a fila sai MDF 25 → MDF 15
+       → MDP 15 → MDF 12 → MDP 12, ou seja, o material troca três vezes — e
+       trocar de material é esvaziar a mesa e trazer outra pilha, o setup mais
+       caro da seccionadora. Então a fila é por BLOCO de material: tudo de um,
+       depois tudo do outro, e DENTRO do bloco grossa→fina como sempre.
+       Abre o dia o bloco da chapa mais grossa; empatados, o de mais peças —
+       a batelada longa cai no começo do turno. */
+    const blocos=new Map();
+    grupos.forEach(g=>{
+      const b=blocos.get(g.mat)||{espMax:0, tot:0};
+      b.espMax=Math.max(b.espMax,g.esp); b.tot+=g.tot; blocos.set(g.mat,b);
+    });
+    const ordemMat=[...blocos.entries()]
+      .sort((a,b)=>(b[1].espMax-a[1].espMax)||(b[1].tot-a[1].tot)||a[0].localeCompare(b[0]))
+      .map(e=>e[0]);
+    grupos.sort((a,b)=>(ordemMat.indexOf(a.mat)-ordemMat.indexOf(b.mat))
+                    || (b.esp-a.esp) || a.chave.localeCompare(b.chave));
+  } else
     grupos.sort((a,b)=>ORDEM_FURAR.indexOf(a.chave)-ORDEM_FURAR.indexOf(b.chave));
   grupos.forEach(g=>g.pecas.sort((a,b)=>(b.area-a.area)||(b.qtdTot-a.qtdTot)));
   return {grupos, sem, totPecas:grupos.reduce((s,g)=>s+g.tot,0),
