@@ -1199,7 +1199,19 @@ function tvRotate(){ if(TVKEY && TV_PAGES>1){ TV_PAGE++; render(); } }
    isso é modo próprio: abre na lista de produtos do dia daquele setor.
    A chave TABLET nasce lá em cima, junto do TVKEY: os dois disputam o mesmo
    `?setor=` e o tablet vence quando `?tablet=` está na URL ou gravado. */
-if(TABLET) document.body.classList.add("tab");
+if(TABLET){
+  document.body.classList.add("tab");
+  /* Esqueleto imediato: o modo tablet esconde a tela normal inteira, então
+     até a primeira leitura da planilha não haveria NADA — e uma leitura
+     travada é um tablet preto sem explicação nem saída. Aparece já no load. */
+  document.getElementById("tabapp").innerHTML=`<div class="tb-head"><div class="tb-top">
+      <img class="tb-logo" src="logo-patrimar.png" alt="Patrimar">
+      <div class="tb-tit"><div class="fase">PPCP · Patrimar</div><div class="nm">Lendo a planilha…</div></div>
+    </div></div>
+    <div class="tb-vazio">Buscando os lotes do dia. Se esta tela ficar assim,
+      confira a rede do aparelho.<br><br>
+      <a href="?tablet=0" style="color:var(--steel)">abrir o painel completo ↗</a></div>`;
+}
 const TAB_SETOR_KEY="lotesElaboracaoTabSetor";
 const TAB_VISTA_KEY="lotesElaboracaoTabVista";
 const TAB_DIA_KEY="lotesElaboracaoTabDia";
@@ -2221,7 +2233,18 @@ function render(){
   aplicaBusca();
 
   if(TVKEY) renderTV(buckets, ref, atras, volAtraso);
-  if(TABLET) renderTab({buckets,atras,volAtraso}, ref);
+  /* Erro aqui não pode virar tela preta: o modo tablet esconde o painel
+     inteiro, então uma exceção sem tratamento deixa a fábrica olhando para
+     o nada. Pior: só nos dados reais — o caminho feliz do teste passa. A
+     tela de erro diz o que houve e dá as duas saídas. */
+  if(TABLET){ try{ renderTab({buckets,atras,volAtraso}, ref); }
+    catch(err){ document.getElementById("tabapp").innerHTML=`<div class="tb-head"><div class="tb-top">
+        <img class="tb-logo" src="logo-patrimar.png" alt="Patrimar">
+        <div class="tb-tit"><div class="fase">PPCP · Patrimar</div><div class="nm">Erro ao montar a tela</div></div>
+      </div></div>
+      <div class="tb-vazio"><code style="color:var(--red)">${esc(err&&err.message||err)}</code><br><br>
+        <button class="b" onclick="location.reload()">recarregar</button> &nbsp;
+        <a href="?tablet=0" style="color:var(--steel)">abrir o painel completo ↗</a></div>`; } }
 }
 
 /* ---------- modo TV: renderiza só o setor escolhido, em tela cheia ---------- */
@@ -2492,8 +2515,11 @@ function renderTab(dados, ref){
 }
 const DIAS_SEM=["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
 const diaSemana = d => DIAS_SEM[d.getDay()]||"";
+/* ULTIMA_OK é timestamp (Date.now()), não Date — chamar toLocaleTimeString
+   direto nele derrubava o renderTab INTEIRO, e só quando a planilha lia com
+   sucesso: tablet preto na fábrica, funcionando no teste sem rede. */
 const txtAtualizado = () => ULTIMA_OK
-  ? "atualizado "+ULTIMA_OK.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})
+  ? "atualizado "+new Date(ULTIMA_OK).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})
   : "sem leitura da planilha";
 
 function cardEl(l,idx,ref,cont){
