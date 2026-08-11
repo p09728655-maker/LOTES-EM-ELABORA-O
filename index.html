@@ -1260,8 +1260,10 @@ const baixaURL = aba => aba==="__gid__"
 const ETAPAS = [
   {key:"corte", nome:"Corte · Furadeira",            curto:"Corte",
    detalhe:"tampo / base",                    fase:"Fase 50-55",   abrev:"C"},
-  {key:"furar", nome:"Furadeira laterais · Coladeira", curto:"Furadeira laterais",
-   detalhe:"furar as laterais do produto · fresadora · fundo PU", fase:"Fase 55-60", abrev:"F"},
+  /* nomes espelham os cabeçalhos oficiais da folha da fábrica:
+     "FURADEIRA LATERAIS / COLADEIRA (TAMPOS) - FREZADORA - FUNDO PU" */
+  {key:"furar", nome:"Furadeira laterais · Coladeira (tampos)", curto:"Furadeira laterais",
+   detalhe:"furar as laterais do produto · frezadora · fundo PU", fase:"Fase 55-60", abrev:"F"},
   {key:"cola",  nome:"Coladeira · Pintura PU",       curto:"Coladeira/PU",
    detalhe:"pintura UV dos ripados",          fase:"Fase 65-70",   abrev:"L"},
   {key:"uv",    nome:"Linha UV",                     curto:"Linha UV",
@@ -1508,7 +1510,12 @@ function rowsToLotes(rows){
       // "PENDENTE" aqui significa "ainda não começou", não atraso.
       if(/atras|parad|bloque/i.test(status)) cur.flagStatus=true; }
   }
-  return out;
+  /* A folha real tem linhas que NÃO são lote e caem na coluna do lote:
+     cabeçalhos de seção ("CORTE - FURADEIRA ... FASE 50-55"), OPs de
+     assistência ("LT 150/26 ASSIST ...", sem produto e sem data) e o rodapé
+     de totais (números soltos). Sem datas e sem itens não é lote — some,
+     senão vira fantasma na aba Programados. */
+  return out.filter(l=>l.itens.length || pd(l.emb) || pd(l.corte));
 }
 
 /* ================== BAIXA: RELATÓRIO DE VOLUMES EMBALADOS ==================
