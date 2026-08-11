@@ -8,7 +8,7 @@
    versao proprio: ele pergunta o desta linha por postMessage e mostra o que
    vier. Dois lugares para bumpar viram um lugar desatualizado. Subir esta
    linha a cada deploy e o que dispara o aviso de atualizacao na tela. */
-const VERSAO = 'v26';   // subiu ao separar MDP de MDF na fila do Corte (bloco de material, grossa->fina dentro dele)
+const VERSAO = 'v27';   // subiu com o cabecalho de impressao no padrao dos demais paineis de PPCP
 const CACHE = 'esteira-' + VERSAO;
 const SHELL = [
   './', './index.html', './falta.html', './estrutura.html',

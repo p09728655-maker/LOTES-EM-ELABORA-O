@@ -448,6 +448,15 @@ Três folhas, sempre referentes à **data de referência** selecionada. Duas sae
 controles; a de programados sai de dentro da própria aba — imprimir o que vem é coisa que se faz
 olhando o que vem, e a barra já carrega três botões.
 
+As três abrem com o **cabeçalho padrão dos painéis de PPCP** (`.pv-head`): faixa escura em degradê
+(`#1a1a2e → #16213e → #0f3460`), tarja `PPCP — Planejamento e Controle da Produção` em âmbar
+`#f5a623`, título em branco, subtítulo em `#a0aec0` e o logo num **chip branco** — o logotipo é
+vermelho sobre claro e sumiria direto no escuro. Os KPIs continuam à direita, em branco, e o de
+atraso clareia para `#fc8181`, que é o vermelho que se lê sobre o navy (o quadro de atraso do corpo
+da folha segue no `#c1121f` forte). A faixa **só imprime colorida** por causa do
+`print-color-adjust:exact`; sem ele o navegador economiza tinta, o fundo sai branco e o texto
+branco desaparece junto.
+
 - **🖨 Imprimir / PDF** — monta um relatório gerencial em **A4 deitado**, fundo branco: cabeçalho com
   logo e KPIs, **detalhamento por etapa** com a situação de cada lote, quadro de **carga por
   etapa** (lotes, volumes, pontos, peso e distribuição), bloco de **atraso** (com a peça que trava
@@ -518,15 +527,15 @@ Trocar os ícones exige subir a versão no `sw.js` (ver abaixo), senão quem já
 o ícone antigo em cache.
 
 ## Versão e aviso de atualização
-A versão mora em **uma linha só**, o `VERSAO` do `sw.js` (hoje `v26`); o nome do cache sai dela
-(`esteira-v26`). O painel não tem número próprio: pergunta ao service worker por `postMessage` e
-mostra o que vier, no pé da tela (`painel v26`). Dois lugares para bumpar viram um lugar
+A versão mora em **uma linha só**, o `VERSAO` do `sw.js` (hoje `v27`); o nome do cache sai dela
+(`esteira-v27`). O painel não tem número próprio: pergunta ao service worker por `postMessage` e
+mostra o que vier, no pé da tela (`painel v27`). Dois lugares para bumpar viram um lugar
 desatualizado.
 
 **Subir essa linha a cada deploy** é o que dispara o aviso. Sem ele, um deploy só chega a quem
 abre a tela do zero — e a tela fica ligada dias seguidos num monitor da fábrica, onde ninguém
 fecha e ninguém recarrega. Quando o service worker novo assume, aparece a barra
-`Versão nova publicada v27 — recarregue para usar`, com **Atualizar agora** e **depois**. Ela fica
+`Versão nova publicada v28 — recarregue para usar`, com **Atualizar agora** e **depois**. Ela fica
 até clicarem: um toast de três segundos passaria batido. No **modo TV** não há quem clique, então
 lá a tela se recarrega sozinha em 8 s.
 
