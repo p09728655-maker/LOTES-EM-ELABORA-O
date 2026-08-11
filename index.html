@@ -512,6 +512,14 @@
   .tb-pr .em{font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut2); display:block;
     margin-top:2px; white-space:normal}
   .tb-pr.semcad .cd{color:var(--red)}
+  /* cabeçalho de grupo na vista de peças: a chapa (corte) ou o tipo (furar),
+     na ordem de operação — mesma língua mono-caixa-alta da faixa de sequência */
+  .tb-pgh{display:flex; align-items:baseline; gap:10px; padding:9px 12px 4px;
+    font-family:"IBM Plex Mono"; font-size:11.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--amber); border-top:1px solid var(--line)}
+  .tb-prods .tb-pgh:first-child{border-top:none}
+  .tb-pgh .s{color:var(--mut); letter-spacing:.04em; text-transform:none}
+  .tb-pgh.warn{color:#ff9f0a}
   /* rodapé do grupo: soma do que está na lista, para conferir com a máquina */
   .tb-lt{display:flex; align-items:center; gap:10px; padding:8px 12px;
     border-top:1px solid var(--line); background:rgba(255,255,255,.02);
@@ -1028,6 +1036,10 @@
       <label for="cfgFaltas">Aba das faltas (gid) <span class="opc">peça que trava o lote</span></label>
       <input type="text" id="cfgFaltas" spellcheck="false" placeholder="711658815">
     </div>
+    <div class="cfg-row">
+      <label for="cfgEstrutura">Aba da estrutura (gid) <span class="opc">peças por produto — tablet</span></label>
+      <input type="text" id="cfgEstrutura" spellcheck="false" placeholder="acha pelo nome ESTRUTURA">
+    </div>
   </div>
   <div class="cfg-acoes">
     <button class="b go" id="cfgSalvar">Salvar e recarregar</button>
@@ -1193,7 +1205,8 @@ const CFG_PADRAO = {
   gid:"1540822534",                     // aba de programação (Lote/Data/.../STATUS)
   baixa:"1353172751",                   // aba BAIXA (reserva; a baixa vem pelo app)
   cadastro:"905587643",                 // aba de cadastro (CODIGO · P B · PONTOS)
-  faltas:"711658815"                    // aba FALTAS (o que o app do celular lança)
+  faltas:"711658815",                   // aba FALTAS (o que o app do celular lança)
+  estrutura:""                          // aba ESTRUTURA (peças por produto; achada pelo nome)
 };
 const CFG_KEY = "lotesElaboracaoCfg";
 function lerCfg(){
@@ -1290,17 +1303,20 @@ const TAB_SETOR_KEY="lotesElaboracaoTabSetor";
 const TAB_VISTA_KEY="lotesElaboracaoTabVista";
 const TAB_DIA_KEY="lotesElaboracaoTabDia";
 
-/* Sequência de operação DENTRO do setor: a ordem das peças no trabalho — o
-   corte começa pelos tampos, depois laterais; a furadeira fura tampos,
-   depois laterais. É regra de processo, não vem da planilha: mora aqui e
-   aparece como faixa fixa no cabeçalho do tablet. Setor sem sequência
-   definida não mostra a faixa — basta preencher a lista para ela nascer. */
+/* Sequência de operação DENTRO do setor: o critério é sempre o que custa
+   SETUP na máquina. Corte: troca de chapa (grossa→fina; fundos são
+   TERCEIRIZADOS e ficam fora). Furadeira: gabarito (batelada por tipo).
+   Coladeira: troca de fita, clara→escura. UV: limpeza de linha, claro→
+   escuro no turno. Embalagem: fecha o 1º da fila, maior volume primeiro.
+   É regra de processo, não vem da planilha: mora aqui e aparece como faixa
+   fixa no cabeçalho do tablet. Na vista de peças (corte/furar) a faixa é
+   substituída pelos grupos REAIS do dia. */
 const SEQ_OPER = {
-  corte:["Tampos","Laterais"],
-  furar:["Tampos","Laterais"],
-  cola:[],   // ex.: ["Ripados","Fundos"]
-  uv:[],
-  emb:[]
+  corte:["Chapa 25","Chapa 15","Chapa 12"],
+  furar:["Tampos","Laterais","Bases","Prateleiras","Gavetas"],
+  cola:["Fita branca","Off white","Cinamomo","Cumaru","Preto"],
+  uv:["Branco","Off white","Cores","Preto"],
+  emb:["Fechar o 1º da fila","Maior volume primeiro"]
 };
 
 const TAB_SETORES = ETAPAS.map(e=>e.key).concat("atraso");
@@ -1313,8 +1329,8 @@ const lidoTab = (k,pad) => { try{ return localStorage.getItem(k)||pad; }catch(e)
 let TAB_SETOR = TV_ALIAS[_tvv] || lidoTab(TAB_SETOR_KEY,"corte");
 if(!TAB_SETORES.includes(TAB_SETOR)) TAB_SETOR="corte";
 if(TABLET && TV_ALIAS[_tvv]) guardaTab(TAB_SETOR_KEY,TAB_SETOR);
-let TAB_VISTA = lidoTab(TAB_VISTA_KEY,"produtos");     // produtos | lotes
-if(TAB_VISTA!=="lotes") TAB_VISTA="produtos";
+let TAB_VISTA = lidoTab(TAB_VISTA_KEY,"produtos");     // produtos | lotes | pecas
+if(!["lotes","pecas"].includes(TAB_VISTA)) TAB_VISTA="produtos";
 /* Nasce no DIA, não no setor inteiro: "o que essa máquina fura hoje" é a
    pergunta que põe o tablet ali. O setor inteiro é a segunda pergunta. */
 let TAB_DIA = lidoTab(TAB_DIA_KEY,"hoje");             // hoje | setor
@@ -1684,6 +1700,110 @@ async function carregarFaltas(){
 // peças que travam um lote, do maior para o menor
 const faltasDe = l => FALTAS.ativa ? (FALTAS.map.get(normCod(l.lote))||[]) : [];
 
+/* ================== ESTRUTURA: PEÇAS POR PRODUTO ==================
+   A aba ESTRUTURA (CODIGO · PECA · QTD · DESCRICAO, a mesma que a tela de
+   faltas usa) diz de que peças cada produto é feito — e a descrição da peça
+   carrega tipo, medidas e material ("TAMPO 1250X450X25 MDP 1 BRANCO"). Com
+   ela o tablet do Corte e da Furadeira lista PEÇAS na ordem de operação, com
+   a conta feita (200 racks × 2 laterais = 400 laterais).
+   Sem a aba, nada muda: a vista de peças simplesmente não existe. */
+const ESTRUTURA = { map:new Map(), ativa:false, aba:"", erro:"", linhas:0, codigos:0 };
+const ABAS_ESTR = ["ESTRUTURA","ESTRUTURAS"];
+const estruturaURL = aba => /^\d+$/.test(aba)
+  ? `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&gid=${aba}`
+  : `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(aba)}`;
+const ALIAS_ESTR = {
+  cod:["codigo","cdigo","cod","produto","pai","codigopai"],
+  peca:["peca","pea","codpeca","codigopeca","filho"],       // norm("PEÇA") === "pea"
+  qtd:["qtd","qtde","quantidade","qtdpeca"],
+  desc:["descricao","descrio","desc","descricaopeca"]
+};
+/* decimal SEM arredondar: existe QTD 2,5 (insumo por produto). O num() global
+   lê ponto como milhar e faria 2.5 → 25; aqui vírgula é decimal. */
+function numEstr(x){ let s=String(x??"").trim(); if(!s) return 0;
+  if(s.includes(",")) s=s.replace(/\./g,"").replace(",",".");
+  return parseFloat(s)||0; }
+
+/* Peça de MÁQUINA vs insumo: quem decide é o token MDP|MDF junto das medidas.
+   Caixa, isomanta e ferragem também têm medidas na descrição — mas não têm
+   material de chapa, e não são trabalho de corte nem de furadeira. */
+const RE_CHAPA=/(\d+(?:[.,]\d+)?)\s*X\s*(\d+(?:[.,]\d+)?)\s*X\s*(\d+(?:[.,]\d+)?)\s+(MDP|MDF)\b/i;
+/* Primeira regex que casar vence. GAV vem ANTES de LAT de propósito: a
+   "LAT GAV 300X90X12" é peça de gaveta, não lateral do móvel. */
+const TIPOS_PECA=[
+  [/\bGAV\b/,"Gavetas"],
+  [/\bTAMPO/,"Tampos"],
+  [/\bLAT\b/,"Laterais"],
+  [/\bPRAT/,"Prateleiras"],
+  [/\bDIV/,"Divisórias"],
+  [/\bBASE\b/,"Bases"],
+  [/\bFUNDO\b/,"Fundos"],
+  [/\bPES?\b/,"Pés"],
+  [/\bTRAV/,"Travessas"],
+];
+const ORDEM_FURAR=["Tampos","Laterais","Bases","Prateleiras","Divisórias","Gavetas","Travessas","Pés","Outras"];
+function infoPeca(desc){
+  const D=String(desc||"").toUpperCase();
+  const m=D.match(RE_CHAPA);
+  if(!m) return {painel:false};
+  const c=parseFloat(m[1].replace(",",".")), l=parseFloat(m[2].replace(",","."));
+  const e=parseFloat(m[3].replace(",","."))||null, mat=m[4].toUpperCase();
+  let tipo="Outras";
+  for(const [re,t] of TIPOS_PECA){ if(re.test(D)){ tipo=t; break; } }
+  return {painel:true, tipo, mat, esp:e, area:(c||0)*(l||0),
+    dims:(c&&l)?`${m[1]}×${m[2]}`:"",
+    chapa: mat+" "+(e?String(e).replace(".",","):"—")};
+}
+function parseEstrutura(rows){
+  let h=-1, idx={};
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    const c={}; rows[i].forEach((v,j)=>{ const n=norm(v);
+      for(const k in ALIAS_ESTR){ if(ALIAS_ESTR[k].includes(n) && c[k]===undefined) c[k]=j; } });
+    if(c.cod!==undefined && c.peca!==undefined && c.qtd!==undefined){ h=i; idx=c; break; }
+  }
+  if(h<0) return null;                     // aba existe mas não é a ESTRUTURA
+  const map=new Map(), vistos=new Set();
+  for(let r=h+1;r<rows.length;r++){ const row=rows[r];
+    const cod=normCod(val(row,idx.cod));
+    if(!/^\d{6,}/.test(cod)) continue;
+    const peca=normCod(val(row,idx.peca)); if(!peca) continue;
+    const k=cod+"|"+peca;
+    if(vistos.has(k)) continue; vistos.add(k);      // linha repetida: a primeira vale
+    const qtd=numEstr(val(row,idx.qtd)); if(qtd<=0) continue;
+    const desc=val(row,idx.desc);
+    if(!map.has(cod)) map.set(cod,[]);
+    map.get(cod).push(Object.assign({peca,qtd,desc}, infoPeca(desc)));
+  }
+  return map.size?map:null;
+}
+async function carregarEstrutura(){
+  ESTRUTURA.map=new Map(); ESTRUTURA.ativa=false; ESTRUTURA.aba=""; ESTRUTURA.erro="";
+  ESTRUTURA.linhas=0; ESTRUTURA.codigos=0;
+  const cand=[...new Set([CFG.estrutura,...ABAS_ESTR].filter(Boolean))];
+  for(const aba of cand){
+    try{
+      const res=await fetch(estruturaURL(aba),{cache:"no-store"});
+      if(!res.ok) continue;
+      const txt=await res.text();
+      if(/<html/i.test(txt)) continue;
+      const m=parseEstrutura(parseCSV(txt));
+      if(!m) continue;
+      ESTRUTURA.map=m; ESTRUTURA.ativa=true; ESTRUTURA.aba=(/^\d+$/.test(aba)?"ESTRUTURA":aba);
+      ESTRUTURA.codigos=m.size; m.forEach(v=>ESTRUTURA.linhas+=v.length);
+      return;
+    }catch(e){ /* tenta a próxima candidata */ }
+  }
+  /* aba ausente é estado NORMAL (a vista de peças fica quieta) — só reclama
+     quem configurou um gid à mão e ele não respondeu */
+  if(CFG.estrutura) ESTRUTURA.erro="não li a aba da estrutura (gid configurado)";
+}
+const estruturaDe = cod => ESTRUTURA.ativa ? (ESTRUTURA.map.get(normCod(cod))||null) : null;
+function txtEstrutura(){
+  if(ESTRUTURA.ativa) return ` · estrutura <b>${ESTRUTURA.aba}</b>: ${ESTRUTURA.linhas} peças de ${ESTRUTURA.codigos} códigos`;
+  if(ESTRUTURA.erro) return ` · <span style="color:var(--amber)">${ESTRUTURA.erro}</span>`;
+  return "";
+}
+
 /* ================== CADASTRO: PONTOS E PESO POR PRODUTO ==================
    Pontos e peso são atributos do PRODUTO, não do lote: moram na aba de
    cadastro (uma linha por código, com `P B` em kg e `PONTOS` por volume) e
@@ -1828,9 +1948,9 @@ async function carregar(){
     const txt=await res.text();
     if(/<html/i.test(txt)) throw new Error("sem-acesso");
     const lotes=rowsToLotes(parseCSV(txt));
-    if(lotes.length){ LOTES=lotes; ULTIMA_OK=Date.now(); await carregarBaixa(); await carregarCadastro(); await carregarFaltas();
-      setStatus("ok",`Planilha lida — <b>${lotes.length}</b> lotes · atualizado ${new Date().toLocaleTimeString("pt-BR")}${txtBaixa()}${txtCadastro()}${txtFaltas()}`);
-    } else { LOTES=DEMO; await carregarBaixa(); await carregarCadastro(); await carregarFaltas();
+    if(lotes.length){ LOTES=lotes; ULTIMA_OK=Date.now(); await carregarBaixa(); await carregarCadastro(); await carregarFaltas(); await carregarEstrutura();
+      setStatus("ok",`Planilha lida — <b>${lotes.length}</b> lotes · atualizado ${new Date().toLocaleTimeString("pt-BR")}${txtBaixa()}${txtCadastro()}${txtFaltas()}${txtEstrutura()}`);
+    } else { LOTES=DEMO; await carregarBaixa(); await carregarCadastro(); await carregarFaltas(); await carregarEstrutura();
       setStatus("warn","Planilha vazia ou cabeçalho não reconhecido — mostrando dados de exemplo. Cole as linhas com o cabeçalho indicado.");
     }
   }catch(e){ LOTES=DEMO; aplicarCadastro();
@@ -2514,11 +2634,103 @@ function tabSomado(lista){
       <span class="tot"><b>${nBR(tot)}</b> vol.</span></div></article>`;
 }
 
+/* ---------- explosão em peças (Corte e Furadeira) ----------
+   Transforma os PRODUTOS do lote nas PEÇAS que a máquina de fato processa,
+   com a conta feita: qtd do produto × peças por unidade. O agrupamento segue
+   o que custa setup em cada posto:
+     corte → por CHAPA (material+espessura, grossa→fina) — o setup caro da
+             seccionadora é a troca de chapa; dentro, peça maior primeiro
+             (o plano de corte nasce dela);
+     furar → por TIPO na ordem de operação (tampos → laterais → …), peças
+             iguais em batelada.
+   FUNDOS ficam FORA: são terceirizados — não passam pelo corte nem pela
+   furadeira daqui. Só semiacabados produzidos em casa entram na fila. */
+function explodePecas(itens, setor){
+  const porPeca=new Map(), sem=[]; let cobertos=0;
+  (itens||[]).forEach(it=>{
+    const rows=estruturaDe(it.cod);
+    if(!rows){ sem.push({it, motivo:"produto sem estrutura cadastrada"}); return; }
+    const paineis=rows.filter(r=>r.painel && r.tipo!=="Fundos");
+    if(!paineis.length){ sem.push({it, motivo:"estrutura sem peça de chapa própria"}); return; }
+    cobertos++;
+    paineis.forEach(r=>{
+      const cur=porPeca.get(r.peca)||Object.assign({},r,{qtdTot:0, prods:new Set()});
+      cur.qtdTot += (it.qtd||0)*r.qtd;
+      cur.prods.add(it.cod||"");
+      porPeca.set(r.peca,cur);
+    });
+  });
+  const gmap=new Map();
+  porPeca.forEach(p=>{
+    const chave = setor==="corte" ? p.chapa : p.tipo;
+    if(!gmap.has(chave)) gmap.set(chave,{chave, pecas:[], tot:0});
+    const g=gmap.get(chave); g.pecas.push(p); g.tot+=p.qtdTot;
+  });
+  const grupos=[...gmap.values()];
+  if(setor==="corte")
+    grupos.sort((a,b)=>((b.pecas[0].esp||0)-(a.pecas[0].esp||0)) || a.chave.localeCompare(b.chave));
+  else
+    grupos.sort((a,b)=>ORDEM_FURAR.indexOf(a.chave)-ORDEM_FURAR.indexOf(b.chave));
+  grupos.forEach(g=>g.pecas.sort((a,b)=>(b.area-a.area)||(b.qtdTot-a.qtdTot)));
+  return {grupos, sem, totPecas:grupos.reduce((s,g)=>s+g.tot,0),
+          cobertos, total:(itens||[]).length};
+}
+
+// as linhas de peça de um lote (ou do dia somado), agrupadas na ordem
+function pecasHTML(ex){
+  const gs=ex.grupos.map((g,n)=>`<div class="tb-pgh"><b>${n+1}º ${esc(g.chave).toUpperCase()}</b>
+      <span class="s">${g.pecas.length} ${g.pecas.length===1?"peça":"peças"} · ${nBR(g.tot)} un</span></div>`+
+    g.pecas.map(p=>{
+      const em=[TAB_SETOR==="corte"?p.tipo:p.chapa,
+                [...p.prods].filter(Boolean).length>1?[...p.prods].filter(Boolean).join(" · "):""]
+               .filter(Boolean).join(" · ");
+      return `<div class="tb-pr"><span class="cd">${esc(p.peca)}</span>
+        <span class="ds">${esc(p.desc)}${em?`<span class="em">${esc(em)}</span>`:""}</span>
+        <span class="q">${nBR(p.qtdTot)}</span></div>`;
+    }).join("")).join("");
+  const semB=ex.sem.length?`<div class="tb-pgh warn"><b>⚠ Sem estrutura</b>
+      <span class="s">quantidade em PRODUTOS, não em peças</span></div>`+
+    ex.sem.map(s=>`<div class="tb-pr semcad"><span class="cd">${esc(s.it.cod||"–")}</span>
+      <span class="ds">${esc(s.it.desc||"")}<span class="em">${esc(s.motivo)}</span></span>
+      <span class="q">${nBR(s.it.qtd)}</span></div>`).join(""):"";
+  return gs+semB;
+}
+
+function tabGrupoPecas(x, ref){
+  const l=x.l, c=tabCabecalhoLote(x,ref);
+  const ex=explodePecas(l.itens, TAB_SETOR);
+  const corpo=(ex.grupos.length||ex.sem.length)?pecasHTML(ex)
+    :`<div class="tb-pr"><span class="ds" style="color:var(--mut2);font-style:italic">Lote sem produtos na planilha</span></div>`;
+  return `<article class="tb-lote${c.hoje?" hoje":""}${x.atr?" atrasado":""}${x.seq===1?" prim":""}" data-busca="${chaveBusca(l)}">
+    ${c.html}<div class="tb-prods">${corpo}</div>
+    <div class="tb-lt"><span>${nBR(ex.totPecas)} peças · ${ex.cobertos}/${ex.total} produtos c/ estrutura</span>
+      <span class="tot"><b>${nBR(l.qtd)}</b> vol.</span></div></article>`;
+}
+
+/* dia inteiro somado: a mesma peça em lotes diferentes numa linha só — o
+   número do setup. Liga no "Somar iguais", como na vista de produtos. */
+function tabPecasSomado(lista){
+  const itens=lista.flatMap(x=>x.l.itens||[]);
+  const ex=explodePecas(itens, TAB_SETOR);
+  return `<article class="tb-lote hoje">
+    <div class="tb-lh"><span class="lt">Somado</span>
+      <span class="cor">${lista.length} ${lista.length===1?"lote":"lotes"}</span>
+      <span class="qt">${nBR(ex.totPecas)}<small>peças</small></span></div>
+    <div class="tb-prods">${pecasHTML(ex)}</div>
+    <div class="tb-lt"><span>${ex.cobertos}/${ex.total} produtos c/ estrutura</span>
+      <span class="tot"><b>${nBR(ex.totPecas)}</b> peças</span></div></article>`;
+}
+
 function renderTab(dados, ref){
   const i=ETAPAS.findIndex(e=>e.key===TAB_SETOR);
   const et=i>=0?ETAPAS[i]:null;
   const lista=tabLotesDoSetor(dados,ref);
   const hojeEh = +ref===+pd(isoOf(new Date()));
+  /* a vista de peças só existe onde faz sentido (corte/furar) e com a aba
+     ESTRUTURA viva; fora disso cai para produtos SEM apagar a preferência —
+     o tablet do corte que espiar a Embalagem volta para peças sozinho */
+  const podePecas = ESTRUTURA.ativa && (TAB_SETOR==="corte"||TAB_SETOR==="furar");
+  const vista = (TAB_VISTA==="pecas" && !podePecas) ? "produtos" : TAB_VISTA;
 
   // barra de setores: quantos lotes entram hoje e quantos estão no setor
   const chips=ETAPAS.map((e,k)=>{
@@ -2539,17 +2751,23 @@ function renderTab(dados, ref){
   const nProd=lista.reduce((s,x)=>s+((x.l.itens||[]).length),0);
   const pend=TAB_SETOR==="atraso"?lista.reduce((s,x)=>s+(x.atr?x.atr.pend:0),0):0;
 
+  /* na vista de peças a explosão do dia alimenta a faixa de sequência (os
+     grupos REAIS na ordem) e o total de peças da linha de carga */
+  const exDia = (vista==="pecas") ? explodePecas(lista.flatMap(x=>x.l.itens||[]), TAB_SETOR) : null;
+
   const filtros=`<div class="tb-filtros">
     ${TAB_SETOR!=="atraso"?`<div class="gp">
       <button class="${TAB_DIA==="hoje"?"on":""}" data-dia="hoje">${hojeEh?"Hoje":fmt(ref)}</button>
       <button class="${TAB_DIA==="setor"?"on":""}" data-dia="setor">Todo o setor</button></div>`:""}
     <div class="gp">
-      <button class="${TAB_VISTA==="produtos"?"on":""}" data-vista="produtos">Produtos</button>
-      <button class="${TAB_VISTA==="lotes"?"on":""}" data-vista="lotes">Lotes</button></div>
-    ${TAB_VISTA==="produtos"?`<div class="gp">
+      ${podePecas?`<button class="${vista==="pecas"?"on":""}" data-vista="pecas">Peças</button>`:""}
+      <button class="${vista==="produtos"?"on":""}" data-vista="produtos">Produtos</button>
+      <button class="${vista==="lotes"?"on":""}" data-vista="lotes">Lotes</button></div>
+    ${(vista==="produtos"||vista==="pecas")?`<div class="gp">
       <button class="${TAB_SOMA?"on":""}" data-soma="1">Somar iguais</button></div>`:""}
     <div class="tb-carga"><b>${lista.length}</b> ${lista.length===1?"lote":"lotes"} ·
-      <b>${nBR(vol)}</b> vol · <b>${nBR(nProd)}</b> ${nProd===1?"produto":"produtos"}
+      <b>${nBR(vol)}</b> vol · ${exDia?`<b>${nBR(exDia.totPecas)}</b> peças`
+        :`<b>${nBR(nProd)}</b> ${nProd===1?"produto":"produtos"}`}
       ${pts?` · ${nBR(pts)} pts`:""}${kg?` · ${pesoTxt(kg)}`:""}
       ${pend?`<span class="fal"> · falta ${nBR(pend)} vol</span>`:""}</div>
   </div>`;
@@ -2567,7 +2785,9 @@ function renderTab(dados, ref){
       : (TAB_DIA==="hoje"
         ? `Nenhum lote entra ${hojeEh?"hoje":"em "+fmt(ref)} ${et?"na "+et.curto:"neste setor"}. Toque em <b>Todo o setor</b> para ver o que já está parado aqui.`
         : `Nenhum lote ${et?"na "+et.curto:"neste setor"} nesta data.`)}</div>`;
-  }else if(TAB_VISTA==="produtos"){
+  }else if(vista==="pecas"){
+    corpo=`<div class="tb-lista">${TAB_SOMA?tabPecasSomado(lista):lista.map(x=>tabGrupoPecas(x,ref)).join("")}</div>`;
+  }else if(vista==="produtos"){
     corpo=`<div class="tb-lista">${TAB_SOMA?tabSomado(lista):lista.map(x=>tabGrupoProdutos(x,ref)).join("")}</div>`;
   }else{
     corpo=`<div class="tb-lista">${lista.map(x=>tabCardLote(x,ref)).join("")}</div>`;
@@ -2578,9 +2798,11 @@ function renderTab(dados, ref){
     ? {fase:"Volumes pendentes", nome:'Em <span>atraso</span>', det:"passou a embalagem e não saiu"}
     : {fase:et.fase, nome:esc(et.nome), det:et.detalhe};
 
-  /* a ordem das peças dentro do trabalho, fixa no cabeçalho: o corte começa
-     pelos tampos, depois laterais — quem chega na máquina lê antes da fila */
-  const ops=SEQ_OPER[TAB_SETOR]||[];
+  /* a ordem das peças dentro do trabalho, fixa no cabeçalho: quem chega na
+     máquina lê antes da fila. Na vista de peças a faixa mostra os grupos
+     REAIS da tela (as chapas/tipos do dia, já na ordem); nas demais vistas
+     vale o texto de regra do SEQ_OPER. */
+  const ops = exDia ? exDia.grupos.map(g=>g.chave) : (SEQ_OPER[TAB_SETOR]||[]);
   const seqop=ops.length?`<div class="tb-seqop"><span class="lbl">Sequência</span>${
     ops.map((o,n)=>`<span class="passo"><b>${n+1}</b>${esc(o)}</span>`)
        .join(`<span class="seta">→</span>`)}</div>`:"";
@@ -3102,6 +3324,7 @@ function pintaCfg(){
   document.getElementById("cfgBaixa").value=CFG.baixa||"";
   document.getElementById("cfgCad").value=CFG.cadastro||"";
   document.getElementById("cfgFaltas").value=CFG.faltas||"";
+  document.getElementById("cfgEstrutura").value=CFG.estrutura||"";
   document.getElementById("srcUrl").textContent=csvURL();
   document.getElementById("cfgAbrir").href=linkPlanilha();
 }
@@ -3153,7 +3376,8 @@ document.getElementById("cfgSalvar").onclick=()=>{
   CFG={ sheet, gid:document.getElementById("cfgGid").value.trim()||CFG_PADRAO.gid,
         baixa:document.getElementById("cfgBaixa").value.trim(),
         cadastro:document.getElementById("cfgCad").value.trim(),
-        faltas:document.getElementById("cfgFaltas").value.trim() };
+        faltas:document.getElementById("cfgFaltas").value.trim(),
+        estrutura:document.getElementById("cfgEstrutura").value.trim() };
   try{ localStorage.setItem(CFG_KEY,JSON.stringify(CFG)); }catch(e){}
   pintaCfg(); toast("Configuração salva — recarregando a planilha"); carregar();
 };
