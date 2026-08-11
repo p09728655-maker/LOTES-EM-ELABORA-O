@@ -582,6 +582,21 @@
     color:#12140f; border:none; border-radius:10px; font-family:"Oswald"; font-weight:600;
     font-size:16px; letter-spacing:.04em; cursor:pointer}
 
+  /* Tela média (o tablet real da fábrica): o cabeçalho não cabe inteiro numa
+     linha — relógio, data, total e botões espremiam o título numa coluna de
+     uma palavra por linha. Sai o que a tela já dá (o relógio: a barra do
+     Android mostra a hora) e o resto encolhe; a soma por lote do total é a
+     primeira a sair, o TOTAL fica. */
+  @media(max-width:1100px){
+    .tb-tit .det{display:none}
+    .tb-tit .nm{font-size:20px}
+    .tb-relogio{display:none}
+    .tb-tot b{font-size:23px}
+    .tb-tot small .soma{display:none}
+    .tb-dia b{font-size:17px}
+    .tb-nav button{min-width:46px; font-size:14px}
+  }
+
   /* tablet em pé (ou tela pequena): uma coluna e cabeçalho em duas linhas */
   @media(max-width:780px){
     .tb-top{flex-wrap:wrap; gap:8px 10px}
@@ -2836,7 +2851,7 @@ function renderTab(dados, ref){
         <div class="tb-dia"><b>${fmt(ref)}</b><small>${diaSemana(ref)}</small></div>
         ${exDia?`<div class="tb-tot"><b>${nBR(exDia.totPecas)}</b>
           <small>peças ${TAB_DIA==="hoje"&&TAB_SETOR!=="atraso"?"hoje":"no setor"}${
-            (pecasLote.length>1&&pecasLote.length<=4)?` · ${pecasLote.map(nBR).join(" + ")}`:""}</small></div>`:""}
+            (pecasLote.length>1&&pecasLote.length<=4)?`<span class="soma"> · ${pecasLote.map(nBR).join(" + ")}</span>`:""}</small></div>`:""}
         <div class="tb-nav">
           <button data-nav="-1">◀</button>
           <button data-nav="0">Hoje</button>
