@@ -8,7 +8,7 @@
    versao proprio: ele pergunta o desta linha por postMessage e mostra o que
    vier. Dois lugares para bumpar viram um lugar desatualizado. Subir esta
    linha a cada deploy e o que dispara o aviso de atualizacao na tela. */
-const VERSAO = 'v15';   // subiu ao consertar a tela preta do modo tablet (rodape com Date.now)
+const VERSAO = 'v16';   // subiu ao entrar o botao Instalar app (PWA por gesto do navegador)
 const CACHE = 'esteira-' + VERSAO;
 const SHELL = [
   './', './index.html', './falta.html', './estrutura.html',

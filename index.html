@@ -513,6 +513,18 @@
   .tb-foot .velho{color:var(--red); font-weight:600}
   .tb-foot a{color:var(--steel); text-decoration:none; margin-left:auto}
 
+  /* Botão flutuante de instalar o app (PWA). Só existe quando o navegador
+     oferece a instalação (beforeinstallprompt): app já instalado ou navegador
+     sem suporte não mostram botão que não funciona. Visível também no modo
+     tablet — é o caminho de pôr o app na tela inicial de cada aparelho. */
+  .instapp{position:fixed; right:18px; bottom:18px; z-index:98; display:flex; align-items:center; gap:8px;
+    background:var(--amber); color:#12140f; border:none; border-radius:12px;
+    padding:14px 20px; font-family:"Oswald"; font-weight:600; font-size:16px; letter-spacing:.04em;
+    cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.55); -webkit-tap-highlight-color:transparent}
+  .instapp[hidden]{display:none}
+  body.tab .instapp{padding:16px 24px; font-size:18px; bottom:calc(18px + env(safe-area-inset-bottom))}
+  body.tv .instapp{display:none}   /* na TV não há quem toque */
+
   /* tablet em pé (ou tela pequena): uma coluna e cabeçalho em duas linhas */
   @media(max-width:780px){
     .tb-top{flex-wrap:wrap; gap:8px 10px}
@@ -1077,6 +1089,10 @@
 <!-- Fora dos painéis de propósito: o modo TV substitui a tela toda, e a regra
      de impressão é `body > #printview` — dentro de uma aba escondida a folha
      sairia em branco. -->
+<!-- Instalar o app: filho direto de body (a impressão o esconde junto com o
+     resto) e fora dos painéis, para aparecer também no modo tablet. -->
+<button class="instapp" id="instApp" hidden>📲 Instalar app</button>
+
 <div id="tv"></div>
 <!-- Modo tablet: mesma regra do modo TV — substitui a tela inteira, então
      mora fora dos painéis. -->
@@ -3104,6 +3120,31 @@ setInterval(carregar, 5*60*1000); // recarrega a cada 5 min
 setInterval(pintaFrescor, 30000); // e conta quanto tempo faz que a última deu certo
 if(TVKEY){ setInterval(tvClock, 30000); setInterval(tvRotate, 14000); } // relógio + rotação de páginas
 if(TABLET) setInterval(tabClock, 30000);   // relógio do tablet
+
+/* ---------- instalação do app (PWA) ----------
+   O Android só instala pelo gesto do usuário: o navegador dispara o convite
+   (beforeinstallprompt), este código o guarda e o botão o aciona no toque.
+   É o caminho dos tablets de setor: abrir o endereço uma vez, tocar em
+   Instalar — o setor já fica gravado e o ícone nasce na tela inicial.
+   Onde não dá para instalar (app já instalado, navegador sem suporte, iPad —
+   que instala pelo menu compartilhar do Safari), o convite nunca chega e o
+   botão simplesmente não aparece. */
+let INSTALAR=null;
+const bInst=document.getElementById("instApp");
+window.addEventListener("beforeinstallprompt", e=>{
+  e.preventDefault(); INSTALAR=e; bInst.hidden=false;
+});
+bInst.onclick=async ()=>{
+  if(!INSTALAR) return;
+  const ev=INSTALAR; INSTALAR=null;   // o convite só vale um prompt()
+  bInst.hidden=true;                   // recusou? o navegador manda outro convite depois
+  ev.prompt();
+  await ev.userChoice.catch(()=>null);
+};
+window.addEventListener("appinstalled", ()=>{
+  bInst.hidden=true; INSTALAR=null;
+  toast("App instalado — abra pelo ícone da tela inicial");
+});
 
 /* ---------- PWA: service worker e aviso de versão nova ----------
    O painel fica aberto dias seguidos num monitor da fábrica: ninguém fecha,
