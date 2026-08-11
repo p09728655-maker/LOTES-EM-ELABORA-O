@@ -150,6 +150,14 @@ do carrinho. O cabeçalho do grupo traz o número do lote, a OP, a cor do GPS e 
 - Versão nova **recarrega sozinha**, como na TV: versão de painel não é decisão de operador, e
   o estado todo mora no localStorage — nada se perde.
 
+### Instalar nos tablets
+Um botão flutuante **📲 Instalar app** aparece (no painel e no modo tablet) sempre que o
+navegador oferece a instalação — é o `beforeinstallprompt` do Chrome/Android guardado e
+disparado no toque. O fluxo por aparelho é: abrir o endereço do setor uma vez, tocar em
+Instalar, e o ícone nasce na tela inicial já com o setor gravado. Onde não dá para instalar
+(app já instalado, navegador sem suporte, iPad — que instala pelo menu compartilhar do
+Safari), o convite nunca chega e o botão não aparece — botão que não funciona não existe.
+
 ## Baixa: volumes embalados
 A baixa real não está na planilha, está no ERP: relatório **Transação 3 – REPORTE, Tipo L –
 VOLUMES**, que lista por dia o código do volume (`501.*`) e a quantidade reportada.
