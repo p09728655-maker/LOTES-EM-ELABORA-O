@@ -741,6 +741,98 @@
     padding-left:30px; white-space:nowrap}
   .tab-lista tr.det .n{color:var(--mut)}
 
+  /* ---------- aba KPI ----------
+     As demais abas respondem "o que fazer agora"; esta responde "como está a
+     fila" — é a tela da reunião e do gestor que não vai abrir lote por lote.
+     Por isso ela é toda de números grandes lidos de longe, sem rolagem até o
+     Top 10: o que não couber na primeira dobra não entra na conversa.
+     Prefixo .kb (kpi board) porque .kpi já é a caixinha do cabeçalho. */
+  .kb{display:flex; flex-direction:column; gap:11px}
+  .kb-grid{display:grid; gap:9px}
+  .kb-alto{grid-template-columns:2.4fr 1fr 1fr 1fr}
+  .kb-tot{grid-template-columns:repeat(6,1fr)}
+  .kb-c{background:var(--panel); border:1px solid var(--line); border-radius:11px;
+    padding:9px 12px 10px; min-width:0}
+  .kb-c .lbl{font-family:"IBM Plex Mono"; font-size:9.5px; letter-spacing:.15em;
+    text-transform:uppercase; color:var(--mut); white-space:nowrap; overflow:hidden;
+    text-overflow:ellipsis}
+  .kb-c b{font-family:"Oswald"; font-weight:600; font-size:30px; line-height:1.05;
+    display:block; margin-top:3px}
+  .kb-c small{display:block; font-size:10.5px; color:var(--mut2); margin-top:3px; line-height:1.35}
+  /* o número que cobra ação é o maior da tela — e só ele */
+  .kb-c.big{grid-row:span 1; display:flex; flex-direction:column; justify-content:center}
+  .kb-c.big b{font-size:58px; text-align:center}
+  .kb-c.big small{text-align:center}
+  .kb-c.crit{border-color:var(--red); background:linear-gradient(180deg,rgba(255,59,48,.10),transparent 72%)}
+  .kb-c.crit b{color:var(--red)} .kb-c.crit .lbl{color:var(--red)}
+  .kb-c.at{border-color:var(--amber-dim)} .kb-c.at b{color:var(--amber)}
+  .kb-c.ok{border-color:var(--green-dim); background:linear-gradient(180deg,rgba(63,209,95,.08),transparent 72%)}
+  .kb-c.ok b{color:var(--green)} .kb-c.ok .lbl{color:var(--green)}
+  .kb-c.calm b{color:var(--steel)}
+  .kb-c.mudo b{color:var(--mut)}
+  /* faixa de seção: separa as perguntas sem gastar altura com card vazio */
+  .kb-sec{font-family:"Oswald"; font-weight:500; font-size:13px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--mut); margin:4px 0 -2px;
+    display:flex; align-items:baseline; gap:9px}
+  .kb-sec span{font-family:"Inter"; font-size:11px; letter-spacing:0; text-transform:none;
+    color:var(--mut2); font-weight:400}
+  /* comparação esteira × fila: mesma linha de colunas para os dois fluxos,
+     senão ninguém compara 950.347 com 335.003 de cabeça */
+  .kb-fluxo .lin{display:grid; grid-template-columns:1.4fr repeat(5,1fr) 1.1fr; gap:8px;
+    align-items:center; padding:8px 12px; border-bottom:1px solid rgba(255,255,255,.05)}
+  .kb-fluxo .lin:last-child{border-bottom:none}
+  .kb-fluxo .lin.cab{padding:6px 12px; border-bottom:1px solid var(--line)}
+  .kb-fluxo .lin.cab span{font-family:"IBM Plex Mono"; font-size:9.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--mut2)}
+  .kb-fluxo .lin .nm{font-family:"Oswald"; font-size:14px; letter-spacing:.04em}
+  .kb-fluxo .lin b{font-family:"IBM Plex Mono"; font-size:15px; text-align:right; display:block}
+  .kb-fluxo .lin small{display:block; text-align:right; font-size:10px; color:var(--mut2)}
+  .kb-fluxo .elab .nm{color:var(--steel)} .kb-fluxo .pend .nm{color:var(--amber)}
+  /* funil: as 5 estações + a fila, na ordem do fluxo, sempre da esquerda p/ direita */
+  .kb-funil{grid-template-columns:repeat(6,1fr)}
+  .kb-funil .kb-c{padding:8px 10px}
+  .kb-funil .kb-c b{font-size:22px}
+  .kb-funil .et{font-family:"IBM Plex Mono"; font-size:9px; letter-spacing:.12em;
+    color:var(--mut2); text-transform:uppercase}
+  .kb-funil .fila{border-color:var(--amber-dim);
+    background:linear-gradient(180deg,rgba(255,90,31,.10),transparent 72%)}
+  .kb-funil .fila b{color:var(--amber)}
+  /* semáforo do Top 10: os mesmos limites dos cards de cima */
+  .kb-dias{font-family:"IBM Plex Mono"; font-size:12.5px; padding:1px 7px; border-radius:5px;
+    background:rgba(255,255,255,.05); color:var(--ink)}
+  .kb-dias.at{background:var(--amber-dim); color:#ffc9ae}
+  .kb-dias.crit{background:#5a1210; color:#ff8b83}
+  .kb-vazio{background:var(--panel); border:1px dashed var(--green-dim); border-radius:11px;
+    padding:22px; text-align:center; color:var(--green); font-family:"Oswald"; font-size:16px;
+    letter-spacing:.04em}
+  /* parâmetros: os limites do semáforo e a capacidade moram na tela, não no
+     código — quem discute o número é quem o ajusta, e sem eles a cobertura
+     em dias é chute */
+  .kb-par{display:flex; flex-wrap:wrap; align-items:flex-end; gap:14px;
+    background:var(--panel2); border:1px solid var(--line); border-radius:11px; padding:10px 13px}
+  .kb-par .gp{display:flex; flex-direction:column; gap:3px}
+  .kb-par label{font-family:"IBM Plex Mono"; font-size:9.5px; letter-spacing:.13em;
+    text-transform:uppercase; color:var(--mut2)}
+  .kb-par input{width:104px; background:#0c0d10; border:1px solid var(--line); color:var(--ink);
+    font-family:"IBM Plex Mono"; font-size:13px; padding:6px 8px; border-radius:7px}
+  .kb-par .obs{flex:1 1 240px; font-size:11px; color:var(--mut2); line-height:1.4}
+  .kb-leg{font-size:11.5px; color:var(--mut2); line-height:1.55;
+    border-top:1px solid var(--line); padding-top:9px}
+  .kb-leg b{color:var(--mut); font-weight:600}
+  @media (max-width:1080px){
+    .kb-alto{grid-template-columns:1fr 1fr} .kb-tot{grid-template-columns:repeat(3,1fr)}
+    .kb-funil{grid-template-columns:repeat(3,1fr)}
+    .kb-c.big b{font-size:44px}
+    .kb-fluxo .lin{grid-template-columns:1fr repeat(3,1fr); row-gap:4px}
+    .kb-fluxo .lin.cab{display:none}
+    .kb-fluxo .lin b::after{content:attr(data-lbl); display:block; font-family:"Inter";
+      font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--mut2)}
+  }
+  @media (max-width:720px){
+    .kb-alto{grid-template-columns:1fr} .kb-tot{grid-template-columns:1fr 1fr}
+    .kb-funil{grid-template-columns:1fr 1fr}
+  }
+
   #printview{display:none}
   @media print{
     /* a orientação mora na tag <style id="pageCSS">, trocada por montarImpresso:
@@ -913,6 +1005,22 @@
     .pv-foot{margin-top:8pt; padding-top:4pt; border-top:.6pt solid #ccc;
       font-family:"IBM Plex Mono"; font-size:6.2pt; color:#777; display:flex; gap:8pt}
     .pv-foot span:last-child{margin-left:auto}
+    /* folha do painel KPI: os cards da tela em versão papel, uma página só */
+    .pk-grid{display:flex; gap:6pt; margin-top:7pt}
+    .pk-c{flex:1; border:.8pt solid #ccc; border-radius:3pt; padding:5pt 7pt;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact}
+    .pk-c .lbl{font-size:6.2pt; letter-spacing:.12em; text-transform:uppercase; color:#666}
+    .pk-c b{font-family:"Oswald"; font-size:19pt; display:block; line-height:1.05; margin-top:1pt}
+    .pk-c small{display:block; font-size:6.5pt; color:#777; margin-top:1pt; line-height:1.3}
+    .pk-c.crit{border-color:#c1121f; background:#fdf0f0} .pk-c.crit b{color:#c1121f}
+    .pk-c.at{border-color:#b8860b; background:#fdf8ec} .pk-c.at b{color:#996f00}
+    .pk-c.ok{border-color:#2f855a; background:#f0faf3} .pk-c.ok b{color:#2f855a}
+    .pk-h{font-family:"Oswald"; font-size:9.5pt; font-weight:600; letter-spacing:.06em;
+      text-transform:uppercase; color:#333; margin:10pt 0 3pt;
+      page-break-after:avoid; break-after:avoid}
+    .pk-dias{font-family:"IBM Plex Mono"}
+    .pk-dias.crit{color:#c1121f; font-weight:700}
+    .pk-dias.at{color:#996f00; font-weight:700}
   }
   /* ===================== CELULAR ===================== */
   @media(max-width:640px){
@@ -1097,6 +1205,7 @@
 <nav class="abas" id="abas">
   <button class="aba on" data-aba="elaboracao">Lotes em elaboração <span class="cnt" id="abaElabCnt">0</span></button>
   <button class="aba" data-aba="pendentes">Volumes pendentes <span class="cnt" id="abaPendCnt">0</span></button>
+  <button class="aba" data-aba="kpi" title="Painel KPI — o retrato da fila em uma tela">📊 KPI <span class="cnt" id="abaKpiCnt">0</span></button>
   <button class="aba" data-aba="faltas">Peças em falta <span class="cnt" id="abaFaltasCnt">0</span></button>
   <button class="aba" data-aba="programados">Programados <span class="cnt" id="abaProgCnt">0</span></button>
   <button class="aba" data-aba="config">⚙ Configuração</button>
@@ -1128,6 +1237,49 @@
   </div>
 
   <div class="vazio-aba" id="pendVazio" hidden>Nenhum volume pendente nesta data — nada passou da embalagem sem sair.</div>
+</div>
+
+<!-- Painel KPI: a mesma fila da aba de pendentes, lida por CIMA. A aba ao lado
+     é a lista de cobrança, lote a lote, e responde "o que fazer agora"; esta
+     responde "como está a fila" — quantos volumes estão passando dos limites,
+     quanto peso, ponto e m³ isso representa, e quantos dias de fábrica há na
+     esteira e na fila. É a tela da reunião: números grandes, sem rolagem até o
+     Top 10, e nenhum lote para abrir. Tudo sai dos mesmos dados das outras
+     abas — nada aqui é digitado à mão, só os parâmetros do rodapé. -->
+<div class="painel" id="painel-kpi" hidden>
+  <div class="kb" id="kpiBoard"></div>
+
+  <!-- Os limites do semáforo e a capacidade da fábrica moram na tela, não no
+       código: quem discute o número é quem precisa ajustá-lo, e uma cobertura
+       em dias calculada com capacidade errada é pior que nenhuma. -->
+  <div class="kb-par">
+    <div class="gp"><label for="kpiAt">Limite de atenção (dias úteis)</label>
+      <input type="number" id="kpiAt" min="1" max="120" step="1"></div>
+    <div class="gp"><label for="kpiCr">Limite crítico (dias úteis)</label>
+      <input type="number" id="kpiCr" min="1" max="365" step="1"></div>
+    <div class="gp"><label for="kpiCap">Capacidade (pontos/dia)</label>
+      <input type="number" id="kpiCap" min="1000" step="1000"></div>
+    <button class="b" id="kpiPadrao">Restaurar padrão</button>
+    <button class="b go" id="impKpi" title="Gera a folha A4 do painel — salve como PDF pra mandar no grupo">🖨 Imprimir / PDF</button>
+    <div class="obs">Vale só neste navegador e sobrevive à recarga — como as demais
+      configurações do painel. A capacidade é o que divide os pontos para virar
+      <b>dias de carga</b>.</div>
+  </div>
+
+  <div class="kb-leg">
+    <b>🔴 Críticos</b>: volumes com mais dias úteis de atraso que o limite crítico ·
+    <b>🟡 Em atenção</b>: entre o limite de atenção e o crítico ·
+    <b>⏱ Atraso médio</b>: média dos lotes em atraso — o atraso do lote é contado em dias
+    <b>úteis</b> desde a data prevista de embalagem ·
+    <b>⚖ Atraso ponderado</b>: o mesmo atraso, com cada item pesando conforme seus pontos —
+    mostra o impacto na carga da fábrica, não no número de linhas ·
+    <b>🏭 Em elaboração</b>: o que está na esteira (as 5 estações do quadro) ·
+    <b>⏳ Pendente</b>: o que passou da embalagem e não saiu ·
+    <b>📆 Cobertura</b>: pontos ÷ capacidade — quantos dias de trabalho existem na esteira e na fila.
+    Cobertura em elaboração caindo = risco de linha ociosa; cobertura pendente subindo =
+    a fila cresce mais rápido do que a fábrica escoa ·
+    <b>🔒 Não iniciados</b>: volumes pendentes de produtos sem nenhuma baixa — ninguém encostou.
+  </div>
 </div>
 
 <!-- A mesma resposta da folha impressa, ao vivo: o que a Embalagem lançou no
@@ -1863,7 +2015,7 @@ function txtEstrutura(){
    são casados com os itens do lote pelo código, do mesmo jeito que a baixa.
    Sem essa aba o painel funciona como antes — as métricas só não aparecem. */
 const CADASTRO = { map:new Map(), ativa:false, aba:"", erro:"",
-                   itens:0, casados:0, semCad:new Set() };
+                   itens:0, casados:0, semCad:new Set(), temM3:false };
 /* Candidatas em ordem: o gid configurado, os gids conhecidos da planilha e,
    por último, os nomes usuais. Vale a primeira que tiver CODIGO + PONTOS/P B —
    assim renomear ou recriar a aba não quebra o painel. */
@@ -1875,10 +2027,14 @@ const cadastroURL = aba => /^\d+$/.test(aba)
   : `https://docs.google.com/spreadsheets/d/${CFG.sheet}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(aba)}`;
 
 /* "P B" (peso bruto, kg por volume) normaliza para "pb". Os demais nomes são
-   rede de segurança para quando a coluna for renomeada. */
+   rede de segurança para quando a coluna for renomeada.
+   O m³ é a cubagem do volume, usada só no painel KPI: "M³" normaliza para "m"
+   (norm() derruba o expoente), e por isso a lista aceita as duas grafias. Sem
+   essa coluna o painel funciona igual — os campos de m³ ficam com "–". */
 const ALIAS_CAD = { cod:["codigo","cod","cdigo","sku","produto","item"],
   peso:["pb","peso","pesobruto","pesokg","kg","pesoliquido","pl"],
-  pontos:["pontos","pts","ponto","pontuacao"] };
+  pontos:["pontos","pts","ponto","pontuacao"],
+  m3:["m3","m","cubagem","cubagemm3","cub","volumem3","metrocubico","metroscubicos"] };
 function mapHeaderCad(hrow){ const idx={};
   hrow.forEach((h,i)=>{ const n=norm(h);
     for(const k in ALIAS_CAD){ if(ALIAS_CAD[k].includes(n) && idx[k]===undefined) idx[k]=i; } });
@@ -1889,13 +2045,17 @@ function parseCadastro(rows){
   let h=-1, idx={};
   // exige código + ao menos uma das duas métricas: com só o código não há o que ler
   for(let i=0;i<Math.min(rows.length,25);i++){ const c=mapHeaderCad(rows[i]);
-    if(c.cod!==undefined && (c.pontos!==undefined || c.peso!==undefined)){ h=i; idx=c; break; } }
+    if(c.cod!==undefined && (c.pontos!==undefined || c.peso!==undefined || c.m3!==undefined)){ h=i; idx=c; break; } }
   if(h<0) return map;
   for(let r=h+1;r<rows.length;r++){ const row=rows[r];
     const cod=normCod(val(row,idx.cod)); if(!/^\d{9}/.test(cod)) continue;
     const pontos=num(val(row,idx.pontos)), peso=num(val(row,idx.peso));
-    if(!pontos && !peso) continue;
-    if(!map.has(cod)) map.set(cod,{pontos,peso});   // primeira linha do código vale
+    /* m³ vem com decimal (0,148) e num() já trata a vírgula; produto sem
+       cubagem cadastrada entra como zero e é contado em CADASTRO.temM3 —
+       total baixo por falta de cadastro não pode passar por total baixo. */
+    const m3=num(val(row,idx.m3));
+    if(!pontos && !peso && !m3) continue;
+    if(!map.has(cod)) map.set(cod,{pontos,peso,m3});   // primeira linha do código vale
   }
   return map;
 }
@@ -1905,15 +2065,18 @@ function parseCadastro(rows){
    cadastro não pode passar por número baixo de verdade. */
 function aplicarCadastro(){
   CADASTRO.itens=0; CADASTRO.casados=0; CADASTRO.semCad=new Set();
+  // m³ é opcional: a aba pode ter pontos e peso e nenhuma coluna de cubagem
+  CADASTRO.temM3=[...CADASTRO.map.values()].some(c=>c.m3>0);
   LOTES.forEach(l=>{
-    l.pontosTot=0; l.pesoTot=0;
+    l.pontosTot=0; l.pesoTot=0; l.m3Tot=0;
     (l.itens||[]).forEach(it=>{
       const c=CADASTRO.map.get(normCod(it.cod));
-      it.pontos=c?c.pontos:0; it.peso=c?c.peso:0;
+      it.pontos=c?c.pontos:0; it.peso=c?c.peso:0; it.m3=c?(c.m3||0):0;
       CADASTRO.itens++;
       if(c) CADASTRO.casados++; else if(it.cod) CADASTRO.semCad.add(normCod(it.cod));
       l.pontosTot+=it.pontos*(it.qtd||0);
       l.pesoTot  +=it.peso  *(it.qtd||0);
+      l.m3Tot    +=it.m3    *(it.qtd||0);
     });
   });
 }
@@ -2296,12 +2459,216 @@ function pintaAvisoData(ref){
     `Você está vendo ${fmt(ref)}/${ref.getFullYear()} — não é hoje (${quando})`;
 }
 
+/* ================== ABA KPI ==================
+   Nada aqui é dado novo: é a MESMA fila da aba de pendentes, lida por cima.
+   A aba de pendentes é a lista de cobrança (lote a lote, o que fazer agora);
+   esta responde as perguntas da reunião — quanto está passando dos limites,
+   quanto isso vale em ponto/peso/m³, e quantos dias de fábrica existem na
+   esteira e na fila. Duas telas porque são duas perguntas: quem cobra lote
+   rola a lista, quem decide capacidade olha os números grandes.
+
+   Três definições que valem para tudo abaixo:
+   · atraso é em dias ÚTEIS desde a data prevista de embalagem (wdBetween);
+   · o atraso do LOTE é o do lote inteiro — as linhas herdam o mesmo número,
+     como no impresso e na faixa de atraso;
+   · ponto, peso e m³ do pendente são do que FALTA (pendente × cadastro), não
+     do lote inteiro: um lote 90% embalado não pesa como um lote parado. */
+const KPI_KEY="lotesElaboracaoKpi";
+const KPI_PADRAO={ atencao:15, critico:30, capacidade:220000 };
+function lerKpiCfg(){
+  try{ return Object.assign({},KPI_PADRAO,JSON.parse(localStorage.getItem(KPI_KEY)||"{}")); }
+  catch(e){ return Object.assign({},KPI_PADRAO); }
+}
+let KPIP=lerKpiCfg();
+function salvarKpiCfg(){ try{ localStorage.setItem(KPI_KEY,JSON.stringify(KPIP)); }catch(e){} }
+
+// número com uma casa: dias de atraso e cobertura não são inteiros e arredondar
+// para cima "16,7 → 17" muda a conversa sobre o limite de 15
+const n1 = n => (n||0).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
+const m3Txt = v => v>0 ? n1(v) : "–";
+
+/* Uma linha por PRODUTO pendente, com o atraso do lote a que ele pertence.
+   É a granularidade do Top 10 e a única que permite ponderar por pontos. */
+function kpiLinhas(atras){
+  const out=[];
+  atras.forEach(a=>(a.l.itens||[]).forEach(it=>{
+    const q=pendItem(it,a.l); if(q<=0) return;
+    out.push({ l:a.l, it, dias:a.dias, q,
+      pontos:(it.pontos||0)*q, peso:(it.peso||0)*q, m3:(it.m3||0)*q,
+      // nada baixado: ninguém encostou nesse produto, é diferente de "quase pronto"
+      naoIni: q>=(it.qtd||0) });
+  }));
+  return out;
+}
+
+function kpiCalc(d){
+  const lin=kpiLinhas(d.atras);
+  const S=(f,filtro)=>lin.reduce((s,x)=>s+(filtro&&!filtro(x)?0:f(x)),0);
+  /* Os baldes do semáforo somam o pendente do LOTE, não das linhas: assim
+     crítico + atenção + no prazo fecham exatamente com os volumes pendentes
+     das outras abas. Um total que não bate com a aba ao lado é um painel em
+     que ninguém confia. */
+  const bal=(f)=>d.atras.reduce((s,a)=>s+(f(a.dias)?a.pend:0),0);
+  const pend={
+    vol:d.volAtraso, lotes:d.atras.length,
+    pontos:S(x=>x.pontos), peso:S(x=>x.peso), m3:S(x=>x.m3),
+    naoIni:S(x=>x.naoIni?x.q:0)
+  };
+  const flat=d.buckets.flat();
+  const elab={
+    vol:d.vols, lotes:d.ativos,
+    pontos:flat.reduce((s,x)=>s+(x.l.pontosTot||0),0),
+    peso:  flat.reduce((s,x)=>s+(x.l.pesoTot||0),0),
+    m3:    flat.reduce((s,x)=>s+(x.l.m3Tot||0),0)
+  };
+  const cap=Math.max(1,KPIP.capacidade||1);
+  return {
+    lin, pend, elab,
+    crit: bal(x=>x>KPIP.critico),
+    aten: bal(x=>x>=KPIP.atencao && x<=KPIP.critico),
+    maior: d.atras.reduce((m,a)=>Math.max(m,a.dias),0),
+    medio: d.atras.length ? d.atras.reduce((s,a)=>s+a.dias,0)/d.atras.length : 0,
+    // ponderado por pontos: 200 volumes de um item de 0 ponto não movem a fábrica
+    pond: pend.pontos ? S(x=>x.dias*x.pontos)/pend.pontos : 0,
+    covElab: elab.pontos/cap, covPend: pend.pontos/cap
+  };
+}
+
+// semáforo único, usado nos cards, no Top 10 e no impresso
+const kpiSem = dias => dias>KPIP.critico ? "crit" : (dias>=KPIP.atencao ? "at" : "");
+
+function renderKPI(d, ref){
+  const k=kpiCalc(d);
+  const box=document.getElementById("kpiBoard");
+  const temM3=CADASTRO.temM3;
+  const pctCrit = k.pend.vol ? (k.crit/k.pend.vol*100) : 0;
+
+  if(!d.atras.length){
+    /* Fila zerada não é motivo para esconder a tela: o resto do painel
+       (esteira, funil, cobertura) continua sendo a pergunta da reunião. */
+    box.innerHTML = `<div class="kb-vazio">✔ Nenhum volume pendente em ${fmt(ref)} — nada passou da embalagem sem sair</div>`
+      + blocoFluxo(k,temM3) + blocoFunil(d,k,ref);
+    document.getElementById("abaKpiCnt").textContent="0";
+    return;
+  }
+
+  const alto=`<div class="kb-grid kb-alto">
+    <div class="kb-c big ${k.crit?"crit":"ok"}">
+      <div class="lbl">${k.crit?"🔴":"✔"} Volumes críticos — mais de ${KPIP.critico} dias úteis em atraso</div>
+      <b>${nBR(k.crit)}</b>
+      <small>de ${nBR(k.pend.vol)} volumes pendentes · ${n1(pctCrit)}% do total ·
+        ${nBR(k.pend.lotes)} ${k.pend.lotes===1?"lote":"lotes"} em aberto</small></div>
+    <div class="kb-c ${kpiSem(k.maior)==="crit"?"crit":(kpiSem(k.maior)==="at"?"at":"calm")}">
+      <div class="lbl">⏱ Maior atraso</div><b>${nBR(k.maior)}</b>
+      <small>dias úteis (pior lote)</small></div>
+    <div class="kb-c ${k.aten?"at":"mudo"}">
+      <div class="lbl">🟡 Em atenção (${KPIP.atencao}–${KPIP.critico} dias úteis)</div><b>${nBR(k.aten)}</b>
+      <small>volumes perto do limite crítico</small></div>
+    <div class="kb-c calm">
+      <div class="lbl">⚖ Atraso médio</div><b>${n1(k.medio)}</b>
+      <small>dias úteis por lote${k.pend.pontos?` · ${n1(k.pond)} ponderado por pontos`:""}</small></div>
+  </div>`;
+
+  const tot=`<div class="kb-grid kb-tot">
+    <div class="kb-c"><div class="lbl">📦 Volumes pendentes</div><b>${nBR(k.pend.vol)}</b></div>
+    <div class="kb-c"><div class="lbl">🗂 Lotes em aberto</div><b>${nBR(k.pend.lotes)}</b></div>
+    <div class="kb-c"><div class="lbl">⚖ Peso pendente</div><b>${k.pend.peso?nBR(Math.round(k.pend.peso)):"–"}</b><small>kg</small></div>
+    <div class="kb-c"><div class="lbl">📐 Total m³</div><b>${m3Txt(k.pend.m3)}</b>
+      <small>${temM3?"cubagem do pendente":"sem coluna M³ no cadastro"}</small></div>
+    <div class="kb-c"><div class="lbl">🏆 Pontos</div><b>${k.pend.pontos?nBR(Math.round(k.pend.pontos)):"–"}</b></div>
+    <div class="kb-c"><div class="lbl">🔒 Não iniciados</div><b>${nBR(k.pend.naoIni)}</b>
+      <small>volumes sem nenhuma baixa</small></div>
+  </div>`;
+
+  /* Top 10 por linha de produto, não por lote: o lote diz onde cobrar, a linha
+     diz o que está travado. Ordena por atraso e, no empate, pelos pontos — o
+     desempate é o impacto na fábrica, que é o que decide quem passa na frente. */
+  const top=[...k.lin].sort((a,b)=>b.dias-a.dias || b.pontos-a.pontos || b.q-a.q).slice(0,10);
+  const tabela=`<div class="kb-sec">🔎 Top 10 linhas mais atrasadas
+      <span>o lote diz onde cobrar; a linha, o que está travado</span></div>
+    <table class="tab-lista">
+      <thead><tr><th style="width:26px">#</th><th>Lote</th><th>Interno</th><th>Código</th>
+        <th style="text-align:right">Dias</th><th style="text-align:right">Pendente</th>
+        <th style="text-align:right">Pontos</th><th>Descrição / cor</th></tr></thead>
+      <tbody>${top.map((x,i)=>`<tr data-busca="${chaveBusca(x.l)}">
+        <td class="n" style="color:var(--mut2)">${i+1}</td>
+        <td class="lt">${esc(x.l.lote)}</td>
+        <td class="int">${esc(x.l.interno||"–")}</td>
+        <td class="dt">${esc(x.it.cod||"–")}</td>
+        <td class="n"><span class="kb-dias ${kpiSem(x.dias)}">${nBR(x.dias)}</span></td>
+        <td class="n">${nBR(x.q)}</td>
+        <td class="n">${x.pontos?nBR(Math.round(x.pontos)):"–"}</td>
+        <td>${esc(x.it.desc||"")}${x.l.cor?` <span class="cor" style="${corGPS(x.l.cor)}">${esc(x.l.cor)}</span>`:""}</td>
+      </tr>`).join("")}</tbody>
+      ${k.lin.length>10?`<tfoot><tr><td colspan="8">mais ${nBR(k.lin.length-10)} ${k.lin.length-10===1?"linha pendente":"linhas pendentes"} na aba <b>Volumes pendentes</b></td></tr></tfoot>`:""}
+    </table>`;
+
+  box.innerHTML = alto + tot + blocoFluxo(k,temM3) + blocoFunil(d,k,ref) + tabela;
+  // o contador da aba é o número que cobra ação: volume crítico
+  const cnt=document.getElementById("abaKpiCnt");
+  cnt.textContent=nBR(k.crit);
+  cnt.title=`${nBR(k.crit)} volumes com mais de ${KPIP.critico} dias úteis de atraso`;
+}
+
+/* Esteira × fila lado a lado, mesma régua. Separadas, cada número parece bom:
+   950 mil pontos em elaboração é muito ou pouco? Ao lado da fila e divididos
+   pela capacidade, viram dias — e dia é a unidade em que se decide hora extra. */
+function blocoFluxo(k,temM3){
+  const lin=(cls,nome,o,cob)=>`<div class="lin ${cls}">
+    <span class="nm">${nome}</span>
+    <b data-lbl="volumes">${nBR(o.vol)}</b>
+    <b data-lbl="m³">${m3Txt(o.m3)}</b>
+    <b data-lbl="peso">${o.peso?nBR(Math.round(o.peso)):"–"}</b>
+    <b data-lbl="pontos">${o.pontos?nBR(Math.round(o.pontos)):"–"}</b>
+    <b data-lbl="lotes">${nBR(o.lotes)}</b>
+    <b data-lbl="cobertura">${o.pontos?n1(cob)+" d":"–"}</b></div>`;
+  return `<div class="kb-sec">🏭 Em elaboração (na fábrica) × ⏳ Pendente (aguardando)
+      <span>cobertura = pontos ÷ ${nBR(KPIP.capacidade)} pontos/dia</span></div>
+    <div class="kb-c kb-fluxo" style="padding:0">
+      <div class="lin cab"><span>Fluxo</span><span style="text-align:right">Volumes</span>
+        <span style="text-align:right">M³${temM3?"":" *"}</span><span style="text-align:right">Peso (kg)</span>
+        <span style="text-align:right">Pontos</span><span style="text-align:right">Lotes</span>
+        <span style="text-align:right">Cobertura</span></div>
+      ${lin("elab","🏭 Em elaboração",k.elab,k.covElab)}
+      ${lin("pend","⏳ Pendente",k.pend,k.covPend)}
+    </div>`;
+}
+
+/* O funil é o quadro de estações comprimido numa linha: onde está cada lote,
+   fluxo → direita, terminando na fila. Quem olha o painel de cima quer ver se
+   a esteira está cheia na frente e vazia atrás — ou o contrário. */
+function blocoFunil(d,k,ref){
+  const cel=(et,i)=>{
+    const b=d.buckets[i];
+    const vol=b.reduce((s,x)=>s+(x.l.qtd||0),0);
+    const nomes=[...new Set(b.map(x=>x.l.interno||x.l.lote).filter(Boolean))];
+    const rot = !b.length ? "livre"
+      : (nomes.length<=2 ? nomes.join(" · ") : `${nomes.length} lotes`);
+    // a data que interessa na estação é quando aquilo embala
+    const embs=b.map(x=>pd(x.l.emb)).filter(Boolean).sort((a,b)=>a-b);
+    const quando=embs.length?`emb. ${fmt(embs[0])}${+embs[0]!==+embs[embs.length-1]?"–"+fmt(embs[embs.length-1]):""}`:"";
+    return `<div class="kb-c${b.length?"":" mudo"}">
+      <div class="et">${i+1}⃣ ${esc(et.curto)}</div>
+      <b>${esc(rot)}</b>
+      <small>${b.length?`${nBR(vol)} vol.${quando?" · "+quando:""}`:"sem lote nesta etapa"}</small></div>`;
+  };
+  return `<div class="kb-sec">⚙ Funil de produção — onde está cada lote
+      <span>fluxo → direita · ref. ${fmt(ref)}</span></div>
+    <div class="kb-grid kb-funil">
+      ${ETAPAS.map(cel).join("")}
+      <div class="kb-c fila"><div class="et">→ Fila (pendente)</div>
+        <b>${nBR(k.pend.vol)}</b>
+        <small>${nBR(k.pend.lotes)} ${k.pend.lotes===1?"lote":"lotes"} na fila${k.pend.pontos?` · ${n1(k.covPend)} d de carga`:""}</small></div>
+    </div>`;
+}
+
 function render(){
   if(TVKEY) document.getElementById("ref").value=isoOf(new Date()); // TV: sempre o dia de hoje
   const ref=pd(document.getElementById("ref").value);
   document.getElementById("refTxt").textContent=fmt(ref)+"/"+ref.getFullYear();
+  const DADOS=computeBuckets(ref);
   const {buckets,wait,done,atras,sbaixa,ativos,vols,volAtraso,
-         volsEt,pendEt,pontosEt,pesoEt,loteEmbHoje,volEmbHoje,faltaHoje}=computeBuckets(ref);
+         volsEt,pendEt,pontosEt,pesoEt,loteEmbHoje,volEmbHoje,faltaHoje}=DADOS;
   const pontosTot = pontosEt.reduce((s,p)=>s+p,0);
   const pesoTot = pesoEt.reduce((s,p)=>s+p,0);
   document.getElementById("kLotes").textContent=ativos;
@@ -2488,6 +2855,7 @@ function render(){
   document.getElementById("abaProgCnt").textContent  = wait.length;
   document.getElementById("pendVazio").hidden = !!(atras.length || sbaixa.length);
   renderFaltasAba(ref, atras);
+  renderKPI(DADOS, ref);
 
   // a busca é reaplicada a cada render: as linhas e cards são recriados
   aplicaBusca();
@@ -3305,6 +3673,84 @@ function buildPrintProg(ref, comItens){
     </td></tr></tbody></table>`;
 }
 
+/* ================== FOLHA DO PAINEL KPI ==================
+   A tela da aba KPI em papel, uma página deitada: cards do semáforo, esteira ×
+   fila e o Top 10. É a folha que vai para a reunião — os mesmos números da
+   tela, na mesma ordem, para ninguém apresentar um PDF diferente do painel. */
+function buildPrintKPI(ref){
+  const d=computeBuckets(ref);
+  const k=kpiCalc(d);
+  const agora=new Date();
+  const pctCrit = k.pend.vol ? (k.crit/k.pend.vol*100) : 0;
+  const top=[...k.lin].sort((a,b)=>b.dias-a.dias || b.pontos-a.pontos || b.q-a.q).slice(0,10);
+  const num0=v=>v?nBR(Math.round(v)):"–";
+
+  const linFluxo=(nome,o,cob)=>`<tr><td style="font-family:Oswald;font-size:10pt">${nome}</td>
+    <td class="n">${nBR(o.vol)}</td><td class="n">${m3Txt(o.m3)}</td>
+    <td class="n">${num0(o.peso)}</td><td class="n">${num0(o.pontos)}</td>
+    <td class="n">${nBR(o.lotes)}</td><td class="n">${o.pontos?n1(cob)+" d":"–"}</td></tr>`;
+
+  document.getElementById("printview").innerHTML=`
+    <table class="pv-page">
+    <tfoot><tr><td><div class="pv-foot">
+      <span>PPCP Patrimar · Painel KPI — Volumes Pendentes · ref. ${fmt(ref)}/${ref.getFullYear()}</span>
+      <span>Atraso em dias úteis desde a embalagem · limites ${KPIP.atencao}/${KPIP.critico} · capacidade ${nBR(KPIP.capacidade)} pontos/dia</span>
+      <span>Emitido ${agora.toLocaleDateString("pt-BR")} ${agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span>
+    </div></td></tr></tfoot>
+    <tbody><tr><td>
+      <div class="pv-head">
+        <img src="logo-patrimar.png" alt="Patrimar Móveis">
+        <div class="pv-title">
+          <div class="pv-lb">PPCP — Planejamento e Controle da Produção</div>
+          <h1>Painel KPI — Volumes Pendentes</h1>
+          <div class="pv-sub">Retrato da fila · ${dataExt(ref)}</div></div>
+        <div class="pv-kpis">
+          <div${k.crit?` class="atr"`:""}><b>${nBR(k.crit)}</b><small>críticos &gt;${KPIP.critico}d</small></div>
+          <div><b>${nBR(k.aten)}</b><small>atenção ${KPIP.atencao}–${KPIP.critico}d</small></div>
+          <div><b>${nBR(k.pend.vol)}</b><small>vol. pendentes</small></div>
+          <div><b>${nBR(k.pend.lotes)}</b><small>lotes em aberto</small></div>
+        </div>
+      </div>
+
+      <div class="pk-grid">
+        <div class="pk-c ${k.crit?"crit":"ok"}"><div class="lbl">${k.crit?"🔴":"✔"} Críticos — mais de ${KPIP.critico} dias úteis</div>
+          <b>${nBR(k.crit)}</b><small>de ${nBR(k.pend.vol)} volumes pendentes · ${n1(pctCrit)}% do total</small></div>
+        <div class="pk-c ${kpiSem(k.maior)}"><div class="lbl">Maior atraso</div>
+          <b>${nBR(k.maior)}</b><small>dias úteis (pior lote)</small></div>
+        <div class="pk-c ${k.aten?"at":""}"><div class="lbl">Em atenção (${KPIP.atencao}–${KPIP.critico} d.u.)</div>
+          <b>${nBR(k.aten)}</b><small>volumes perto do limite crítico</small></div>
+        <div class="pk-c"><div class="lbl">Atraso médio</div>
+          <b>${n1(k.medio)}</b><small>d.u. por lote${k.pend.pontos?` · ${n1(k.pond)} ponderado por pontos`:""}</small></div>
+        <div class="pk-c"><div class="lbl">Não iniciados</div>
+          <b>${nBR(k.pend.naoIni)}</b><small>volumes sem nenhuma baixa</small></div>
+      </div>
+
+      <div class="pk-h">Em elaboração (na fábrica) × Pendente (aguardando) — cobertura = pontos ÷ ${nBR(KPIP.capacidade)} pontos/dia</div>
+      <table class="pv-tab">
+        <thead><tr><th>Fluxo</th><th style="text-align:right">Volumes</th>
+          <th style="text-align:right">M³</th><th style="text-align:right">Peso (kg)</th>
+          <th style="text-align:right">Pontos</th><th style="text-align:right">Lotes</th>
+          <th style="text-align:right">Cobertura</th></tr></thead>
+        <tbody>${linFluxo("Em elaboração",k.elab,k.covElab)}${linFluxo("Pendente",k.pend,k.covPend)}</tbody>
+      </table>
+
+      ${top.length?`<div class="pk-h">Top 10 linhas mais atrasadas</div>
+      <table class="pv-tab">
+        <thead><tr><th>#</th><th>Lote</th><th>Interno</th><th>Código</th>
+          <th style="text-align:right">Dias</th><th style="text-align:right">Pendente</th>
+          <th style="text-align:right">Pontos</th><th>Descrição / cor</th></tr></thead>
+        <tbody>${top.map((x,i)=>`<tr>
+          <td class="n">${i+1}</td><td class="lt" style="font-size:9pt">${esc(x.l.lote)}</td>
+          <td>${esc(x.l.interno||"–")}</td>
+          <td style="font-family:'IBM Plex Mono';font-size:7.5pt">${esc(x.it.cod||"–")}</td>
+          <td class="n"><span class="pk-dias ${kpiSem(x.dias)}">${nBR(x.dias)}</span></td>
+          <td class="n">${nBR(x.q)}</td><td class="n">${num0(x.pontos)}</td>
+          <td>${esc(x.it.desc||"")}${x.l.cor?` · ${esc(x.l.cor)}`:""}</td></tr>`).join("")}</tbody>
+        ${k.lin.length>10?`<tfoot><tr><td colspan="8" style="color:#777">mais ${nBR(k.lin.length-10)} linhas pendentes no painel</td></tr></tfoot>`:""}
+      </table>`:`<div class="pf-nada" style="margin-top:10pt">Nenhum volume pendente nesta data.</div>`}
+    </td></tr></tbody></table>`;
+}
+
 /* ================== SAÍDA GERENCIAL: TEXTO DO WHATSAPP ==================
    Resumo curto, na formatação do WhatsApp (*negrito*), pra colar no grupo. */
 function textoWhats(ref, comItens){
@@ -3396,13 +3842,15 @@ let IMPRESSO="gerencial";
 /* Gerencial deitado: são 8 colunas de tabela, e em pé Feito fica espremido
    enquanto sobra vão entre Embalagem e Atraso. A folha de faltas continua em
    pé — é uma lista para a parede, e lista se lê de cima para baixo. */
-const ORIENTACAO={gerencial:"landscape", faltas:"portrait", programados:"landscape"};
+const ORIENTACAO={gerencial:"landscape", faltas:"portrait", programados:"landscape",
+                  kpi:"landscape"};
 function montarImpresso(){
   document.getElementById("pageCSS").textContent =
     `@page{size:A4 ${ORIENTACAO[IMPRESSO]||"portrait"}; margin:9mm 10mm}`;
   const ref=pd(refInput.value), its=document.getElementById("pItens").checked;
   if(IMPRESSO==="faltas") buildPrintFaltas(ref);
   else if(IMPRESSO==="programados") buildPrintProg(ref, its);
+  else if(IMPRESSO==="kpi") buildPrintKPI(ref);
   else buildPrint(ref, its);
 }
 /* ---------- configurações ---------- */
@@ -3425,18 +3873,44 @@ document.getElementById("painel-config").appendChild(cfgBox);
 cfgBox.hidden=false;
 
 const ABA_KEY="lotesElaboracaoAba";
-const ABAS=["elaboracao","pendentes","faltas","programados","config"];
+const ABAS=["elaboracao","pendentes","kpi","faltas","programados","config"];
 function irPara(nome){
   if(!ABAS.includes(nome)) nome="elaboracao";
   document.querySelectorAll(".aba").forEach(b=>b.classList.toggle("on", b.dataset.aba===nome));
   ABAS.forEach(n=>document.getElementById("painel-"+n).hidden = n!==nome);
   if(nome==="config") pintaCfg();
+  if(nome==="kpi") pintaKpiPar();
   try{ localStorage.setItem(ABA_KEY,nome); }catch(e){}
   window.scrollTo({top:0,behavior:"instant"});
 }
 document.getElementById("abas").addEventListener("click",e=>{
   const b=e.target.closest(".aba"); if(b) irPara(b.dataset.aba);
 });
+
+/* ---------- parâmetros do painel KPI ----------
+   Mudou o limite, a tela repinta na hora: quem está discutindo se o corte é
+   15 ou 20 dias precisa ver o efeito enquanto discute, não depois de salvar. */
+function pintaKpiPar(){
+  document.getElementById("kpiAt").value=KPIP.atencao;
+  document.getElementById("kpiCr").value=KPIP.critico;
+  document.getElementById("kpiCap").value=KPIP.capacidade;
+}
+function mudouKpiPar(){
+  const at=parseInt(document.getElementById("kpiAt").value,10);
+  const cr=parseInt(document.getElementById("kpiCr").value,10);
+  const cap=parseInt(document.getElementById("kpiCap").value,10);
+  if(at>0) KPIP.atencao=at;
+  // crítico abaixo do atenção deixaria a faixa amarela vazia e o semáforo mudo
+  if(cr>0) KPIP.critico=Math.max(cr,KPIP.atencao);
+  if(cap>0) KPIP.capacidade=cap;
+  salvarKpiCfg(); render();
+}
+["kpiAt","kpiCr","kpiCap"].forEach(id=>
+  document.getElementById(id).addEventListener("change",mudouKpiPar));
+document.getElementById("kpiPadrao").onclick=()=>{
+  KPIP=Object.assign({},KPI_PADRAO); salvarKpiCfg(); pintaKpiPar(); render(); };
+document.getElementById("impKpi").onclick=()=>{
+  IMPRESSO="kpi"; montarImpresso(); setTimeout(()=>window.print(),60); };
 
 /* ---------- eventos da busca ---------- */
 const inpBusca=document.getElementById("busca");
@@ -3455,8 +3929,15 @@ document.addEventListener("keydown",e=>{
     e.preventDefault(); inpBusca.focus(); inpBusca.select();
   }
 });
-// a aba escolhida sobrevive à recarga: a tela fica aberta o dia todo
-try{ const a=localStorage.getItem(ABA_KEY); if(a && a!=="elaboracao") irPara(a); }catch(e){}
+/* A aba escolhida sobrevive à recarga: a tela fica aberta o dia todo.
+   `?aba=kpi` (ou qualquer outra) tem precedência e serve para o atalho de tela
+   inicial e para o link que se manda no grupo — quem recebe abre direto no
+   painel, sem instruir "clique na terceira aba". */
+try{
+  const q=new URLSearchParams(location.search).get("aba");
+  const a=q || localStorage.getItem(ABA_KEY);
+  if(a && ABAS.includes(a) && a!=="elaboracao") irPara(a);
+}catch(e){}
 
 document.getElementById("cfgFechar").onclick=()=>irPara("elaboracao");
 document.getElementById("cfgSalvar").onclick=()=>{

@@ -26,7 +26,7 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
 - **KPIs**: lotes ativos, volumes em elaboração, **volumes p/ embalar hoje** e volumes em atraso.
   O de atraso é o único que cobra ação, então vira caixa destacada — vermelha quando há
   pendência, verde quando está zerado.
-- **Cinco abas**, não uma rolagem só. São perguntas diferentes e uma competia com a outra pela
+- **Seis abas**, não uma rolagem só. São perguntas diferentes e uma competia com a outra pela
   primeira dobra: o quadro de etapas responde *onde cada lote está*, a faixa de atraso responde
   *o que ficou para trás*, e empilhadas o atraso empurrava o quadro para fora da tela.
 
@@ -34,6 +34,7 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   |---|---|---|
   | **Lotes em elaboração** | quadro das 5 estações | lotes ativos |
   | **Volumes pendentes** | Em atraso · Sem baixa | **volumes** em atraso |
+  | **📊 KPI** | painel de indicadores da fila: semáforo, esteira × fila, funil, Top 10 | volumes **críticos** |
   | **Peças em falta** | o que a Embalagem lançou, por lote interno · atrasados sem lançamento | **peças** a buscar |
   | **Programados** | tabela do que ainda não entrou no corte, quem entra antes primeiro | lotes |
   | **⚙ Configuração** | planilha e gids | — |
@@ -49,7 +50,42 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
 
   Em elaboração conta **lote** (é o que se acompanha no quadro); em pendentes conta **volume**,
   que é a unidade da cobrança — `29 lotes` e `2.293 volumes` levam a prioridades diferentes. A aba
-  escolhida fica salva: a tela fica ligada o dia todo.
+  escolhida fica salva: a tela fica ligada o dia todo. `?aba=kpi` (ou qualquer outra) no endereço
+  tem precedência e serve para o link que se manda no grupo — quem recebe abre direto no painel.
+- **📊 KPI — Painel de Volumes Pendentes.** Nada aqui é dado novo: é a **mesma fila** da aba de
+  pendentes, lida por cima. A aba ao lado é a lista de cobrança (lote a lote, *o que fazer
+  agora*); esta responde as perguntas da reunião — *como está a fila* — em números grandes, sem
+  abrir lote nenhum:
+
+  - **Semáforo**: volumes **críticos** (mais dias úteis de atraso que o limite crítico, o maior
+    número da tela), **em atenção** (entre os dois limites), **maior atraso** e **atraso médio**
+    por lote — com a versão **ponderada por pontos** ao lado, porque 200 volumes de um item de
+    0 ponto não movem a fábrica. Atraso é sempre em dias **úteis** desde a data prevista de
+    embalagem, a mesma conta da faixa de atraso.
+  - **Totais do pendente**: volumes, lotes, peso, **m³**, pontos e **não iniciados** (linhas sem
+    nenhuma baixa — ninguém encostou; é diferente de "quase pronto"). Ponto, peso e m³ são do que
+    **falta** (pendente × cadastro), não do lote inteiro: lote 90% embalado não pesa como lote
+    parado. Os baldes do semáforo somam o pendente do **lote**, então crítico + atenção + no prazo
+    fecham exatamente com o contador da aba de pendentes — total que não bate com a aba ao lado é
+    painel em que ninguém confia.
+  - **Esteira × fila**: em elaboração e pendente na mesma régua (volumes, m³, peso, pontos,
+    lotes) e a **cobertura em dias** = pontos ÷ capacidade da fábrica. Separados, cada número
+    parece bom; divididos pela capacidade viram dias, que é a unidade em que se decide hora
+    extra. Cobertura em elaboração caindo = risco de linha ociosa; cobertura pendente subindo =
+    a fila cresce mais rápido do que a fábrica escoa.
+  - **Funil**: as 5 estações numa linha, fluxo → direita, terminando na fila — o quadro de
+    etapas comprimido para se ver de longe se a esteira está cheia na frente e vazia atrás.
+  - **Top 10 linhas mais atrasadas**: por linha de produto, não por lote — o lote diz onde
+    cobrar, a linha diz *o que* está travado. Ordena por atraso e desempata por pontos: o
+    desempate é o impacto na fábrica.
+  - **Parâmetros na tela**, não no código: limite de atenção (15), crítico (30) e capacidade
+    (220.000 pontos/dia) ficam em campos no rodapé da aba, salvos neste navegador. Mudou, a tela
+    repinta na hora — quem discute se o corte é 15 ou 20 dias precisa ver o efeito enquanto
+    discute. E **🖨 Imprimir / PDF** próprio: a folha A4 deitada com os mesmos números, na mesma
+    ordem, para a reunião não receber um PDF diferente do painel.
+
+  O **m³** vem de uma coluna `M3`/`M³` (ou `CUBAGEM`) na mesma aba de cadastro de pontos e peso —
+  opcional: sem ela o painel funciona igual e os campos ficam com `–`.
 - **Programados** era uma faixa no pé da aba de elaboração, abaixo da dobra, mostrando só o número
   do lote. Em aba própria cabe a tabela: interno, cor, itens, volumes, pontos, peso e o dia em que
   entra no corte, com os totais no rodapé — é com isso que se dimensiona a semana que vem. A ordem
