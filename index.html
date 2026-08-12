@@ -1269,10 +1269,12 @@
   <div class="kb-leg">
     <b>🔴 Críticos</b>: volumes com mais dias úteis de atraso que o limite crítico ·
     <b>🟡 Em atenção</b>: entre o limite de atenção e o crítico ·
-    <b>⏱ Atraso médio</b>: média dos lotes em atraso — o atraso do lote é contado em dias
-    <b>úteis</b> desde a data prevista de embalagem ·
-    <b>⚖ Atraso ponderado</b>: o mesmo atraso, com cada item pesando conforme seus pontos —
-    mostra o impacto na carga da fábrica, não no número de linhas ·
+    <b>⏱ Tempo médio de fila</b>: mede o <b>tempo</b> de fila, não o tamanho dela — há quanto
+    tempo, em média, cada lote atrasado está parado, em dias <b>úteis</b> desde a data prevista
+    de embalagem. Cada lote pesa igual, tenha 1 ou 300 volumes pendentes ·
+    <b>⚖ Ponderado por pontos</b>: o mesmo tempo, com cada item pesando conforme seus pontos —
+    acima da média simples, o atraso está concentrado nos lotes pesados; abaixo, os lotes
+    grandes são os mais recentes ·
     <b>🏭 Em elaboração</b>: o que está na esteira (as 5 estações do quadro) ·
     <b>⏳ Pendente</b>: o que passou da embalagem e não saiu ·
     <b>📆 Cobertura</b>: pontos ÷ capacidade — quantos dias de trabalho existem na esteira e na fila.
@@ -2565,8 +2567,9 @@ function renderKPI(d, ref){
       <div class="lbl">🟡 Em atenção (${KPIP.atencao}–${KPIP.critico} dias úteis)</div><b>${nBR(k.aten)}</b>
       <small>volumes perto do limite crítico</small></div>
     <div class="kb-c calm">
-      <div class="lbl">⚖ Atraso médio</div><b>${n1(k.medio)}</b>
-      <small>dias úteis por lote${k.pend.pontos?` · ${n1(k.pond)} ponderado por pontos`:""}</small></div>
+      <div class="lbl">⏱ Tempo médio de fila</div><b>${n1(k.medio)}</b>
+      <small>dias úteis parado, por lote — mede há quanto tempo a fila espera, não o tamanho
+        dela: cada lote pesa igual${k.pend.pontos?` · ${n1(k.pond)} ponderado por pontos`:""}</small></div>
   </div>`;
 
   const tot=`<div class="kb-grid kb-tot">
@@ -3720,8 +3723,8 @@ function buildPrintKPI(ref){
           <b>${nBR(k.maior)}</b><small>dias úteis (pior lote)</small></div>
         <div class="pk-c ${k.aten?"at":""}"><div class="lbl">Em atenção (${KPIP.atencao}–${KPIP.critico} d.u.)</div>
           <b>${nBR(k.aten)}</b><small>volumes perto do limite crítico</small></div>
-        <div class="pk-c"><div class="lbl">Atraso médio</div>
-          <b>${n1(k.medio)}</b><small>d.u. por lote${k.pend.pontos?` · ${n1(k.pond)} ponderado por pontos`:""}</small></div>
+        <div class="pk-c"><div class="lbl">Tempo médio de fila</div>
+          <b>${n1(k.medio)}</b><small>d.u. parado, por lote — tempo de fila, não tamanho${k.pend.pontos?` · ${n1(k.pond)} ponderado por pontos`:""}</small></div>
         <div class="pk-c"><div class="lbl">Não iniciados</div>
           <b>${nBR(k.pend.naoIni)}</b><small>volumes sem nenhuma baixa</small></div>
       </div>
