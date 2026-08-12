@@ -58,10 +58,15 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   abrir lote nenhum:
 
   - **Semáforo**: volumes **críticos** (mais dias úteis de atraso que o limite crítico, o maior
-    número da tela), **em atenção** (entre os dois limites), **maior atraso** e **atraso médio**
-    por lote — com a versão **ponderada por pontos** ao lado, porque 200 volumes de um item de
-    0 ponto não movem a fábrica. Atraso é sempre em dias **úteis** desde a data prevista de
-    embalagem, a mesma conta da faixa de atraso.
+    número da tela), **em atenção** (entre os dois limites), **maior atraso** e **tempo médio de
+    fila** — a média simples dos lotes atrasados, que mede o **tempo** de fila, não o tamanho
+    dela: cada lote pesa igual, tenha 1 ou 300 volumes pendentes. O nome diz isso na tela,
+    porque "atraso médio de 7,5 dias" com o Top 10 mostrando 15 lia-se como conta errada — o
+    Top 10 é o topo; a média inclui os 30 e tantos lotes que venceram há poucos dias. Quem
+    corrige pelo tamanho é a versão **ponderada por pontos** ao lado (200 volumes de um item de
+    0 ponto não movem a fábrica): acima da média simples, o atraso está concentrado nos lotes
+    pesados; abaixo, os lotes grandes são os mais recentes. Tudo em dias **úteis** desde a data
+    prevista de embalagem, a mesma conta da faixa de atraso.
   - **Totais do pendente**: volumes, lotes, peso, **m³**, pontos e **não iniciados** (linhas sem
     nenhuma baixa — ninguém encostou; é diferente de "quase pronto"). Ponto, peso e m³ são do que
     **falta** (pendente × cadastro), não do lote inteiro: lote 90% embalado não pesa como lote
