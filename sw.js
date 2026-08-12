@@ -8,7 +8,7 @@
    versao proprio: ele pergunta o desta linha por postMessage e mostra o que
    vier. Dois lugares para bumpar viram um lugar desatualizado. Subir esta
    linha a cada deploy e o que dispara o aviso de atualizacao na tela. */
-const VERSAO = 'v28';   // subiu com a aba KPI: o retrato da fila de pendentes em uma tela
+const VERSAO = 'v29';   // subiu com a cor do Top 10 do KPI em coluna propria, alinhada
 const CACHE = 'esteira-' + VERSAO;
 const SHELL = [
   './', './index.html', './falta.html', './estrutura.html',
