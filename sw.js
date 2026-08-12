@@ -8,7 +8,7 @@
    versao proprio: ele pergunta o desta linha por postMessage e mostra o que
    vier. Dois lugares para bumpar viram um lugar desatualizado. Subir esta
    linha a cada deploy e o que dispara o aviso de atualizacao na tela. */
-const VERSAO = 'v27';   // subiu com o cabecalho de impressao no padrao dos demais paineis de PPCP
+const VERSAO = 'v28';   // subiu com a aba KPI: o retrato da fila de pendentes em uma tela
 const CACHE = 'esteira-' + VERSAO;
 const SHELL = [
   './', './index.html', './falta.html', './estrutura.html',
