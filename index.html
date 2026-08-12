@@ -2589,7 +2589,7 @@ function renderKPI(d, ref){
     <table class="tab-lista">
       <thead><tr><th style="width:26px">#</th><th>Lote</th><th>Interno</th><th>Código</th>
         <th style="text-align:right">Dias</th><th style="text-align:right">Pendente</th>
-        <th style="text-align:right">Pontos</th><th>Descrição / cor</th></tr></thead>
+        <th style="text-align:right">Pontos</th><th>Descrição</th><th>Cor</th></tr></thead>
       <tbody>${top.map((x,i)=>`<tr data-busca="${chaveBusca(x.l)}">
         <td class="n" style="color:var(--mut2)">${i+1}</td>
         <td class="lt">${esc(x.l.lote)}</td>
@@ -2598,9 +2598,10 @@ function renderKPI(d, ref){
         <td class="n"><span class="kb-dias ${kpiSem(x.dias)}">${nBR(x.dias)}</span></td>
         <td class="n">${nBR(x.q)}</td>
         <td class="n">${x.pontos?nBR(Math.round(x.pontos)):"–"}</td>
-        <td>${esc(x.it.desc||"")}${x.l.cor?` <span class="cor" style="${corGPS(x.l.cor)}">${esc(x.l.cor)}</span>`:""}</td>
+        <td>${esc(x.it.desc||"")}</td>
+        <td>${x.l.cor?`<span class="cor" style="${corGPS(x.l.cor)}">${esc(x.l.cor)}</span>`:""}</td>
       </tr>`).join("")}</tbody>
-      ${k.lin.length>10?`<tfoot><tr><td colspan="8">mais ${nBR(k.lin.length-10)} ${k.lin.length-10===1?"linha pendente":"linhas pendentes"} na aba <b>Volumes pendentes</b></td></tr></tfoot>`:""}
+      ${k.lin.length>10?`<tfoot><tr><td colspan="9">mais ${nBR(k.lin.length-10)} ${k.lin.length-10===1?"linha pendente":"linhas pendentes"} na aba <b>Volumes pendentes</b></td></tr></tfoot>`:""}
     </table>`;
 
   box.innerHTML = alto + tot + blocoFluxo(k,temM3) + blocoFunil(d,k,ref) + tabela;
@@ -2626,7 +2627,7 @@ function blocoFluxo(k,temM3){
       <span>cobertura = pontos ÷ ${nBR(KPIP.capacidade)} pontos/dia</span></div>
     <div class="kb-c kb-fluxo" style="padding:0">
       <div class="lin cab"><span>Fluxo</span><span style="text-align:right">Volumes</span>
-        <span style="text-align:right">M³${temM3?"":" *"}</span><span style="text-align:right">Peso (kg)</span>
+        <span style="text-align:right">M³</span><span style="text-align:right">Peso (kg)</span>
         <span style="text-align:right">Pontos</span><span style="text-align:right">Lotes</span>
         <span style="text-align:right">Cobertura</span></div>
       ${lin("elab","🏭 Em elaboração",k.elab,k.covElab)}
@@ -3738,15 +3739,16 @@ function buildPrintKPI(ref){
       <table class="pv-tab">
         <thead><tr><th>#</th><th>Lote</th><th>Interno</th><th>Código</th>
           <th style="text-align:right">Dias</th><th style="text-align:right">Pendente</th>
-          <th style="text-align:right">Pontos</th><th>Descrição / cor</th></tr></thead>
+          <th style="text-align:right">Pontos</th><th>Descrição</th><th>Cor</th></tr></thead>
         <tbody>${top.map((x,i)=>`<tr>
           <td class="n">${i+1}</td><td class="lt" style="font-size:9pt">${esc(x.l.lote)}</td>
           <td>${esc(x.l.interno||"–")}</td>
           <td style="font-family:'IBM Plex Mono';font-size:7.5pt">${esc(x.it.cod||"–")}</td>
           <td class="n"><span class="pk-dias ${kpiSem(x.dias)}">${nBR(x.dias)}</span></td>
           <td class="n">${nBR(x.q)}</td><td class="n">${num0(x.pontos)}</td>
-          <td>${esc(x.it.desc||"")}${x.l.cor?` · ${esc(x.l.cor)}`:""}</td></tr>`).join("")}</tbody>
-        ${k.lin.length>10?`<tfoot><tr><td colspan="8" style="color:#777">mais ${nBR(k.lin.length-10)} linhas pendentes no painel</td></tr></tfoot>`:""}
+          <td>${esc(x.it.desc||"")}</td>
+          <td class="cel-cor">${chipCor(x.l.cor)}</td></tr>`).join("")}</tbody>
+        ${k.lin.length>10?`<tfoot><tr><td colspan="9" style="color:#777">mais ${nBR(k.lin.length-10)} linhas pendentes no painel</td></tr></tfoot>`:""}
       </table>`:`<div class="pf-nada" style="margin-top:10pt">Nenhum volume pendente nesta data.</div>`}
     </td></tr></tbody></table>`;
 }
