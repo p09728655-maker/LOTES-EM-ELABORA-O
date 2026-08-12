@@ -3900,7 +3900,7 @@ function pintaKpiPar(){
   document.getElementById("kpiCr").value=KPIP.critico;
   document.getElementById("kpiCap").value=KPIP.capacidade;
 }
-function mudouKpiPar(){
+function mudouKpiPar(fim){
   const at=parseInt(document.getElementById("kpiAt").value,10);
   const cr=parseInt(document.getElementById("kpiCr").value,10);
   const cap=parseInt(document.getElementById("kpiCap").value,10);
@@ -3909,9 +3909,20 @@ function mudouKpiPar(){
   if(cr>0) KPIP.critico=Math.max(cr,KPIP.atencao);
   if(cap>0) KPIP.capacidade=cap;
   salvarKpiCfg(); render();
+  /* No fim da edição (blur/Enter), o campo volta a mostrar o valor que VALEU:
+     crítico digitado abaixo do atenção sobe para ele por dentro, e um campo
+     mostrando 10 enquanto o painel usa 15 é um painel que parece travado. */
+  if(fim) pintaKpiPar();
 }
-["kpiAt","kpiCr","kpiCap"].forEach(id=>
-  document.getElementById(id).addEventListener("change",mudouKpiPar));
+/* "input", não só "change": o repinte tem de acompanhar a digitação. Só no
+   change, quem digita o limite e fica olhando a tela não vê nada acontecer
+   até clicar fora — e conclui que o campo não funciona. Valor pela metade
+   ("2" a caminho de "20") repinta e se corrige na tecla seguinte; NaN e
+   campo vazio não passam das guardas acima. */
+["kpiAt","kpiCr","kpiCap"].forEach(id=>{ const el=document.getElementById(id);
+  el.addEventListener("input",()=>mudouKpiPar(false));
+  el.addEventListener("change",()=>mudouKpiPar(true));
+});
 document.getElementById("kpiPadrao").onclick=()=>{
   KPIP=Object.assign({},KPI_PADRAO); salvarKpiCfg(); pintaKpiPar(); render(); };
 document.getElementById("impKpi").onclick=()=>{
