@@ -168,9 +168,16 @@ do carrinho. O cabeçalho do grupo traz o número do lote, a OP, a cor do GPS e 
 - O parâmetro **fica gravado no aparelho** (localStorage): abre-se o endereço uma vez, prende-se
   o tablet na máquina e ele volta sozinho ao seu setor a cada recarga — inclusive quando o
   atalho de tela inicial (PWA) abre o `start_url` sem parâmetros, que é o que o Android faz.
-  `?tablet=0` desliga. **Não há link de saída na tela**: o tablet do setor é do operador, e
-  o operador vê o setor dele — quem precisa do painel inteiro (PCP) digita `?tablet=0` no
-  endereço. A tela de erro é a única que mantém a saída, como recuperação.
+- **A saída fica no rodapé**: o botão `Sair do modo tablet` apaga a marca do aparelho e volta
+  ao painel completo. Sai em **dois toques** — o primeiro vira `Sair mesmo? toque de novo` e
+  desarma sozinho em 4s, então encostão de luva não desmonta a tela da máquina. `Esc` faz o
+  mesmo, para quem confere no computador; `?tablet=0` no endereço também. Antes só existia o
+  `?tablet=0`, e como o app instalado não tem barra de endereço, quem entrava no modo tablet
+  **só voltava limpando o navegador**. A saída aparece também na tela de carregamento e na
+  tela de erro — justamente onde o resto não renderiza.
+- Ao sair, o destino é o painel **sem parâmetro nenhum**: ir para `?tablet=0&setor=furar`
+  cairia direto no modo TV daquele setor, que é outra tela cheia. Pelo mesmo motivo o modo TV
+  tem `painel completo` no rodapé (um toque, que TV ninguém toca) e também responde a `Esc`.
 - Os dois mesmos `?setor=` disputados com o modo TV: com `?tablet=` presente (ou gravado), o
   setor é do tablet; sem ele, da TV.
 - **Barra de setores** sempre à vista, com `N hoje · N no setor` em cada um, mais o chip

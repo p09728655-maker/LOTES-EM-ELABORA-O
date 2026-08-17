@@ -8,7 +8,7 @@
    versao proprio: ele pergunta o desta linha por postMessage e mostra o que
    vier. Dois lugares para bumpar viram um lugar desatualizado. Subir esta
    linha a cada deploy e o que dispara o aviso de atualizacao na tela. */
-const VERSAO = 'v31';   // subiu com os parametros do KPI reagindo a digitacao, nao so ao blur
+const VERSAO = 'v32';   // subiu com a saida do modo tablet/TV no rodape (sem limpar o navegador)
 const CACHE = 'esteira-' + VERSAO;
 const SHELL = [
   './', './index.html', './falta.html', './estrutura.html',

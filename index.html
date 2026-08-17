@@ -362,6 +362,11 @@
     font-family:"IBM Plex Mono"; font-size:1vw; color:var(--mut2); display:flex; gap:2.4vw}
   .tv-foot span:last-child{margin-left:auto}
   .tv-foot .velho{color:var(--red); font-weight:600}
+  /* Saída do modo TV: a tela pendurada ninguém toca, mas quem abriu ?setor= no
+     computador para conferir precisava editar o endereço para voltar. Um toque
+     basta aqui — o modo TV não fica gravado no aparelho. */
+  .tv-sair{cursor:pointer; color:var(--steel); border:1px solid var(--line);
+    border-radius:.5vw; padding:.2vh .8vw}
 
   /* ===================== MODO TABLET (?tablet=1) =====================
      O tablet fica preso na máquina — na furadeira, no corte — e responde uma
@@ -550,6 +555,15 @@
     font-family:"IBM Plex Mono"; font-size:11.5px; color:var(--mut2)}
   .tb-foot .velho{color:var(--red); font-weight:600}
   .tb-foot a{color:var(--steel); text-decoration:none; margin-left:auto}
+  /* Saída do modo tablet. Fica no rodapé, longe do que o operador toca o dia
+     inteiro, e só sai no SEGUNDO toque — encosto sem querer não desmonta a
+     tela da máquina. Sem ela a única saída era digitar ?tablet=0 no endereço
+     (que o app instalado não tem) ou limpar o navegador. */
+  .tb-sair{margin-left:auto; background:none; border:1px solid var(--line); border-radius:8px;
+    color:var(--mut2); font-family:"IBM Plex Mono"; font-size:11.5px; padding:9px 14px;
+    cursor:pointer; -webkit-tap-highlight-color:transparent}
+  .tb-foot a + .tb-sair, .tb-foot .tb-sair ~ .tb-sair{margin-left:0}
+  .tb-sair.armado{border-color:var(--amber); color:var(--amber); font-weight:600}
 
   /* Botão flutuante de instalar o app (PWA). Só existe quando o navegador
      oferece a instalação (beforeinstallprompt): app já instalado ou navegador
@@ -1373,14 +1387,19 @@
     <a href="?setor=uv">Linha UV</a> ·
     <a href="?setor=emb">Embalagem</a>
   </div>
-  <!-- O tablet da máquina abre direto no setor dela e não sai mais de lá: o
-       endereço é o que fica salvo na tela inicial do aparelho. -->
+  <!-- O tablet da máquina abre direto no setor dela e volta nele sozinho a cada
+       recarga: o modo fica gravado NO APARELHO, não no endereço. Por isso a
+       linha da volta está escrita aqui — quem abre no computador para conferir
+       precisa saber onde é a saída antes de entrar. -->
   <div class="tvlinks"><b style="color:var(--mut)">Modo tablet</b> (produtos do dia, no toque):
     <a href="?tablet=1&amp;setor=corte">Corte</a> ·
     <a href="?tablet=1&amp;setor=furar">Furadeira laterais</a> ·
     <a href="?tablet=1&amp;setor=cola">Coladeira/PU</a> ·
     <a href="?tablet=1&amp;setor=uv">Linha UV</a> ·
     <a href="?tablet=1&amp;setor=emb">Embalagem</a>
+    <div style="color:var(--mut2); margin-top:4px">Fica gravado no aparelho: ao abrir de novo,
+      volta no mesmo setor. Para voltar ao painel, <b style="color:var(--steel)">Sair do modo tablet</b>
+      no rodapé (dois toques) ou <b style="color:var(--steel)">Esc</b>.</div>
   </div>
   <div class="verfoot" id="verFoot" hidden></div>
 </div>
@@ -1458,7 +1477,8 @@ const _tvv = (_tvp.get("setor") || _tvp.get("tv") || "").toLowerCase().replace(/
    na URL (ou gravado de uma visita anterior), o setor é do tablet, não da TV.
    O parâmetro fica GRAVADO no aparelho: o tablet é aberto uma vez, preso na
    máquina, e ninguém digita endereço de novo — nem depois de acabar a
-   bateria. `?tablet=0` desliga, que é a saída do rodapé. */
+   bateria. Desligar é o botão "Sair do modo tablet" no rodapé (ou `?tablet=0`
+   no endereço, que faz o mesmo). */
 const TAB_LIGADO_KEY="lotesElaboracaoTablet";
 const TABLET=(()=>{
   const p=_tvp.get("tablet") ?? _tvp.get("tablete") ?? _tvp.get("tab");
@@ -1467,6 +1487,14 @@ const TABLET=(()=>{
   try{ on ? localStorage.setItem(TAB_LIGADO_KEY,"1") : localStorage.removeItem(TAB_LIGADO_KEY); }catch(e){}
   return on;
 })();
+/* Desligar o modo tablet apaga a marca do aparelho E limpa o endereço: sair
+   para `?tablet=0&setor=furar` cairia direto no modo TV do setor, que é outra
+   tela cheia sem saída. O destino é o painel puro, sem parâmetro nenhum. */
+let SAIR_TIMER=null;
+function saiDoModoTablet(){
+  try{ localStorage.removeItem(TAB_LIGADO_KEY); }catch(e){}
+  location.href = location.pathname;
+}
 const TVKEY = TABLET ? null : (TV_ALIAS[_tvv] || null);
 if(TVKEY) document.body.classList.add("tv");
 let TV_PAGE=0, TV_PAGES=1;   // paginação/rotação do modo TV
@@ -1484,16 +1512,18 @@ if(TABLET){
   /* Esqueleto imediato: o modo tablet esconde a tela normal inteira, então
      até a primeira leitura da planilha não haveria NADA — e uma leitura
      travada é um tablet preto sem explicação nem saída. Aparece já no load. */
-  /* sem saída para o painel completo aqui: o tablet do setor é do operador,
-     e o operador vê o setor DELE. O PCP sai digitando ?tablet=0 no endereço
-     (dentro do app instalado nem barra de endereço existe). A tela de erro
-     mantém a saída — lá é recuperação, não navegação. */
+  /* A saída para o painel completo mora no rodapé, em dois toques. Já foi
+     "digite ?tablet=0 no endereço", e no app instalado não existe barra de
+     endereço: quem entrava no modo tablet só voltava limpando o navegador.
+     Longe dos botões de trabalho e com confirmação, o operador não sai sem
+     querer e o PCP não fica preso. */
   document.getElementById("tabapp").innerHTML=`<div class="tb-head"><div class="tb-top">
       <img class="tb-logo" src="logo-patrimar.png" alt="Patrimar">
       <div class="tb-tit"><div class="fase">PPCP · Patrimar</div><div class="nm">Lendo a planilha…</div></div>
     </div></div>
     <div class="tb-vazio">Buscando os lotes do dia. Se esta tela ficar assim,
-      confira a rede do aparelho.</div>`;
+      confira a rede do aparelho.</div>
+    <div class="tb-foot"><button class="tb-sair" data-sair="1">Sair do modo tablet</button></div>`;
 }
 const TAB_SETOR_KEY="lotesElaboracaoTabSetor";
 const TAB_VISTA_KEY="lotesElaboracaoTabVista";
@@ -2927,6 +2957,7 @@ function renderTV(buckets, ref, atras, volAtraso){
     <div class="tv-grid">${list.length?cards:`<div class="tv-empty">Nenhum lote entrou hoje neste setor</div>`}</div>
     <div class="tv-foot"><span>PPCP · Patrimar · Lotes em Elaboração</span><span>${pgTxt}</span>
       ${txtFrescorTV()?`<span class="velho">${txtFrescorTV()}</span>`:""}
+      <span class="tv-sair" id="tvSair">painel completo</span>
       <span>${fmt(ref)}/${ref.getFullYear()}</span></div>`;
   tvClock();
 }
@@ -3289,6 +3320,7 @@ function renderTab(dados, ref){
       <span>PPCP · Patrimar · ${hojeEh?"":`vendo ${fmt(ref)} — `}${esc(txtAtualizado())}</span>
       ${txtFrescorTV()?`<span class="velho">${txtFrescorTV()}</span>`:""}
       ${ver?`<span>${esc(ver)}</span>`:""}
+      <button class="tb-sair" data-sair="1">Sair do modo tablet</button>
     </div>`;
   tabClock();
 }
@@ -4001,6 +4033,19 @@ if(TABLET) document.getElementById("tabapp").addEventListener("click",e=>{
   if(vista){ TAB_VISTA=vista.dataset.vista; guardaTab(TAB_VISTA_KEY,TAB_VISTA); render(); return; }
   const soma=e.target.closest("[data-soma]");
   if(soma){ TAB_SOMA=!TAB_SOMA; guardaTab("lotesElaboracaoTabSoma",TAB_SOMA?"1":"0"); render(); return; }
+  /* Saída em dois toques: o primeiro arma e explica, o segundo sai. Quatro
+     segundos depois volta ao normal sozinho — quem encostou sem querer não
+     precisa desfazer nada. */
+  const sair=e.target.closest("[data-sair]");
+  if(sair){
+    if(sair.classList.contains("armado")){ saiDoModoTablet(); return; }
+    sair.classList.add("armado");
+    sair.textContent="Sair mesmo? toque de novo";
+    clearTimeout(SAIR_TIMER);
+    SAIR_TIMER=setTimeout(()=>{ sair.classList.remove("armado");
+      sair.textContent="Sair do modo tablet"; }, 4000);
+    return;
+  }
   const abre=e.target.closest(".tb-abre");
   if(abre){ const lt=abre.dataset.lote;
     if(TAB_ABERTO.has(lt)) TAB_ABERTO.delete(lt); else TAB_ABERTO.add(lt);
@@ -4011,6 +4056,19 @@ if(TABLET) document.getElementById("tabapp").addEventListener("click",e=>{
     if(n==="0") irParaHoje(); else shift(+n);
     return; }
 });
+/* Saída do modo TV: um toque no rodapé volta ao painel. Diferente do tablet,
+   aqui não precisa de confirmação — o modo TV não fica gravado no aparelho, e
+   quem está diante da tela pendurada não a toca. */
+if(TVKEY) document.getElementById("tv").addEventListener("click", e=>{
+  if(e.target.closest("#tvSair")) location.href = location.pathname;
+});
+/* Esc sai dos dois modos de tela cheia. Quem confere no computador não precisa
+   descobrir o rodapé; no tablet e na TV não existe teclado, então não atrapalha. */
+if(TVKEY || TABLET) addEventListener("keydown", e=>{
+  if(e.key!=="Escape") return;
+  if(TABLET) saiDoModoTablet(); else location.href = location.pathname;
+});
+
 carregar();
 setInterval(carregar, 5*60*1000); // recarrega a cada 5 min
 setInterval(pintaFrescor, 30000); // e conta quanto tempo faz que a última deu certo
