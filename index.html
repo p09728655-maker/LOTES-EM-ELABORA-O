@@ -2235,7 +2235,7 @@ function txtEstrutura(det){
    são casados com os itens do lote pelo código, do mesmo jeito que a baixa.
    Sem essa aba o painel funciona como antes — as métricas só não aparecem. */
 const CADASTRO = { map:new Map(), ativa:false, aba:"", erro:"",
-                   itens:0, casados:0, semCad:new Map(), temM3:false };
+                   itens:0, casados:0, semCad:new Map(), zerados:new Set(), temM3:false };
 /* Candidatas em ordem: o gid configurado, os gids conhecidos da planilha e,
    por último, os nomes usuais. Vale a primeira que tiver CODIGO + PONTOS/P B —
    assim renomear ou recriar a aba não quebra o painel. */
@@ -2260,13 +2260,18 @@ function mapHeaderCad(hrow){ const idx={};
     for(const k in ALIAS_CAD){ if(ALIAS_CAD[k].includes(n) && idx[k]===undefined) idx[k]=i; } });
   return idx;
 }
+/* Devolve o mapa e, à parte, os códigos que ESTÃO na aba mas com pontos,
+   peso e m³ todos vazios ou zero. As duas situações derrubam o total da mesma
+   forma, mas o conserto é diferente — uma pede criar a linha, a outra pede
+   preencher a que já existe — e o aviso só consegue dizer qual é se souber
+   distinguir. */
 function parseCadastro(rows){
-  const map=new Map();
+  const map=new Map(), zerados=new Set();
   let h=-1, idx={};
   // exige código + ao menos uma das duas métricas: com só o código não há o que ler
   for(let i=0;i<Math.min(rows.length,25);i++){ const c=mapHeaderCad(rows[i]);
     if(c.cod!==undefined && (c.pontos!==undefined || c.peso!==undefined || c.m3!==undefined)){ h=i; idx=c; break; } }
-  if(h<0) return map;
+  if(h<0) return {map, zerados};
   for(let r=h+1;r<rows.length;r++){ const row=rows[r];
     const cod=normCod(val(row,idx.cod)); if(!/^\d{9}/.test(cod)) continue;
     const pontos=num(val(row,idx.pontos)), peso=num(val(row,idx.peso));
@@ -2274,10 +2279,12 @@ function parseCadastro(rows){
        cubagem cadastrada entra como zero e é contado em CADASTRO.temM3 —
        total baixo por falta de cadastro não pode passar por total baixo. */
     const m3=num(val(row,idx.m3));
-    if(!pontos && !peso && !m3) continue;
+    // a linha existe e não serve para nada: fica anotada para o aviso poder
+    // dizer "está na aba, falta preencher" em vez de "não está na aba"
+    if(!pontos && !peso && !m3){ zerados.add(cod); continue; }
     if(!map.has(cod)) map.set(cod,{pontos,peso,m3});   // primeira linha do código vale
   }
-  return map;
+  return {map, zerados};
 }
 
 /* Soma pontos e peso do lote a partir do cadastro. Item sem código no
@@ -2302,9 +2309,14 @@ function aplicarCadastro(){
       if(c) CADASTRO.casados++;
       else if(it.cod){
         const k=normCod(it.cod);
-        const e=CADASTRO.semCad.get(k)||{cod:it.cod, desc:"", lotes:new Set(), vol:0};
+        /* vazio = o código ESTÁ na aba de cadastro, com a linha sem pontos,
+           peso nem m³. Conserto: preencher a linha. O contrário (vazio
+           false) é o código que nem aparece na aba. Conserto: criar a linha.
+           Os dois derrubam o total igual, e só o aviso separado diz qual. */
+        const e=CADASTRO.semCad.get(k)||{cod:it.cod, desc:"", lotes:new Set(),
+                                         vol:0, n:0, vazio:CADASTRO.zerados.has(k)};
         if(!e.desc && it.desc) e.desc=it.desc;
-        e.lotes.add(l.interno||l.lote); e.vol+=(it.qtd||0);
+        e.lotes.add(l.interno||l.lote); e.vol+=(it.qtd||0); e.n++;
         CADASTRO.semCad.set(k,e);
       }
       l.pontosTot+=it.pontos*(it.qtd||0);
@@ -2315,7 +2327,8 @@ function aplicarCadastro(){
 }
 
 async function carregarCadastro(){
-  CADASTRO.map=new Map(); CADASTRO.ativa=false; CADASTRO.aba=""; CADASTRO.erro="";
+  CADASTRO.map=new Map(); CADASTRO.zerados=new Set();
+  CADASTRO.ativa=false; CADASTRO.aba=""; CADASTRO.erro="";
   const abas=[...new Set([CFG.cadastro,...GIDS_CAD,...ABAS_CAD].filter(Boolean))];
   for(const aba of abas){
     try{
@@ -2323,9 +2336,10 @@ async function carregarCadastro(){
       if(!res.ok) continue;
       const txt=await res.text();
       if(/<html/i.test(txt)) continue;
-      const map=parseCadastro(parseCSV(txt));
+      const {map,zerados}=parseCadastro(parseCSV(txt));
       if(!map.size){ CADASTRO.erro="nenhuma aba com CODIGO + PONTOS/P B"; continue; }
-      CADASTRO.map=map; CADASTRO.ativa=true; CADASTRO.erro=""; CADASTRO.aba=aba;
+      CADASTRO.map=map; CADASTRO.zerados=zerados;
+      CADASTRO.ativa=true; CADASTRO.erro=""; CADASTRO.aba=aba;
       break;
     }catch(e){ /* tenta a próxima candidata */ }
   }
@@ -2374,33 +2388,53 @@ function txtBaixa(det){
 function txtCadastro(det){
   if(!CADASTRO.ativa)
     return CADASTRO.erro ? ` · <span style="color:var(--amber)">cadastro: ${CADASTRO.erro}</span>` : "";
+  /* Duas causas, dois consertos:
+       FORA  — o código não aparece na aba de cadastro → criar a linha
+       VAZIO — o código está lá, com pontos, peso e m³ em branco → preencher
+     Antes as duas davam a mesma frase ("sem cadastro"), e quem já tinha
+     mexido na planilha ficava sem saber se errou de aba ou de coluna. */
   const sem=[...CADASTRO.semCad.values()];
+  const fora  = sem.filter(e=>!e.vazio);
+  const vazio = sem.filter(e=>e.vazio);
+  // até 3 códigos cabem na linha; acima disso ela viraria parágrafo
+  const cods = g => g.length<=3
+    ? g.map(e=>esc(e.cod)).join(", ")
+    : g.slice(0,3).map(e=>esc(e.cod)).join(", ")+` e mais ${g.length-3}`;
+  const itens = g => g.reduce((s,e)=>s+e.n,0);
+
   if(det){
     const base=` · cadastro <b>${CADASTRO.aba}</b>: ${nBR(CADASTRO.map.size)} ${CADASTRO.map.size===1?"código":"códigos"}`;
     if(!sem.length) return base;
-    // a lista completa, com descrição e lote: é o que se leva para a planilha
-    // o mesmo código costuma aparecer em vários lotes: 4 bastam para achar,
-    // a lista inteira viraria parágrafo — o problema que esta linha resolve
+    // a lista completa, com descrição e lote: é o que se leva para a planilha.
+    // O mesmo código costuma aparecer em vários lotes: 4 bastam para achar,
+    // a lista inteira viraria parágrafo — o problema que esta linha resolve.
     const lotesTxt = e => { const ls=[...e.lotes];
       return ls.slice(0,4).map(esc).join(", ") + (ls.length>4?` +${ls.length-4}`:""); };
-    return base + ` · <span style="color:var(--amber)">sem cadastro:</span> ` +
-      sem.map(e=>`<b>${esc(e.cod)}</b>${e.desc?" "+esc(e.desc):""}` +
-        ` <span style="opacity:.7">(${nBR(e.vol)} vol. · ${lotesTxt(e)})</span>`).join(" · ");
+    const lista = g => g.map(e=>`<b>${esc(e.cod)}</b>${e.desc?" "+esc(e.desc):""}`+
+      ` <span style="opacity:.7">(${nBR(e.vol)} vol. · ${lotesTxt(e)})</span>`).join(" · ");
+    let out=base;
+    if(fora.length)  out += ` · <span style="color:var(--amber)">fora da aba de cadastro`+
+      ` — criar a linha com PONTOS e P B:</span> ${lista(fora)}`;
+    if(vazio.length) out += ` · <span style="color:var(--amber)">na aba, com a linha em branco`+
+      ` — preencher PONTOS e P B:</span> ${lista(vazio)}`;
+    return out;
   }
-  const fora=CADASTRO.itens-CADASTRO.casados;
+
   /* Item sem cadastro não é detalhe técnico: sem ele o produto entra com 0
      ponto e 0 kg, e os totais de pontos e peso da tela ficam MENORES do que
-     a realidade. Fica na linha de cima, em âmbar — e agora com O CÓDIGO, que
-     é o que faltava para alguém resolver. Avisar sem dizer qual é obrigava a
-     conferir 428 códigos na mão.
-     Até 3 códigos cabem na linha; acima disso ela viraria parágrafo, então o
-     resto fica em "detalhes", que traz a lista inteira com descrição e lote. */
-  if(!fora) return "";
-  const quais = sem.length<=3
-    ? " — " + sem.map(e=>esc(e.cod)).join(", ")
-    : " — " + sem.slice(0,3).map(e=>esc(e.cod)).join(", ") + ` e mais ${sem.length-3} (ver detalhes)`;
-  return ` · <span style="color:var(--amber)">${fora} ${fora===1?"item sem":"itens sem"} cadastro`+
-    `${quais} — pontos e peso subestimados</span>`;
+     a realidade. Fica na linha de cima, em âmbar, com O CÓDIGO e a causa —
+     que é o que faltava para alguém resolver sem conferir 428 códigos na
+     mão nem descobrir por tentativa em qual aba mexer. */
+  if(!sem.length) return "";
+  const ptsA = t => `<span style="color:var(--amber)">${t}</span>`;
+  const partes=[];
+  if(fora.length)  partes.push(ptsA(`${itens(fora)} ${itens(fora)===1?"item":"itens"} `+
+    `fora da aba de cadastro — ${cods(fora)}`));
+  if(vazio.length) partes.push(ptsA(`${itens(vazio)} ${itens(vazio)===1?"item":"itens"} `+
+    `com a linha em branco no cadastro — ${cods(vazio)}`));
+  return " · " + partes.join(" · ") +
+    ptsA(" — pontos e peso subestimados") +
+    (sem.length>3 ? ptsA(" (ver detalhes)") : "");
 }
 function txtFaltas(det){
   if(!FALTAS.ativa)
