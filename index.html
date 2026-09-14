@@ -192,7 +192,14 @@
   .st-head .carga .bar{flex:1; min-width:26px; height:7px; border-radius:4px;
     background:var(--line); overflow:hidden}
   .st-head .carga .bar i{display:block; height:100%; background:var(--mut2); border-radius:4px}
-  .st-head .carga .fat{font-size:10.5px; color:var(--mut); min-width:30px; text-align:right}
+  /* A unidade vai escrita no próprio número. Um "13%" solto ao lado de uma
+     linha que traz volume, pontos e peso não diz de qual dos três ele é — e
+     a leitura errada aqui não é inofensiva: o mix varia de ~53 a ~157 pontos
+     por volume entre as etapas, então a etapa com mais VOLUME não é
+     necessariamente a com mais CARGA. Quem quiser a carga compara os pontos
+     na linha de cima; o title do bloco diz isso por extenso. */
+  .st-head .carga .fat{font-size:10.5px; color:var(--mut); text-align:right; white-space:nowrap}
+  .st-head .carga .fat em{font-style:normal; color:var(--mut2); font-size:9.5px}
   .station.hot .carga .bar i{background:var(--amber)}
   .station.hot .carga .fat{color:var(--amber)}
   .st-head .nm .cnt{margin-left:auto; font-size:12px; color:var(--bg); background:var(--mut);
@@ -2228,7 +2235,7 @@ function txtEstrutura(det){
    são casados com os itens do lote pelo código, do mesmo jeito que a baixa.
    Sem essa aba o painel funciona como antes — as métricas só não aparecem. */
 const CADASTRO = { map:new Map(), ativa:false, aba:"", erro:"",
-                   itens:0, casados:0, semCad:new Set(), temM3:false };
+                   itens:0, casados:0, semCad:new Map(), temM3:false };
 /* Candidatas em ordem: o gid configurado, os gids conhecidos da planilha e,
    por último, os nomes usuais. Vale a primeira que tiver CODIGO + PONTOS/P B —
    assim renomear ou recriar a aba não quebra o painel. */
@@ -2277,7 +2284,13 @@ function parseCadastro(rows){
    cadastro entra como zero e é contado à parte — número baixo por falta de
    cadastro não pode passar por número baixo de verdade. */
 function aplicarCadastro(){
-  CADASTRO.itens=0; CADASTRO.casados=0; CADASTRO.semCad=new Set();
+  /* semCad era um Set só com o código normalizado: o painel avisava que havia
+     item sem cadastro mas não dizia QUAL — aviso que cobra ação sem entregar
+     a coisa sobre a qual agir. Virou Map com o código como estava na
+     planilha, a descrição e em que lotes ele aparece, que é o que se leva
+     para a aba de cadastro. Map também tem .size, então o texto do aviso não
+     precisou mudar de forma. */
+  CADASTRO.itens=0; CADASTRO.casados=0; CADASTRO.semCad=new Map();
   // m³ é opcional: a aba pode ter pontos e peso e nenhuma coluna de cubagem
   CADASTRO.temM3=[...CADASTRO.map.values()].some(c=>c.m3>0);
   LOTES.forEach(l=>{
@@ -2286,7 +2299,14 @@ function aplicarCadastro(){
       const c=CADASTRO.map.get(normCod(it.cod));
       it.pontos=c?c.pontos:0; it.peso=c?c.peso:0; it.m3=c?(c.m3||0):0;
       CADASTRO.itens++;
-      if(c) CADASTRO.casados++; else if(it.cod) CADASTRO.semCad.add(normCod(it.cod));
+      if(c) CADASTRO.casados++;
+      else if(it.cod){
+        const k=normCod(it.cod);
+        const e=CADASTRO.semCad.get(k)||{cod:it.cod, desc:"", lotes:new Set(), vol:0};
+        if(!e.desc && it.desc) e.desc=it.desc;
+        e.lotes.add(l.interno||l.lote); e.vol+=(it.qtd||0);
+        CADASTRO.semCad.set(k,e);
+      }
       l.pontosTot+=it.pontos*(it.qtd||0);
       l.pesoTot  +=it.peso  *(it.qtd||0);
       l.m3Tot    +=it.m3    *(it.qtd||0);
@@ -2354,14 +2374,33 @@ function txtBaixa(det){
 function txtCadastro(det){
   if(!CADASTRO.ativa)
     return CADASTRO.erro ? ` · <span style="color:var(--amber)">cadastro: ${CADASTRO.erro}</span>` : "";
-  if(det) return ` · cadastro <b>${CADASTRO.aba}</b>: ${CADASTRO.map.size.toLocaleString("pt-BR")} códigos`;
+  const sem=[...CADASTRO.semCad.values()];
+  if(det){
+    const base=` · cadastro <b>${CADASTRO.aba}</b>: ${nBR(CADASTRO.map.size)} ${CADASTRO.map.size===1?"código":"códigos"}`;
+    if(!sem.length) return base;
+    // a lista completa, com descrição e lote: é o que se leva para a planilha
+    // o mesmo código costuma aparecer em vários lotes: 4 bastam para achar,
+    // a lista inteira viraria parágrafo — o problema que esta linha resolve
+    const lotesTxt = e => { const ls=[...e.lotes];
+      return ls.slice(0,4).map(esc).join(", ") + (ls.length>4?` +${ls.length-4}`:""); };
+    return base + ` · <span style="color:var(--amber)">sem cadastro:</span> ` +
+      sem.map(e=>`<b>${esc(e.cod)}</b>${e.desc?" "+esc(e.desc):""}` +
+        ` <span style="opacity:.7">(${nBR(e.vol)} vol. · ${lotesTxt(e)})</span>`).join(" · ");
+  }
   const fora=CADASTRO.itens-CADASTRO.casados;
   /* Item sem cadastro não é detalhe técnico: sem ele o produto entra com 0
      ponto e 0 kg, e os totais de pontos e peso da tela ficam MENORES do que
-     a realidade. Fica na linha de cima, em âmbar. */
-  return fora
-    ? ` · <span style="color:var(--amber)">${fora} ${fora===1?"item sem":"itens sem"} cadastro (${CADASTRO.semCad.size} ${CADASTRO.semCad.size===1?"código":"códigos"}) — pontos e peso subestimados</span>`
-    : "";
+     a realidade. Fica na linha de cima, em âmbar — e agora com O CÓDIGO, que
+     é o que faltava para alguém resolver. Avisar sem dizer qual é obrigava a
+     conferir 428 códigos na mão.
+     Até 3 códigos cabem na linha; acima disso ela viraria parágrafo, então o
+     resto fica em "detalhes", que traz a lista inteira com descrição e lote. */
+  if(!fora) return "";
+  const quais = sem.length<=3
+    ? " — " + sem.map(e=>esc(e.cod)).join(", ")
+    : " — " + sem.slice(0,3).map(e=>esc(e.cod)).join(", ") + ` e mais ${sem.length-3} (ver detalhes)`;
+  return ` · <span style="color:var(--amber)">${fora} ${fora===1?"item sem":"itens sem"} cadastro`+
+    `${quais} — pontos e peso subestimados</span>`;
 }
 function txtFaltas(det){
   if(!FALTAS.ativa)
@@ -2992,9 +3031,9 @@ function render(){
         ${pesoEt[i]>0?`<span><b>${pesoTxt(pesoEt[i])}</b></span>`:""}
         ${pendEt[i]>0?`<span class="falta">falta <b>${pendEt[i].toLocaleString("pt-BR")}</b></span>`:""}
       </div>
-      <div class="cg-b" title="${fat}% dos ${vols.toLocaleString("pt-BR")} volumes em elaboração estão nesta etapa">
+      <div class="cg-b" title="${volsEt[i].toLocaleString("pt-BR")} dos ${vols.toLocaleString("pt-BR")} volumes em elaboração (${fat}%) estão nesta etapa.&#10;A barra é de VOLUME, não de pontos: o mix varia muito entre as etapas, então a etapa com mais volume nem sempre é a com mais carga. Compare os pontos na linha de cima.">
         <span class="bar"><i style="width:${fat}%"></i></span>
-        <span class="fat">${fat}%</span>
+        <span class="fat">${fat}% <em>dos vol.</em></span>
       </div></div>`:"";
     st.innerHTML=`<div class="st-head"><div class="fase">${et.fase}</div>
       <div class="nm">${et.nome}<span class="cnt">${buckets[i].length}</span></div>

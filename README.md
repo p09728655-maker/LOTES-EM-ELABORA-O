@@ -161,15 +161,29 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   tela.
 - Cada estação mostra a carga em **volume**, não só em lote: três lotes podem ser 300 ou 3.000
   volumes e a coluna fica igual se só contar lote. A barra fica em **linha própria**, na largura
-  do cabeçalho, com a **fatia do total em elaboração** ao lado — `13% · 28% · 27% · 25% · 8%` diz
-  onde a produção está concentrada sem abrir lote nenhum.
+  do cabeçalho, com a fatia do total ao lado — `13% dos vol. · 28% dos vol. · …`.
 
   A barra era relativa à etapa mais cheia e tinha 4px, espremida no que sobrava da linha depois de
   três números coloridos (volume branco, pontos azul, peso verde — cor virando rótulo, e o verde
-  brigando com o verde de "etapa concluída" da régua do card). **Barra e número agora medem a
-  mesma coisa**: gráfico e número lado a lado dizendo quantidades diferentes é painel que mente.
-  Como a escala passou a ser do total, a maior barra não encosta no fim da régua — e isso também é
-  informação: nenhuma etapa segura mais de um terço da esteira.
+  brigando com o verde de "etapa concluída" da régua do card). **Barra e número medem a mesma
+  coisa**: gráfico e número lado a lado dizendo quantidades diferentes é painel que mente. Como a
+  escala é do total, a maior barra não encosta no fim da régua — e isso também é informação:
+  nenhuma etapa segura mais de um terço da esteira.
+
+  **A unidade vai escrita no número (`13% dos vol.`), e não é detalhe de redação.** Um `13%` solto
+  ao lado de uma linha que traz volume, pontos e peso não diz de qual dos três ele é — e a leitura
+  errada aqui não é inofensiva: **o mix varia de ~53 a ~157 pontos por volume entre as etapas**,
+  quase 3×, então a etapa com mais volume não é necessariamente a com mais carga. Num dia real a
+  Coladeira aparecia com 27% dos volumes e só 18% dos pontos, enquanto o Corte tinha 13% dos
+  volumes e 19% dos pontos — ler a barra como "carga" apontaria o gargalo errado. Quem quer carga
+  compara os **pontos** na linha de cima; o `title` do bloco diz isso por extenso.
+
+  **Por que não trocar a barra para pontos.** Seria a unidade certa (é a da capacidade e a da
+  cobertura do KPI), mas pontos vêm do cadastro e nem sempre cobrem todos os itens — a linha de
+  status avisa quando não cobrem. Volume é sempre completo. O que responderia a pergunta de vez é
+  **dias de carga por etapa**, e isso não dá para fazer hoje: os 220.000 pts/dia são capacidade da
+  fábrica inteira, não de cada posto, e dividir por etapa daria precisão falsa. Falta a capacidade
+  por posto na planilha.
 - **Peça em falta aparece no quadro**, não só na aba de peças. Peça faltando é a *causa* de o lote
   parar; até então o lote travado tinha a mesma cara de um lote normal no quadro das estações.
   Pastilha `aguardando peça` no mesmo âmbar-amarelo da aba de peças — mesmo assunto, mesma cor.
@@ -220,6 +234,11 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
 
   O único pedaço acionável ali — **`1 item sem cadastro`**, que significa que os totais de pontos
   e peso da tela estão **menores do que a realidade** — tinha o mesmo peso visual do número do gid.
+  E, pior, **não dizia qual era o código**: avisava que havia trabalho a fazer sem entregar a coisa
+  sobre a qual agir, o que obrigava a conferir os 428 códigos da aba na mão. Agora o aviso traz o
+  código (até 3 na linha; acima disso, os 3 primeiros e `e mais N`), e `detalhes` traz a lista
+  inteira com **descrição, volumes afetados e em que lotes** o código aparece — que é o que se
+  leva para a aba de cadastro.
   Ficam na linha: leu, quando, e o que está furado (em âmbar, agora dizendo *por que* importa).
   Contagem de códigos, gid e estrutura vão para **`detalhes`**, que abre no clique. Cada fonte de
   dado tem uma função só, com duas saídas (`txtCadastro(det)`), em vez de dois textos escritos em
