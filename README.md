@@ -23,9 +23,34 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   dizia `Dia ok` com a embalagem inteira parada. Ele é deliberadamente sem alarme — de manhã o
   normal é estar assim, e uma tarja laranja todo dia às 8h ensina todo mundo a ignorá-la.
   Havendo atraso de ontem, o vermelho vence e o que falta de hoje entra na linha de apoio.
-- **KPIs**: lotes ativos, volumes em elaboração, **volumes p/ embalar hoje** e volumes em atraso.
-  O de atraso é o único que cobra ação, então vira caixa destacada — vermelha quando há
-  pendência, verde quando está zerado.
+- **KPIs em três blocos**, uma pergunta por bloco. Eram seis números soltos na mesma linha, todos
+  no mesmo corpo: quem olhava precisava ler os seis rótulos para descobrir qual cobrava ação.
+
+  | bloco | número grande | apoio | pergunta que responde |
+  |---|---|---|---|
+  | **Produção atual** | volumes em elaboração | lotes · pontos · peso | o que a fábrica tem na esteira |
+  | **Riscos e atrasos** | volumes em atraso | vol. críticos · peças em falta · sem baixa | o que está travado |
+  | **Próximas ações** | vol. p/ embalar hoje | programados · cobertura | o que vem a seguir |
+
+  **Só o bloco do meio tem cor** — é o único que cobra ação. Vermelho quando há o que perseguir,
+  verde quando **tudo** zera (atraso, crítico, peça e sem baixa). Antes o verde vinha só do atraso
+  zerado, e um bloco verde com 300 peças em falta dentro dizia a coisa errada justamente na leitura
+  de 2 segundos que o painel existe para dar. Zero dentro do bloco vermelho volta ao cinza: três
+  zeros em vermelho ensinam todo mundo a ignorar o vermelho.
+
+  **Nenhum número é novo.** Vol. críticos e cobertura saem de `kpiCalc` (a mesma conta da aba KPI),
+  peças em falta sai de `renderFaltasAba` (o mesmo total da aba de peças), o resto de
+  `computeBuckets`. O cabeçalho repete o número que a aba mostra, não recalcula — total que não
+  bate com a aba ao lado é painel em que ninguém confia. Linha que depende de fonte ausente
+  (cadastro sem apontamento, aba FALTAS fora do ar) **some** em vez de mostrar um zero que na
+  verdade é "não sei".
+- **A cor do produto é atributo, não estado.** A pastilha do lote nascia preenchida com a cor de
+  verdade (VERMELHO `#e8342a`, VERDE `#2fbf4f`), para bater de olho com o quadro do GPS. Só que
+  pílula cheia e arredondada no canto do card é a forma de um *badge de status* — e o vermelho de
+  atraso (`#ff3b30`) e o verde de "etapa concluída" (`#3fd15f`) estão na mesma tela. Lote vermelho
+  parecia lote em alarme; lote verde, lote resolvido. A cor continua, agora em **swatch**: bolinha
+  da cor + nome em texto neutro, o mesmo padrão que o impresso A4 já usava. Cor na tela só
+  comunica prioridade.
 - **Seis abas**, não uma rolagem só. São perguntas diferentes e uma competia com a outra pela
   primeira dobra: o quadro de etapas responde *onde cada lote está*, a faixa de atraso responde
   *o que ficou para trás*, e empilhadas o atraso empurrava o quadro para fora da tela.
@@ -134,19 +159,77 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   digita no campo de busca é número em que ninguém confia. Como o lote pode estar em qualquer aba,
   o resumo diz **onde ele está** e leva até lá; estação sem nenhum card do lote procurado sai da
   tela.
-- Cada estação mostra a carga em **volume**, não só em lote, com barra relativa à etapa mais
-  cheia: três lotes podem ser 300 ou 3.000 volumes e a coluna fica igual se só contar lote.
+- Cada estação mostra a carga em **volume**, não só em lote: três lotes podem ser 300 ou 3.000
+  volumes e a coluna fica igual se só contar lote. A barra fica em **linha própria**, na largura
+  do cabeçalho, com a **fatia do total em elaboração** ao lado — `13% · 28% · 27% · 25% · 8%` diz
+  onde a produção está concentrada sem abrir lote nenhum.
+
+  A barra era relativa à etapa mais cheia e tinha 4px, espremida no que sobrava da linha depois de
+  três números coloridos (volume branco, pontos azul, peso verde — cor virando rótulo, e o verde
+  brigando com o verde de "etapa concluída" da régua do card). **Barra e número agora medem a
+  mesma coisa**: gráfico e número lado a lado dizendo quantidades diferentes é painel que mente.
+  Como a escala passou a ser do total, a maior barra não encosta no fim da régua — e isso também é
+  informação: nenhuma etapa segura mais de um terço da esteira.
+- **Peça em falta aparece no quadro**, não só na aba de peças. Peça faltando é a *causa* de o lote
+  parar; até então o lote travado tinha a mesma cara de um lote normal no quadro das estações.
+  Pastilha `aguardando peça` no mesmo âmbar-amarelo da aba de peças — mesmo assunto, mesma cor.
+- **Cards seguidos da mesma OP não repetem a frase de status.** A OP e a cor já saíam só no
+  primeiro card; a frase seguia repetida — três cards do Corte dizendo *"Hoje → Furadeira laterais
+  · 1d"* são três linhas de texto para uma informação que é da **coluna**, não do lote. Sai quando
+  a OP **e** a data de embalagem são as mesmas do card de cima (aí as datas de etapa são
+  necessariamente iguais). A régua fica: ela é gráfica, repetida reforça que os três estão no
+  mesmo ponto, e não custa leitura como uma frase custa.
+- **A régua de etapas subiu de 8px para 9,5/10px.** Era o menor tipo da tela inteira e carregava o
+  dado mais específico do card — *quando* cada etapa acontece. Custa ~3px de altura por card e
+  passa a ser lida de fato.
 - Navegação por **data de referência** (◀/▶/Hoje) para simular os próximos dias. Quando a data
   não é hoje, entra uma **tarja laranja** avisando — numa tela compartilhada, um dia simulado
   esquecido na tela vira decisão errada.
 - **Dado velho** (15 min sem conseguir ler a planilha, ou seja 3 recargas seguidas falhando) entra
   como tarja vermelha no cabeçalho e no rodapé do modo TV. Dado velho é pior que dado ausente: a
   tela continua com cara de tempo real.
-- Card expansível com os itens do lote (código, descrição, quantidade). Lotes seguidos da **mesma
-  OP** mostram OP e cor só no primeiro card — repetir os chips três vezes gasta altura sem
-  informar.
+- **Os produtos de cada lote nascem abertos** (código, descrição, quantidade e, quando há
+  apontamento, o pendente). Antes vinham fechados e abriam no clique — mas a pergunta que se faz
+  olhando o quadro é *o que este lote leva*, e ela só era respondida depois de o usuário descobrir
+  que o card clica. Quem quiser o quadro compacto **recolhe**: card a card no clique, ou tudo de
+  uma vez no `▸ recolher produtos` acima do quadro (sem esse botão, voltar ao compacto custaria um
+  clique por lote — o mesmo problema, ao contrário).
+
+  O que está recolhido fica **gravado neste navegador**: a tela recarrega sozinha a cada 5 min e
+  fica ligada o dia todo, então sem gravar cada recarga desfaria o que o usuário acabou de fazer.
+  Guarda o **fechado**, não o aberto — assim lote novo já entra aberto, e a lista é podada dos
+  lotes que saíram da planilha em vez de crescer para sempre.
+
+  A caixa **`produtos no PDF`** da barra de controles não tem nada a ver com isso: ela decide se a
+  folha A4 e o texto do WhatsApp saem com a lista de produtos. Chamava-se só `produtos`, o que
+  passava quando o quadro nascia fechado e virava armadilha agora que ele nasce aberto.
+- Lotes seguidos da **mesma OP** mostram OP e cor só no primeiro card — repetir os chips três
+  vezes gasta altura sem informar.
 - **Impressão gerencial** e **envio por WhatsApp** (ver abaixo).
 - Recarrega automaticamente a cada 5 minutos.
+
+### Legibilidade
+- **`--mut2` passou de `#5b636e` para `#7d858f`.** É o token de texto de apoio do produto inteiro
+  (28 usos: detalhe da etapa, código do item, rodapé, contador de aba, legenda do TV). No valor
+  antigo dava **2,90:1** sobre `--panel2` e **3,06:1** sobre `--panel`, abaixo dos 4,5:1 que texto
+  normal exige; agora dá 4,71 / 4,98 / 5,62:1 e continua nitidamente abaixo de `--mut`, que é quem
+  carrega a hierarquia. Todo elemento novo ou alterado foi conferido contra 4,5:1.
+- **A linha de status separou operação de depuração.** Ela dizia, no mesmo cinza e no mesmo corpo:
+  `Planilha lida — 35 lotes · atualizado 07:59 · cadastro 399284148: 428 códigos · 1 item sem
+  cadastro · FALTAS: nenhuma peça em aberto · estrutura ESTRUTURA: 10644 peças de 455 códigos`.
+
+  O único pedaço acionável ali — **`1 item sem cadastro`**, que significa que os totais de pontos
+  e peso da tela estão **menores do que a realidade** — tinha o mesmo peso visual do número do gid.
+  Ficam na linha: leu, quando, e o que está furado (em âmbar, agora dizendo *por que* importa).
+  Contagem de códigos, gid e estrutura vão para **`detalhes`**, que abre no clique. Cada fonte de
+  dado tem uma função só, com duas saídas (`txtCadastro(det)`), em vez de dois textos escritos em
+  lugares diferentes que divergem na primeira mudança feita em só um deles.
+- **O rodapé separou navegação de ajuda.** Os links que abrem TV e tablet são navegação e ficam;
+  o parágrafo que explica como o painel lê a planilha se lê uma vez na vida e recolheu para dentro
+  de `como este painel funciona`. Juntos, um texto de prioridade 3 ocupava o mesmo espaço que o
+  quadro de lotes.
+- **Contador de aba zerado some.** Um badge cinza escrito `0` é ruído: não há nada naquela aba, e
+  a ausência já diz isso. O contador da aba ativa continua mudando de cor.
 
 ### Unidade
 Tudo é **volume**. A coluna `Qtd_cx` da planilha, a baixa do ERP (`Tipo L – VOLUMES`) e o saldo

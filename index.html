@@ -21,7 +21,12 @@
   :root{
     /* paleta no padrão do RitmoProd (Embalagem): preto, laranja, verde/vermelho */
     --bg:#000000; --panel:#111316; --panel2:#17191d; --line:#2b2f36;
-    --ink:#f2f4f7; --mut:#8a929c; --mut2:#5b636e;
+    /* --mut2 é o texto de apoio do produto inteiro (28 usos: detalhe da etapa,
+       código do item, rodapé, contador de aba, legenda do TV). Em #5b636e ele
+       dava 2,90:1 sobre --panel2 e 3,06:1 sobre --panel — abaixo dos 4,5:1 que
+       texto normal exige. #7d858f dá 4,71 / 4,98 / 5,62:1 e continua
+       nitidamente abaixo de --mut, que é quem carrega a hierarquia. */
+    --ink:#f2f4f7; --mut:#8a929c; --mut2:#7d858f;
     --amber:#ff5a1f; --amber-dim:#5a2410; --green:#3fd15f; --green-dim:#184f2b;
     --steel:#5b8bb0; --wood:#ff5a1f; --red:#ff3b30;
   }
@@ -43,14 +48,51 @@
      Encolhe para o maior tipo do cabeçalho ser o número que cobra ação. */
   .brand h1{font-family:"Oswald"; font-weight:600; font-size:19px; letter-spacing:.02em; margin:0; line-height:1}
   .brand h1 span{color:var(--amber)}
-  /* seis KPIs no desktop: o gap cai de 26 para 18 e eles podem quebrar para a
-     segunda linha antes de espremer o número, que é o que se lê de longe */
-  .headmeta{flex:1 1 0; display:flex; flex-wrap:wrap; justify-content:flex-end;
-    gap:4px 18px; align-items:flex-end}
-  .kpi{display:flex; flex-direction:column; align-items:flex-end; line-height:1}
-  .kpi b{font-family:"Oswald"; font-size:22px; font-weight:600}
-  .kpi small{font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut);
-    margin-top:3px; white-space:nowrap}
+  /* ---------- KPIs em três blocos ----------
+     Eram seis números soltos, todos no mesmo corpo, disputando a mesma linha:
+     lotes, volumes, pontos, peso, embalar hoje e atraso. Quem olhava tinha de
+     ler os seis rótulos para descobrir qual cobrava ação.
+     Agora são três perguntas, uma por bloco, cada uma com UM número grande e o
+     resto como apoio: o que a fábrica tem (Produção atual), o que está
+     travado (Riscos e atrasos) e o que vem a seguir (Próximas ações).
+     Nenhum número é novo — todos já eram calculados em computeBuckets, em
+     kpiCalc (aba KPI) e em renderFaltasAba. */
+  .headmeta{flex:1 1 auto; display:flex; flex-wrap:wrap; justify-content:flex-end;
+    gap:6px; align-items:stretch}
+  .kgrp{display:flex; flex-direction:column; gap:3px; min-width:172px;
+    padding:5px 12px 6px; border-radius:10px;
+    border:1px solid var(--line); background:var(--panel)}
+  .kgrp > h2{margin:0; font-family:"IBM Plex Mono"; font-weight:400; font-size:9px;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--mut2)}
+  .kgrp .kmain{display:flex; align-items:baseline; gap:7px; line-height:1}
+  .kgrp .kmain[hidden]{display:none}
+  .kgrp .kmain b{font-family:"Oswald"; font-size:26px; font-weight:600}
+  /* o rótulo estava em 9,5px com .14em de entreletra: espaçamento largo em
+     corpo pequeno derruba justamente o texto que diz o que o número é */
+  .kgrp .kmain small{font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--mut); white-space:nowrap}
+  .kgrp .kside{display:flex; flex-wrap:wrap; gap:2px 13px; line-height:1.15}
+  .kgrp .kside span{display:flex; align-items:baseline; gap:4px}
+  .kgrp .kside b{font-family:"IBM Plex Mono"; font-size:12.5px; font-weight:600; color:var(--ink)}
+  .kgrp .kside i{font-style:normal; font-size:9.5px; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--mut); white-space:nowrap}
+  /* Prioridade 1 da tela: só o bloco que cobra ação recebe cor. Verde quando
+     não há nada a perseguir — atraso, crítico, peça e sem baixa zerados —,
+     não só quando o atraso zera: um bloco verde com peça em falta dentro
+     seria mentira. */
+  .kgrp.risco{border-color:var(--red); background:rgba(255,59,48,.1)}
+  .kgrp.risco > h2{color:var(--red); opacity:.9}
+  .kgrp.risco .kmain b, .kgrp.risco .kmain small{color:var(--red)}
+  .kgrp.risco .kside b{color:var(--red)}
+  /* zero não é alarme: dentro do bloco vermelho, o número zerado volta ao
+     cinza. Três zeros em vermelho ensinam a ignorar o vermelho.
+     Quando TUDO zera o bloco inteiro fica verde (regra .zero mais abaixo,
+     que vence esta por vir depois com a mesma especificidade). */
+  .kgrp.risco .kside b.nada, .kgrp.risco .kmain b.nada{color:var(--mut)}
+  .kgrp.risco.zero{border-color:var(--green); background:rgba(63,209,95,.09)}
+  .kgrp.risco.zero > h2{color:var(--green)}
+  .kgrp.risco.zero .kmain b, .kgrp.risco.zero .kmain small,
+  .kgrp.risco.zero .kside b{color:var(--green)}
 
   /* ---------- veredito do dia: a resposta que se lê em 2 segundos ----------
      Ocupa a linha inteira do cabeçalho (que é sticky), então acompanha a
@@ -107,7 +149,21 @@
   .status a{color:var(--steel)}
   .status button.mini{margin-left:6px; background:none; border:1px solid var(--line); color:var(--mut);
     border-radius:6px; padding:3px 9px; font-size:11px; cursor:pointer; font-family:"IBM Plex Mono"}
+  .status button.mini:hover{border-color:var(--amber); color:var(--amber)}
+  /* conferência de configuração: quebra para a linha de baixo inteira, para
+     não empurrar o que importa da primeira linha */
+  .status .detalhes{flex:1 0 100%; color:var(--mut2); font-family:"IBM Plex Mono";
+    font-size:11px; line-height:1.5; padding-top:3px}
+  .status .detalhes[hidden]{display:none}
+  .status{flex-wrap:wrap}
 
+  /* linha utilitária do quadro: discreta, alinhada à direita — é controle de
+     visualização, prioridade 3, não pode disputar com os lotes */
+  .board-util{display:flex; justify-content:flex-end; margin:-4px 0 7px}
+  .board-util button.mini{background:none; border:1px solid var(--line); color:var(--mut);
+    border-radius:6px; padding:3px 10px; font-size:11px; cursor:pointer;
+    font-family:"IBM Plex Mono"; transition:.14s}
+  .board-util button.mini:hover{border-color:var(--amber); color:var(--amber)}
   .board{display:grid; grid-template-columns:repeat(5,1fr); gap:14px}
   .station{background:var(--panel); border:1px solid var(--line); border-radius:12px;
     display:flex; flex-direction:column; min-height:120px; overflow:hidden}
@@ -117,17 +173,28 @@
   .st-head .nm{font-family:"Oswald"; font-weight:600; font-size:16px; letter-spacing:.02em;
     display:flex; align-items:flex-start; gap:8px; margin-top:2px; line-height:1.15}
   .st-head .det{font-size:10.5px; color:var(--mut2); margin-top:3px; line-height:1.3}
-  /* carga da etapa em volume + barra relativa à etapa mais carregada */
-  .st-head .carga{display:flex; align-items:center; gap:7px; margin-top:7px;
-    font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut)}
-  .st-head .carga .v{color:var(--ink); font-weight:600; font-size:12.5px}
-  .st-head .carga .pts{color:var(--steel); font-weight:600}
-  .st-head .carga .kg{color:var(--green); font-weight:600}
+  /* ---------- carga da etapa: onde a produção está concentrada ----------
+     A barra dizia isso desde sempre, mas com 4px de altura e espremida no
+     que sobrava da linha depois de três números coloridos — volume branco,
+     pontos azul, peso verde. Cor virou rótulo, e verde aqui brigava com o
+     verde de "etapa concluída" da régua do card.
+     Agora: barra em linha própria, 7px, ocupando a largura inteira do
+     cabeçalho, com a fatia em % ao lado — duas colunas viram comparáveis de
+     relance. Os números descem para uma linha só, numa cor só: número em
+     --ink, unidade em --mut. Cor sobrou para o que cobra ação (falta). */
+  .st-head .carga{margin-top:7px; font-family:"IBM Plex Mono"; font-size:11px; color:var(--mut)}
+  .st-head .carga .cg-n{display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px}
+  .st-head .carga .cg-n b{color:var(--ink); font-weight:600}
+  .st-head .carga .v b{font-size:13px}
   .st-head .carga .falta{color:var(--red)}
-  .st-head .carga .bar{flex:1; min-width:26px; height:4px; border-radius:3px;
+  .st-head .carga .falta b{color:var(--red)}
+  .st-head .carga .cg-b{display:flex; align-items:center; gap:7px; margin-top:5px}
+  .st-head .carga .bar{flex:1; min-width:26px; height:7px; border-radius:4px;
     background:var(--line); overflow:hidden}
-  .st-head .carga .bar i{display:block; height:100%; background:var(--mut); border-radius:3px}
+  .st-head .carga .bar i{display:block; height:100%; background:var(--mut2); border-radius:4px}
+  .st-head .carga .fat{font-size:10.5px; color:var(--mut); min-width:30px; text-align:right}
   .station.hot .carga .bar i{background:var(--amber)}
+  .station.hot .carga .fat{color:var(--amber)}
   .st-head .nm .cnt{margin-left:auto; font-size:12px; color:var(--bg); background:var(--mut);
     font-family:"IBM Plex Mono"; font-weight:600; min-width:22px; text-align:center; border-radius:20px; padding:1px 7px}
   .station.hot .nm .cnt{background:var(--amber)}
@@ -152,14 +219,40 @@
     letter-spacing:.02em; background:rgba(255,255,255,.07); border:1px solid var(--line);
     border-radius:5px; padding:1px 7px}
   .lane .row .int{font-family:"IBM Plex Mono"; font-size:12.5px; font-weight:600; color:var(--ink)}
-  .cor{margin-left:auto; font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
-    padding:3px 9px; border-radius:20px; border:1px solid var(--line); color:var(--mut); white-space:nowrap}
+  /* ---------- cor do produto: atributo, não estado ----------
+     A pastilha nascia PREENCHIDA com a cor de verdade (VERMELHO #e8342a,
+     VERDE #2fbf4f). Pílula cheia, arredondada, no canto do card é a mesma
+     forma de um badge de status — e o vermelho de atraso (#ff3b30) e o verde
+     de "etapa concluída" (#3fd15f) estão na mesma tela. Lote vermelho parecia
+     lote em alarme; lote verde parecia lote resolvido.
+     A cor continua (ela existe para bater de olho com o quadro do GPS), mas
+     em SWATCH: bolinha da cor + nome em texto neutro. É o mesmo padrão que o
+     impresso A4 já usava. Cor só comunica prioridade agora. */
+  .cor{margin-left:auto; display:inline-flex; align-items:center; gap:6px;
+    font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    padding:3px 9px; border-radius:20px; border:1px solid var(--line);
+    background:var(--panel); color:var(--mut); white-space:nowrap}
+  /* Só o chip .sw ganha bolinha. A classe .cor sozinha é reusada como pílula
+     neutra em outros lugares (o "N lotes" do card Somado no tablet, o chip do
+     impresso de faltas, que já traz o próprio swatch) — lá uma bolinha
+     cinza seria enfeite sem significado.
+     Cor fora do mapa cai no cinza: a bolinha neutra avisa que o nome existe
+     mas não tem cor cadastrada, em vez de sumir sem explicação. */
+  .cor.sw::before{content:""; flex:none; width:9px; height:9px; border-radius:50%;
+    background:var(--sw,var(--mut2)); box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
   .c-sub{display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:4px; font-size:12px; color:var(--mut)}
   .c-sub b{color:var(--ink); font-family:"IBM Plex Mono"}
   /* o que falta produzir no dia: vira pastilha, é o que se procura no card */
   .c-falta{color:var(--red); background:rgba(255,59,48,.13); border:1px solid rgba(255,59,48,.45);
     border-radius:20px; padding:1px 9px; margin-left:-4px}
   .c-falta b{color:var(--red)}
+  /* peça em falta trava o lote antes de ele virar atraso: no quadro isso não
+     aparecia. Mesmo âmbar-amarelo da aba de peças — mesmo assunto, mesma cor */
+  .c-peca{color:#ff9f0a; background:rgba(255,159,10,.12); border:1px solid rgba(255,159,10,.45);
+    border-radius:20px; padding:1px 9px; font-size:11px; white-space:nowrap}
+  /* sem a frase de status (card repetido), a régua precisa do próprio
+     respiro: senão encosta nos números e o card perde o ritmo dos vizinhos */
+  .c-sub + .tl{margin-top:9px; padding-top:7px; border-top:1px solid var(--line)}
   .c-status{margin-top:6px; font-size:11.5px; display:flex; align-items:center; gap:6px;
     padding-top:5px; border-top:1px solid var(--line)}
   .dot{width:7px; height:7px; border-radius:50%; flex:none}
@@ -173,11 +266,28 @@
   .tl .bead{width:11px; height:11px; border-radius:50%; background:var(--panel); border:2px solid var(--line); z-index:1}
   .tl .step.past .bead{background:var(--green); border-color:var(--green)}
   .tl .step.cur .bead{background:var(--amber); border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-dim)}
-  .tl .lbl{font-family:"IBM Plex Mono"; font-size:8px; color:var(--mut2); letter-spacing:.05em}
-  .tl .dt{font-family:"IBM Plex Mono"; font-size:8.5px; color:var(--mut)}
+  /* A régua de etapas é o dado mais específico do card — QUANDO cada etapa
+     acontece — e estava no menor tipo da tela (8px / 8,5px). Sobe para 9,5 e
+     10px: custa ~3px de altura por card e passa a ser lida de fato. */
+  .tl .lbl{font-family:"IBM Plex Mono"; font-size:9.5px; color:var(--mut2); letter-spacing:.05em}
+  .tl .dt{font-family:"IBM Plex Mono"; font-size:10px; color:var(--mut)}
   .tl .step.cur .lbl,.tl .step.cur .dt{color:var(--amber)}
-  .items{margin-top:11px; padding-top:9px; border-top:1px solid var(--line); display:none}
-  .card.open .items{display:block}
+  /* ---------- produtos do lote: abertos por padrão ----------
+     Estavam fechados e abriam no clique. Mas a pergunta que se faz no quadro
+     é "o que este lote leva", e ela era respondida só depois de descobrir que
+     o card clica. Agora nascem abertos e quem quiser recolhe — o contrário
+     obriga 13 cliques por dia para ver o que já estava lá.
+     Recolher é por card e fica GRAVADO neste navegador: a tela recarrega
+     sozinha a cada 5 min e fica ligada o dia todo; sem gravar, cada recarga
+     desfaria o que o usuário acabou de recolher. */
+  .items{margin-top:11px; padding-top:9px; border-top:1px solid var(--line); display:block}
+  .card.fechado .items{display:none}
+  /* o card que tem produtos avisa que clica, e em que sentido */
+  .card.temitens{position:relative}
+  .card.temitens .c-lote::after{content:"▾"; font-size:10px; color:var(--mut2); margin-left:7px;
+    vertical-align:2px; transition:.14s}
+  .card.temitens.fechado .c-lote::after{content:"▸"}
+  .card.temitens:hover .c-lote::after{color:var(--amber)}
   .items table{width:100%; border-collapse:collapse; font-size:11px}
   .items td{padding:3px 4px; color:var(--mut); vertical-align:top}
   .items td.q{font-family:"IBM Plex Mono"; color:var(--ink); text-align:right; white-space:nowrap; width:42px}
@@ -189,7 +299,10 @@
     color:var(--mut); text-transform:uppercase; display:flex; align-items:center; gap:8px}
   .lane h3 .cnt{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:var(--ink)}
   .lane .row{display:flex; align-items:center; gap:10px; padding:7px 0; font-size:12.5px; color:var(--mut)}
-  .lane .row .cor{margin-left:0; font-size:9.5px; padding:2px 8px}
+  /* nas listas o chip é compacto: bolinha menor e menos entreletra, senão o
+     swatch estoura a coluna de largura fixa da faixa de atraso */
+  .lane .row .cor{margin-left:0; font-size:9.5px; padding:2px 8px; gap:5px; letter-spacing:.06em}
+  .lane .row .cor.sw::before{width:7px; height:7px}
   .lane .row b{font-family:"IBM Plex Mono"; color:var(--ink); font-size:14px}
   .lane .row .tag{margin-left:auto; font-family:"IBM Plex Mono"; font-size:11px}
   .lane.wait h3{color:var(--steel)}
@@ -236,15 +349,6 @@
     max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 
   /* faixa de atraso: lotes que passaram da embalagem com volume pendente */
-  /* o atraso não é um KPI igual aos outros: é o único que cobra ação.
-     Vira caixa vermelha e número maior; os outros três recuam para contexto. */
-  .kpi.late{align-items:flex-end; background:rgba(255,59,48,.12); border:1px solid var(--red);
-    border-radius:9px; padding:4px 12px 5px; margin-bottom:-3px}
-  .kpi.late b{color:var(--red); font-size:28px}
-  .kpi.late small{color:var(--red); opacity:.85}
-  .kpi.late[hidden]{display:none}
-  .kpi.late.zero{background:rgba(63,209,95,.1); border-color:var(--green)}
-  .kpi.late.zero b, .kpi.late.zero small{color:var(--green)}
   .lane.late{margin:0 0 14px; border:1px solid var(--red); border-style:solid;
     background:linear-gradient(180deg,rgba(255,59,48,.07),transparent)}
   .lane.late h3{color:var(--red)}
@@ -253,7 +357,9 @@
   .lane.late h3 .tot{margin-left:auto; font-family:"IBM Plex Mono"; font-size:12px; color:var(--red)}
   /* grade de colunas fixas: ▸ · lote · cor · nº · rótulo · de N/% · atraso */
   .lane.late .row{display:grid; align-items:center; gap:0 10px; padding:6px 0;
-    grid-template-columns:12px 58px 62px 104px 64px 96px 1fr auto;
+    /* a coluna da cor foi de 62 para 84px: o chip ganhou a bolinha do swatch
+       e o nome mais comprido (LARANJA, VERMELHO) passava por cima do número */
+    grid-template-columns:12px 58px 84px 104px 64px 96px 1fr auto;
     border-bottom:1px solid rgba(255,59,48,.16)}
   .lane.late .lrow:last-child .row{border-bottom:none}
   .lane.late .lrow.tem .row{cursor:pointer}
@@ -298,6 +404,16 @@
   #lateExtra .lrow:first-child .row{border-top:1px solid rgba(255,59,48,.16)}
   .foot{margin-top:26px; font-size:11.5px; color:var(--mut2); line-height:1.6; max-width:760px}
   .foot code{font-family:"IBM Plex Mono"; color:var(--mut); background:var(--panel); padding:1px 5px; border-radius:4px}
+  /* ajuda recolhida: some do caminho, continua a um clique de distância */
+  .foot .ajuda{margin:0 0 7px}
+  .foot .ajuda > summary{cursor:pointer; color:var(--mut); font-family:"IBM Plex Mono";
+    font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; width:max-content;
+    list-style:none; padding:2px 0}
+  .foot .ajuda > summary::-webkit-details-marker{display:none}
+  .foot .ajuda > summary::before{content:"▸ "; display:inline-block; transition:transform .14s}
+  .foot .ajuda[open] > summary::before{content:"▾ "}
+  .foot .ajuda > summary:hover{color:var(--amber)}
+  .foot .ajuda .corpo{padding:3px 0 2px}
   @media(max-width:900px){ .board{grid-template-columns:1fr} .headmeta{flex:0 0 100%; width:100%; justify-content:flex-start; margin-left:0} .lanes{grid-template-columns:1fr} }
 
   /* ===================== MODO TV (um setor por tela) ===================== */
@@ -332,7 +448,9 @@
     background:rgba(255,255,255,.08); border-radius:.5vw; padding:.2vh .8vw}
   .tv-card .l .cor{margin-left:auto; font-size:1.35vw; font-weight:700; letter-spacing:.1em;
     text-transform:uppercase; color:var(--mut); border:.15vw solid var(--line);
-    border-radius:20px; padding:.5vh 1.2vw; white-space:nowrap}
+    border-radius:20px; padding:.5vh 1.2vw; white-space:nowrap; gap:.7vw}
+  /* a bolinha de 9px do painel some numa TV: aqui ela é medida em vw */
+  .tv-card .l .cor.sw::before{width:1.3vw; height:1.3vw}
   .tv-card .m{font-family:"IBM Plex Mono"; font-size:1.5vw; color:var(--mut)} .tv-card .m b{color:var(--ink)}
   .tv-card .s{font-size:1.5vw; display:flex; align-items:center; gap:.7vw; color:var(--steel); margin-top:.3vh}
   .tv-card.today .s{color:var(--amber)}
@@ -1043,13 +1161,17 @@
     header.top{gap:8px; padding:6px 0 7px; margin-top:-6px}
     .brand .eyebrow{font-size:9.5px; letter-spacing:.16em}
     .brand h1{font-size:23px}
-    /* KPIs em três colunas: com seis deles, quatro por linha deixa a última
-       com dois órfãos e espreme os rótulos longos */
-    .headmeta{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; flex:0 0 100%; width:100%; margin:6px 0 0}
-    .kpi{align-items:flex-start} .kpi b{font-size:19px}
-    /* no celular a coluna é estreita: aqui o rótulo pode quebrar */
-    .kpi small{font-size:8px; letter-spacing:.04em; margin-top:3px; line-height:1.2; white-space:normal}
-    .kpi.late{padding:5px 8px 6px; margin-bottom:0} .kpi.late b{font-size:22px}
+    /* No celular os três blocos empilham, mas cada um vira uma LINHA: título
+       em cima, número grande à esquerda, apoio à direita. Em coluna cheia
+       gastariam 160px de cabeçalho grudado, que é card de lote a menos. */
+    .headmeta{display:grid; grid-template-columns:1fr; gap:5px; flex:0 0 100%; width:100%; margin:6px 0 0}
+    .kgrp{min-width:0; flex-direction:row; flex-wrap:wrap; align-items:baseline;
+      gap:2px 10px; padding:5px 10px 6px}
+    .kgrp > h2{flex:0 0 100%; font-size:8.5px; letter-spacing:.12em}
+    .kgrp .kmain b{font-size:21px}
+    .kgrp .kmain small{font-size:9px; letter-spacing:.04em}
+    .kgrp .kside{margin-left:auto; gap:2px 10px; justify-content:flex-end}
+    .kgrp .kside b{font-size:11.5px} .kgrp .kside i{font-size:8.5px}
     .verdict{font-size:16px; padding:9px 11px; gap:9px; flex-wrap:wrap; margin-top:6px}
     .verdict .ico{font-size:18px}
     .verdict .sub{margin-left:0; width:100%; text-align:left; font-size:10px}
@@ -1091,7 +1213,7 @@
     .card{padding:9px 10px} .c-lote{font-size:17px}
     .c-sub{gap:10px; font-size:11.5px; flex-wrap:wrap}
     .c-status{font-size:11px; margin-top:7px; padding-top:7px}
-    .tl .dt{font-size:7.5px} .tl .lbl{font-size:7.5px}
+    .tl .dt{font-size:9px} .tl .lbl{font-size:8.5px}
     .items td{font-size:10.5px}
 
     /* faixa de atraso: uma linha por lote vira bloco, sem cortar texto */
@@ -1124,13 +1246,40 @@
     <h1>Lotes em <span>Elaboração</span></h1>
   </div>
   <img class="logo" src="logo-patrimar.png" alt="Patrimar Móveis">
+  <!-- Três perguntas, três blocos. O do meio é o único colorido porque é o
+       único que cobra ação. Todos os números já existiam: computeBuckets
+       (volumes, lotes, pontos, peso, atraso, sem baixa, programados),
+       kpiCalc (volumes críticos, cobertura) e renderFaltasAba (peças). -->
   <div class="headmeta">
-    <div class="kpi"><b id="kLotes">–</b><small>lotes ativos</small></div>
-    <div class="kpi"><b id="kVols">–</b><small>vol. em elaboração</small></div>
-    <div class="kpi"><b id="kPontos">–</b><small>pontos em elaboração</small></div>
-    <div class="kpi"><b id="kPeso">–</b><small>peso em elaboração</small></div>
-    <div class="kpi"><b id="kHoje">–</b><small id="kHojeLbl">p/ embalar hoje</small></div>
-    <div class="kpi late" id="kAtrasoBox"><b id="kAtraso">–</b><small>vol. em atraso</small></div>
+    <section class="kgrp">
+      <h2>Produção atual</h2>
+      <div class="kmain"><b id="kVols">–</b><small>vol. em elaboração</small></div>
+      <div class="kside">
+        <span><b id="kLotes">–</b><i>lotes</i></span>
+        <span><b id="kPontos">–</b><i>pontos</i></span>
+        <span><b id="kPeso">–</b><i>peso</i></span>
+      </div>
+    </section>
+    <section class="kgrp risco" id="grpRisco">
+      <h2>Riscos e atrasos</h2>
+      <div class="kmain" id="kAtrasoBox"><b id="kAtraso">–</b><small>vol. em atraso</small></div>
+      <!-- crítico e sem baixa dependem de apontamento; peças dependem da aba
+           FALTAS. Sem a fonte, a linha some em vez de mostrar um zero que
+           não é zero — é "não sei". -->
+      <div class="kside">
+        <span id="sCrit"><b id="kCrit">–</b><i>vol. críticos</i></span>
+        <span id="sPecas"><b id="kPecas">–</b><i>peças em falta</i></span>
+        <span id="sSemBaixa"><b id="kSemBaixa">–</b><i>sem baixa</i></span>
+      </div>
+    </section>
+    <section class="kgrp">
+      <h2>Próximas ações</h2>
+      <div class="kmain"><b id="kHoje">–</b><small id="kHojeLbl">p/ embalar hoje</small></div>
+      <div class="kside">
+        <span><b id="kProg">–</b><i>programados</i></span>
+        <span><b id="kCob">–</b><i>cobertura</i></span>
+      </div>
+    </section>
   </div>
   <div class="verdict none" id="verdict"><span class="ico">•</span><span class="txt" id="verdictTxt">Carregando…</span></div>
   <div class="refwarn stale" id="staleWarn" hidden>
@@ -1154,7 +1303,11 @@
     <button class="b go" id="imprimir" title="Gera a folha A4 — salve como PDF pra mandar no WhatsApp">🖨 Imprimir / PDF</button>
     <button class="b fal" id="impFaltas" title="Folha para a fábrica: o que falta de peça em cada lote parado">🔧 Peças em falta</button>
     <button class="b zap" id="whats" title="Monta o resumo em texto e abre o WhatsApp">Enviar no WhatsApp</button>
-    <label class="chk" title="Lista os produtos de cada lote (desmarque para o resumo curto)"><input type="checkbox" id="pItens" checked> produtos</label>
+    <!-- Esta caixa nunca mexeu na tela: ela decide se o PDF e o texto do
+         WhatsApp saem com a lista de produtos. Enquanto o quadro nascia
+         fechado ninguém confundia; agora que ele nasce aberto, "produtos"
+         sozinho ao lado de um quadro cheio de produtos vira armadilha. -->
+    <label class="chk" title="Inclui a lista de produtos de cada lote no PDF e no texto do WhatsApp (não muda o quadro)"><input type="checkbox" id="pItens" checked> produtos no PDF</label>
   </div>
   <div class="grp busca">
     <input type="search" id="busca" autocomplete="off" spellcheck="false"
@@ -1206,8 +1359,19 @@
   <div class="cfg-fonte">Lendo de: <code id="srcUrl"></code></div>
 </div>
 
+<!-- A linha de status dizia, no mesmo cinza e no mesmo corpo:
+     "Planilha lida — 35 lotes · atualizado 07:59 · cadastro 399284148: 428
+     códigos · 1 item sem cadastro · FALTAS: nenhuma peça em aberto ·
+     estrutura ESTRUTURA: 10644 peças de 455 códigos".
+     O único pedaço acionável ali — "1 item sem cadastro", que significa que
+     PONTOS e PESO da tela estão subestimados — tinha o mesmo peso do número
+     do gid. Agora fica: leu / quando / o que está furado. A contagem de
+     códigos, o gid e a estrutura são conferência de configuração e vão para
+     "detalhes", que abre no clique. -->
 <div class="status" id="status"><span class="led"></span><span id="statusTxt">Carregando…</span>
-  <button class="mini" id="reload">recarregar</button></div>
+  <button class="mini" id="statusMais" hidden aria-expanded="false">detalhes</button>
+  <button class="mini" id="reload">recarregar</button>
+  <span class="detalhes" id="statusDet" hidden></span></div>
 
 <!-- Quatro telas em vez de uma rolagem só. São duas perguntas diferentes e
      estavam empilhadas: "onde cada lote está" (o quadro de etapas) e "o que
@@ -1226,6 +1390,10 @@
 </nav>
 
 <div class="painel" id="painel-elaboracao">
+  <!-- Os produtos nascem abertos e recolhem card a card. Sem este botão,
+       voltar ao quadro compacto custaria um clique por lote — o mesmo
+       problema, ao contrário, de quando tudo nascia fechado. -->
+  <div class="board-util"><button class="mini" id="itensTodos"></button></div>
   <div class="board" id="board"></div>
 </div>
 
@@ -1375,11 +1543,19 @@
 <div id="printview"></div>
 <style id="pageCSS">@page{size:A4 landscape; margin:9mm 10mm}</style>
 
+<!-- O rodapé tinha duas naturezas misturadas: NAVEGAÇÃO (os links que abrem a
+     TV e o tablet, que se clica de fato) e AJUDA (a explicação de como o
+     painel lê a planilha, que se lê uma vez na vida). Juntas, o parágrafo de
+     ajuda dava a um texto de prioridade 3 o mesmo espaço que o quadro de
+     lotes. A navegação fica; a ajuda recolhe para dentro do "como funciona". -->
 <div class="foot">
-  Lê ao vivo a aba de elaboração no Google Sheets e posiciona cada lote pela <b>data prevista</b> de cada etapa
-  (corte → furar → colar/PU → UV → embalagem). Clique num card para ver os itens (quando houver).
-  Use ◀/▶ pra simular os próximos dias.<br>
-  <span class="so-desktop">O endereço da planilha fica na aba <b style="color:var(--mut)">⚙ Configuração</b>.</span>
+  <details class="ajuda">
+    <summary>Como este painel funciona</summary>
+    <div class="corpo">Lê ao vivo a aba de elaboração no Google Sheets e posiciona cada lote pela
+      <b>data prevista</b> de cada etapa (corte → furar → colar/PU → UV → embalagem).
+      Clique num card para ver os itens (quando houver). Use ◀/▶ pra simular os próximos dias.
+      <span class="so-desktop">O endereço da planilha fica na aba <b style="color:var(--mut)">⚙ Configuração</b>.</span></div>
+  </details>
   <div class="tvlinks"><b style="color:var(--mut)">Modo TV</b> (um setor por tela, para pendurar):
     <a href="?setor=corte">Corte</a> ·
     <a href="?setor=furar">Furadeira laterais</a> ·
@@ -1397,9 +1573,10 @@
     <a href="?tablet=1&amp;setor=cola">Coladeira/PU</a> ·
     <a href="?tablet=1&amp;setor=uv">Linha UV</a> ·
     <a href="?tablet=1&amp;setor=emb">Embalagem</a>
-    <div style="color:var(--mut2); margin-top:4px">Fica gravado no aparelho: ao abrir de novo,
-      volta no mesmo setor. Para voltar ao painel, <b style="color:var(--steel)">Sair do modo tablet</b>
-      no rodapé (dois toques) ou <b style="color:var(--steel)">Esc</b>.</div>
+    <details class="ajuda"><summary>Como sair do modo tablet</summary>
+      <div class="corpo">Fica gravado no aparelho: ao abrir de novo, volta no mesmo setor.
+        Para voltar ao painel, <b style="color:var(--steel)">Sair do modo tablet</b>
+        no rodapé (dois toques) ou <b style="color:var(--steel)">Esc</b>.</div></details>
   </div>
   <div class="verfoot" id="verFoot" hidden></div>
 </div>
@@ -1583,16 +1760,19 @@ const CORES_GPS = {
   bege:"#e2d3ae", dourado:"#d4af37", prata:"#c6cbd1", azulclaro:"#5cc5f0",
   verdeclaro:"#7ede8a", verdeescuro:"#1c7a35", azulescuro:"#1c3f8a"
 };
-// texto preto ou branco conforme a luminância da cor de fundo
+/* A função devolve só a variável --sw, que a regra .cor usa para pintar a
+   BOLINHA. Antes ela devolvia background/color/border e preenchia a pastilha
+   inteira — o que fazia a cor do móvel falar a língua do status (ver o
+   comentário da regra .cor). O nome da função e a assinatura não mudaram:
+   os 8 pontos que a chamam continuam iguais.
+   Preto (#0d0f12) some no fundo preto, então recebe um cinza levemente mais
+   claro; a bolinha ainda tem o anel interno branco que a destaca. */
 function corGPS(nome){
   const hex=CORES_GPS[norm(nome)];
   if(!hex) return "";
   const r=parseInt(hex.substr(1,2),16), g=parseInt(hex.substr(3,2),16), b=parseInt(hex.substr(5,2),16);
   const lum=(0.299*r+0.587*g+0.114*b)/255;
-  const fg=lum>0.6?"#000":"#fff";
-  // preto e cores escuras ganham borda clara para não sumirem no fundo preto
-  const bd=lum<0.18?"#6b7280":hex;
-  return `background:${hex};border-color:${bd};color:${fg}`;
+  return `--sw:${lum<0.10?"#2a2e35":hex}`;
 }
 
 /* ---------- datas ---------- */
@@ -2035,8 +2215,9 @@ async function carregarEstrutura(){
   if(CFG.estrutura) ESTRUTURA.erro="não li a aba da estrutura (gid configurado)";
 }
 const estruturaDe = cod => ESTRUTURA.ativa ? (ESTRUTURA.map.get(normCod(cod))||null) : null;
-function txtEstrutura(){
-  if(ESTRUTURA.ativa) return ` · estrutura <b>${ESTRUTURA.aba}</b>: ${ESTRUTURA.linhas} peças de ${ESTRUTURA.codigos} códigos`;
+function txtEstrutura(det){
+  // a contagem de peças da estrutura só serve para conferir a aba: é detalhe
+  if(ESTRUTURA.ativa) return det ? ` · estrutura <b>${ESTRUTURA.aba}</b>: ${ESTRUTURA.linhas} peças de ${ESTRUTURA.codigos} códigos` : "";
   if(ESTRUTURA.erro) return ` · <span style="color:var(--amber)">${ESTRUTURA.erro}</span>`;
   return "";
 }
@@ -2132,36 +2313,61 @@ async function carregarCadastro(){
 }
 
 /* ---------- carregar ---------- */
-function setStatus(kind,txt){ const el=document.getElementById("status");
-  el.className="status "+kind; document.getElementById("statusTxt").innerHTML=txt; }
+/* det = conferência de configuração (qual aba respondeu, quantos códigos).
+   Fica recolhida atrás de "detalhes": quem opera o painel não precisa dela,
+   e quem configura abre uma vez. Sem det, o botão nem aparece. */
+function setStatus(kind,txt,det){ const el=document.getElementById("status");
+  el.className="status "+kind; document.getElementById("statusTxt").innerHTML=txt;
+  const cx=document.getElementById("statusDet"), bt=document.getElementById("statusMais");
+  if(!cx||!bt) return;
+  const tem=!!(det&&det.trim());
+  bt.hidden=!tem;
+  if(!tem){ cx.hidden=true; bt.setAttribute("aria-expanded","false"); return; }
+  cx.innerHTML=det;
+  // mantém aberto/fechado entre as recargas de 5 min: a tela fica ligada o dia todo
+  cx.hidden = bt.getAttribute("aria-expanded")!=="true";
+}
 
 /* Resumo da baixa na linha de status. A baixa hoje chega pelo app na própria
    aba de programação (PRODUZIDO/SALDO); a aba BAIXA é só reserva, então
    quando ela não está em uso a linha fica calada — nada a avisar. */
-function txtBaixa(){
+function txtBaixa(det){
   if(!BAIXA.ativa) return "";
   const per=BAIXA.min?`${fmt(BAIXA.min)}${+BAIXA.max!==+BAIXA.min?" a "+fmt(BAIXA.max):""}`:"sem data";
   const vol=BAIXA.linhas.reduce((s,b)=>s+b.qtd,0);
   const sobra=BAIXA.semLote?` · <span style="color:var(--amber)">${BAIXA.semLote.toLocaleString("pt-BR")} sem lote</span>`:"";
   const exc=BAIXA.excedente?` · <span style="color:var(--amber)">${BAIXA.excedente.toLocaleString("pt-BR")} acima do programado</span>`:"";
-  return ` · baixa <b>${BAIXA.aba}</b>: ${vol.toLocaleString("pt-BR")} vol. (${per})${sobra}${exc}`;
+  // volume baixado e período são conferência; "sem lote" e "acima do
+  // programado" são baixa que não encaixa no plano — isso alguém tem de ver
+  return det ? ` · baixa <b>${BAIXA.aba}</b>: ${vol.toLocaleString("pt-BR")} vol. (${per})`
+             : `${sobra}${exc}`;
 }
 
 /* Cobertura do cadastro. Item sem código lá vale zero ponto e zero quilo, e
    um total baixo por falta de cadastro é indistinguível de um total baixo de
    verdade — então a cobertura fica dita, não subentendida. */
-function txtCadastro(){
+/* det=false → só o que cobra ação (erro de leitura, item sem cadastro).
+   det=true  → a conferência de configuração: qual aba respondeu, quantos
+   códigos ela tem. Uma função por fonte de dado, duas saídas — em vez de
+   dois textos escritos em lugares diferentes, que divergem na primeira
+   mudança que alguém fizer em só um deles. */
+function txtCadastro(det){
   if(!CADASTRO.ativa)
     return CADASTRO.erro ? ` · <span style="color:var(--amber)">cadastro: ${CADASTRO.erro}</span>` : "";
+  if(det) return ` · cadastro <b>${CADASTRO.aba}</b>: ${CADASTRO.map.size.toLocaleString("pt-BR")} códigos`;
   const fora=CADASTRO.itens-CADASTRO.casados;
-  const aviso = fora
-    ? ` · <span style="color:var(--amber)">${fora} ${fora===1?"item sem":"itens sem"} cadastro (${CADASTRO.semCad.size} ${CADASTRO.semCad.size===1?"código":"códigos"})</span>`
+  /* Item sem cadastro não é detalhe técnico: sem ele o produto entra com 0
+     ponto e 0 kg, e os totais de pontos e peso da tela ficam MENORES do que
+     a realidade. Fica na linha de cima, em âmbar. */
+  return fora
+    ? ` · <span style="color:var(--amber)">${fora} ${fora===1?"item sem":"itens sem"} cadastro (${CADASTRO.semCad.size} ${CADASTRO.semCad.size===1?"código":"códigos"}) — pontos e peso subestimados</span>`
     : "";
-  return ` · cadastro <b>${CADASTRO.aba}</b>: ${CADASTRO.map.size.toLocaleString("pt-BR")} códigos${aviso}`;
 }
-function txtFaltas(){
+function txtFaltas(det){
   if(!FALTAS.ativa)
     return FALTAS.erro ? ` · <span style="color:var(--amber)">faltas: ${FALTAS.erro}</span>` : "";
+  // o número de peças já é o contador da aba "Peças em falta": aqui é conferência
+  if(!det) return "";
   if(!FALTAS.linhas) return ` · <b>${FALTAS.aba}</b>: nenhuma peça em aberto`;
   return ` · <b>${FALTAS.aba}</b>: ${FALTAS.linhas} ${FALTAS.linhas===1?"peça":"peças"} em `+
     `${FALTAS.map.size} ${FALTAS.map.size===1?"lote":"lotes"}`;
@@ -2197,7 +2403,10 @@ async function carregar(){
     if(/<html/i.test(txt)) throw new Error("sem-acesso");
     const lotes=rowsToLotes(parseCSV(txt));
     if(lotes.length){ LOTES=lotes; ULTIMA_OK=Date.now(); await carregarBaixa(); await carregarCadastro(); await carregarFaltas(); await carregarEstrutura();
-      setStatus("ok",`Planilha lida — <b>${lotes.length}</b> lotes · atualizado ${new Date().toLocaleTimeString("pt-BR")}${txtBaixa()}${txtCadastro()}${txtFaltas()}${txtEstrutura()}`);
+      setStatus("ok",
+        `Planilha lida — <b>${lotes.length}</b> lotes · atualizado ${new Date().toLocaleTimeString("pt-BR")}`+
+        `${txtBaixa(false)}${txtCadastro(false)}${txtFaltas(false)}${txtEstrutura(false)}`,
+        `Fontes lidas${txtBaixa(true)}${txtCadastro(true)}${txtFaltas(true)}${txtEstrutura(true)}`);
     } else { LOTES=DEMO; await carregarBaixa(); await carregarCadastro(); await carregarFaltas(); await carregarEstrutura();
       setStatus("warn","Planilha vazia ou cabeçalho não reconhecido — mostrando dados de exemplo. Cole as linhas com o cabeçalho indicado.");
     }
@@ -2307,6 +2516,10 @@ const LATE_TOP=5;        // quantos lotes atrasados a faixa mostra sem abrir
    embalagem: peça faltando é problema antes do atraso, não depois. Agrupado
    por lote interno, como a fábrica chama o lote. Os atrasados SEM lançamento
    ficam num bloco à parte: cobrar o registro também é ação. */
+/* Devolve o resumo (peças a buscar, lotes travados, atrasados sem registro)
+   para o bloco "Riscos e atrasos" do cabeçalho usar o MESMO número da aba.
+   Contar de novo lá em cima seria a segunda conta da mesma coisa — e duas
+   contas divergem no dia em que alguém mexer só numa delas. */
 function renderFaltasAba(ref, atras){
   const lane=document.getElementById("falLane"), semLane=document.getElementById("falSemLane");
   const vazio=document.getElementById("falVazio");
@@ -2314,8 +2527,8 @@ function renderFaltasAba(ref, atras){
     lane.hidden=semLane.hidden=true; vazio.hidden=false;
     vazio.innerHTML=`Aba <b>FALTAS</b> não encontrada — o que a Embalagem lança no celular apareceria aqui.
       Confira o gid em ⚙ Configuração.`;
-    document.getElementById("abaFaltasCnt").textContent=0;
-    return;
+    setAbaCnt("abaFaltasCnt",0);
+    return {ativa:false, totPecas:0, grupos:0, sem:0};
   }
 
   const g=new Map();
@@ -2347,7 +2560,7 @@ function renderFaltasAba(ref, atras){
     return `<div class="fl-lote" data-busca="${gr.chave}">
       <div class="fl-cab"><span class="in">${esc(gr.tit)}</span>
         <span class="op">${gr.subs.map(l=>esc(l.lote)).join(" · ")}</span>
-        ${gr.cores.map(c=>`<span class="cor" style="${corGPS(c)}">${esc(c)}</span>`).join("")}
+        ${gr.cores.map(c=>`<span class="cor sw" style="${corGPS(c)}">${esc(c)}</span>`).join("")}
         <span class="pz">${prazo}</span></div>
       <table class="fl-pc">${gr.pecas.map(f=>
         `<tr><td class="q">${nBR(f.qtd)}</td>
@@ -2362,12 +2575,13 @@ function renderFaltasAba(ref, atras){
   document.getElementById("falSemCnt").textContent=sem.length;
   document.getElementById("falSemList").innerHTML=sem.map(a=>
     `<div class="row" data-busca="${chaveBusca(a.l)}"><b>${esc(a.l.lote)}</b>${a.l.interno?`<span class="int">${esc(a.l.interno)}</span>`:""}
-      ${a.l.cor?`<span class="cor" style="${corGPS(a.l.cor)}">${esc(a.l.cor)}</span>`:""}
+      ${a.l.cor?`<span class="cor sw" style="${corGPS(a.l.cor)}">${esc(a.l.cor)}</span>`:""}
       <span class="tag">${nBR(a.pend)} vol. · ${a.dias}d de atraso</span></div>`).join("");
 
   vazio.hidden=!!(grupos.length||sem.length);
   if(!vazio.hidden) vazio.textContent="Nenhuma peça em falta lançada — e nenhum lote atrasado sem registro.";
-  document.getElementById("abaFaltasCnt").textContent=nBR(totPecas);
+  setAbaCnt("abaFaltasCnt",totPecas);
+  return {ativa:true, totPecas, grupos:grupos.length, sem:sem.length};
 }
 
 /* ---------- busca de lote ----------
@@ -2424,6 +2638,27 @@ function aplicaBusca(){
 let LATE_ABERTO=true;
 const LATE_DET=new Set();   // lotes da faixa de atraso abertos no detalhe
 const PROG_DET=new Set();   // idem na aba Programados
+/* Cards do quadro com os produtos RECOLHIDOS. Guarda o fechado, não o aberto:
+   aberto é o padrão, então a lista fica vazia enquanto ninguém recolhe nada —
+   e lote novo já entra aberto sem precisar ser cadastrado aqui.
+   Vai para o localStorage porque a tela recarrega sozinha a cada 5 min: sem
+   isso, recolher um card duraria até a próxima recarga. */
+const CARD_FECHADO = new Set((()=>{
+  try{ const v=JSON.parse(localStorage.getItem("elab.cardsFechados")||"[]");
+       return Array.isArray(v)?v:[]; }catch(e){ return []; }
+})());
+function salvarFechados(){
+  /* Poda o que saiu da planilha: sem isso a lista cresceria para sempre, um
+     lote por vez, e daqui a um ano o navegador guardaria centenas de OPs que
+     não existem mais. Só poda quando há planilha lida — se LOTES ainda está
+     vazio, apagaria tudo por engano. */
+  if(LOTES.length){
+    const vivos=new Set(LOTES.map(l=>l.lote));
+    [...CARD_FECHADO].forEach(k=>{ if(!vivos.has(k)) CARD_FECHADO.delete(k); });
+  }
+  try{ localStorage.setItem("elab.cardsFechados", JSON.stringify([...CARD_FECHADO])); }
+  catch(e){ /* navegador sem storage: recolher continua valendo só nesta sessão */ }
+}
 
 /* ---------- veredito do dia ----------
    Uma frase só, com cor, no topo da tela: quem bate o olho precisa sair
@@ -2569,8 +2804,11 @@ function kpiCalc(d){
 // semáforo único, usado nos cards, no Top 10 e no impresso
 const kpiSem = dias => dias>KPIP.critico ? "crit" : (dias>=KPIP.atencao ? "at" : "");
 
-function renderKPI(d, ref){
-  const k=kpiCalc(d);
+/* k vem pronto de render(): o cabeçalho já precisou de kpiCalc para os
+   volumes críticos e a cobertura, e refazer a conta aqui seria a mesma
+   varredura duas vezes por render. */
+function renderKPI(d, ref, k){
+  k = k || kpiCalc(d);
   const box=document.getElementById("kpiBoard");
   const temM3=CADASTRO.temM3;
   const pctCrit = k.pend.vol ? (k.crit/k.pend.vol*100) : 0;
@@ -2580,7 +2818,7 @@ function renderKPI(d, ref){
        (esteira, funil, cobertura) continua sendo a pergunta da reunião. */
     box.innerHTML = `<div class="kb-vazio">✔ Nenhum volume pendente em ${fmt(ref)} — nada passou da embalagem sem sair</div>`
       + blocoFluxo(k,temM3) + blocoFunil(d,k,ref);
-    document.getElementById("abaKpiCnt").textContent="0";
+    setAbaCnt("abaKpiCnt",0);
     return;
   }
 
@@ -2632,7 +2870,7 @@ function renderKPI(d, ref){
         <td class="n">${nBR(x.q)}</td>
         <td class="n">${x.pontos?nBR(Math.round(x.pontos)):"–"}</td>
         <td>${esc(x.it.desc||"")}</td>
-        <td>${x.l.cor?`<span class="cor" style="${corGPS(x.l.cor)}">${esc(x.l.cor)}</span>`:""}</td>
+        <td>${x.l.cor?`<span class="cor sw" style="${corGPS(x.l.cor)}">${esc(x.l.cor)}</span>`:""}</td>
       </tr>`).join("")}</tbody>
       ${k.lin.length>10?`<tfoot><tr><td colspan="9">mais ${nBR(k.lin.length-10)} ${k.lin.length-10===1?"linha pendente":"linhas pendentes"} na aba <b>Volumes pendentes</b></td></tr></tfoot>`:""}
     </table>`;
@@ -2640,7 +2878,7 @@ function renderKPI(d, ref){
   box.innerHTML = alto + tot + blocoFluxo(k,temM3) + blocoFunil(d,k,ref) + tabela;
   // o contador da aba é o número que cobra ação: volume crítico
   const cnt=document.getElementById("abaKpiCnt");
-  cnt.textContent=nBR(k.crit);
+  setAbaCnt("abaKpiCnt",k.crit);
   cnt.title=`${nBR(k.crit)} volumes com mais de ${KPIP.critico} dias úteis de atraso`;
 }
 
@@ -2705,32 +2943,59 @@ function render(){
          volsEt,pendEt,pontosEt,pesoEt,loteEmbHoje,volEmbHoje,faltaHoje}=DADOS;
   const pontosTot = pontosEt.reduce((s,p)=>s+p,0);
   const pesoTot = pesoEt.reduce((s,p)=>s+p,0);
-  document.getElementById("kLotes").textContent=ativos;
+  /* As duas contas que o cabeçalho reusa das abas, feitas UMA vez por render:
+     kpiCalc dá os volumes críticos e a cobertura (aba KPI) e renderFaltasAba
+     dá as peças a buscar (aba Peças em falta). O cabeçalho não recalcula
+     nada — ele repete o número que a aba já mostra. */
+  const K = kpiCalc(DADOS);
+  const FAL = renderFaltasAba(ref, atras);
+
+  // Grupo 1 — Produção atual: o que a fábrica tem na esteira agora
   document.getElementById("kVols").textContent=vols.toLocaleString("pt-BR");
+  document.getElementById("kLotes").textContent=ativos;
   document.getElementById("kPontos").textContent=pontosTot?nBR(pontosTot):"–";
   document.getElementById("kPeso").textContent=pesoTxt(pesoTot);
+
+  // Grupo 3 — Próximas ações: o que vence hoje e o que vem atrás
   document.getElementById("kHoje").textContent=volEmbHoje.toLocaleString("pt-BR");
   document.getElementById("kHojeLbl").textContent =
     loteEmbHoje ? `vol. p/ embalar hoje · ${loteEmbHoje} ${loteEmbHoje===1?"lote":"lotes"}`
                 : "vol. p/ embalar hoje";
+  document.getElementById("kProg").textContent=wait.length;
+  /* cobertura = pontos em elaboração ÷ capacidade, a mesma conta da aba KPI.
+     É o número que diz se a esteira cobre os próximos dias ou se a linha
+     corre risco de ficar ociosa. */
+  document.getElementById("kCob").textContent = K.elab.pontos ? n1(K.covElab)+" d" : "–";
   pintaVeredito({atras,sbaixa,volAtraso,ativos,faltaHoje,volEmbHoje,loteEmbHoje}, ref);
   pintaAvisoData(ref);
   pintaFrescor();
 
   const board=document.getElementById("board"); board.innerHTML="";
-  const maxEt=Math.max(1,...volsEt);   // a barra é relativa à etapa mais carregada
   ETAPAS.forEach((et,i)=>{
     const hot=buckets[i].some(x=>{const d=pd(x.l[et.key]); return d&&+d===+ref;});
     const st=document.createElement("div");
     st.className="station"+(hot?" hot":"")+(buckets[i].length?"":" vazia");
     // a carga da etapa é volume, não lote: sem isso duas colunas de 3 lotes
     // parecem iguais valendo 300 e 3.000 volumes
+    /* Barra e número medem a MESMA coisa: a fatia dos volumes em elaboração
+       que está nesta etapa. A barra era relativa à etapa mais cheia, o que
+       desenhava bem o gargalo mas não casa com nenhuma porcentagem legível —
+       gráfico e número lado a lado dizendo quantidades diferentes é painel
+       que mente. Com fatia do total, a maior barra não encosta no fim da
+       régua, e isso também é informação: nenhuma etapa segura mais de um
+       terço da esteira. */
+    const fat = vols ? Math.round(volsEt[i]/vols*100) : 0;
     const carga=buckets[i].length?`<div class="carga">
-      <span class="v">${volsEt[i].toLocaleString("pt-BR")}</span> vol.
-      ${pontosEt[i]>0?`<span class="pts">${nBR(pontosEt[i])} pts</span>`:""}
-      ${pesoEt[i]>0?`<span class="kg">${pesoTxt(pesoEt[i])}</span>`:""}
-      ${pendEt[i]>0?`<span class="falta">falta ${pendEt[i].toLocaleString("pt-BR")}</span>`:""}
-      <span class="bar"><i style="width:${Math.round(volsEt[i]/maxEt*100)}%"></i></span></div>`:"";
+      <div class="cg-n">
+        <span class="v"><b>${volsEt[i].toLocaleString("pt-BR")}</b> vol.</span>
+        ${pontosEt[i]>0?`<span><b>${nBR(pontosEt[i])}</b> pts</span>`:""}
+        ${pesoEt[i]>0?`<span><b>${pesoTxt(pesoEt[i])}</b></span>`:""}
+        ${pendEt[i]>0?`<span class="falta">falta <b>${pendEt[i].toLocaleString("pt-BR")}</b></span>`:""}
+      </div>
+      <div class="cg-b" title="${fat}% dos ${vols.toLocaleString("pt-BR")} volumes em elaboração estão nesta etapa">
+        <span class="bar"><i style="width:${fat}%"></i></span>
+        <span class="fat">${fat}%</span>
+      </div></div>`:"";
     st.innerHTML=`<div class="st-head"><div class="fase">${et.fase}</div>
       <div class="nm">${et.nome}<span class="cnt">${buckets[i].length}</span></div>
       ${et.detalhe?`<div class="det">${et.detalhe}</div>`:""}${carga}</div>
@@ -2740,21 +3005,43 @@ function render(){
     if(!buckets[i].length){ body.innerHTML=`<div class="empty">livre</div>`; return; }
     // a mesma OP costuma vir quebrada em vários lotes seguidos: só o primeiro
     // carrega os chips de OP e cor, os de baixo são continuação
-    let opAnt=null;
+    let opAnt=null, embAnt=null;
     buckets[i].forEach(x=>{
       const cont = !!x.l.interno && x.l.interno===opAnt;
-      opAnt = x.l.interno||null;
-      body.appendChild(cardEl(x.l,x.idx,ref,cont));
+      // mesma OP E mesma data de embalagem = mesmas datas de etapa: a frase
+      // de status do card seria idêntica à do de cima, então não se repete
+      const mudo = cont && String(x.l.emb||"")===embAnt;
+      opAnt = x.l.interno||null; embAnt = String(x.l.emb||"");
+      body.appendChild(cardEl(x.l,x.idx,ref,cont,mudo));
     });
   });
+  pintaItensTodos();
 
   // faixa de atraso — volumes que passaram da embalagem e não foram produzidos
   const lane=document.getElementById("lateLane"), ll=document.getElementById("lateList");
+  /* Grupo 2 — Riscos e atrasos. É a prioridade 1 da tela: o único bloco
+     colorido, porque é o único que cobra ação. */
   const kBox=document.getElementById("kAtrasoBox");
   kBox.hidden = !APONTA();
-  // zerado fica verde: a caixa em destaque não pode parecer alarme quando está tudo certo
-  kBox.classList.toggle("zero", APONTA() && volAtraso===0);
-  document.getElementById("kAtraso").textContent = APONTA() ? volAtraso.toLocaleString("pt-BR") : "–";
+  // .nada devolve o zero ao cinza: só o que tem valor fica vermelho
+  const risco=(id,n)=>{ const el=document.getElementById(id);
+    el.textContent=nBR(n); el.classList.toggle("nada", !n); };
+  const elAtr=document.getElementById("kAtraso");
+  elAtr.textContent = APONTA() ? volAtraso.toLocaleString("pt-BR") : "–";
+  elAtr.classList.toggle("nada", APONTA() && volAtraso===0);
+  risco("kCrit", K.crit);
+  risco("kPecas", FAL.totPecas);
+  risco("kSemBaixa", sbaixa.length);
+  document.getElementById("sCrit").hidden = !APONTA();
+  document.getElementById("sSemBaixa").hidden = !APONTA();
+  document.getElementById("sPecas").hidden = !FAL.ativa;
+  /* Verde só quando NÃO HÁ NADA a perseguir. Antes o verde vinha só do
+     atraso zerado — um bloco verde com 300 peças em falta dentro dizia a
+     coisa errada, e é exatamente a leitura de 2 segundos que o painel
+     existe para dar. */
+  const semRisco = APONTA() && volAtraso===0 && K.crit===0
+                   && sbaixa.length===0 && (!FAL.ativa || FAL.totPecas===0);
+  document.getElementById("grpRisco").classList.toggle("zero", semRisco);
   lane.hidden = !atras.length;
   document.getElementById("lateCnt").textContent = atras.length;
   document.getElementById("lateTot").textContent = volAtraso.toLocaleString("pt-BR")+" volumes pendentes";
@@ -2793,7 +3080,7 @@ function render(){
     return `<div class="lrow${tem?" tem":""}${aberto?" aberto":""}" data-lote="${esc(a.l.lote)}" data-busca="${chaveBusca(a.l)}">
       <div class="row"><span class="abre">${tem?"▸":""}</span><b class="lt">${a.l.lote}</b>
       <span class="cel-int">${a.l.interno||""}</span>
-      <span class="cel-cor">${a.l.cor?`<span class="cor" style="${corGPS(a.l.cor)}">${a.l.cor}</span>`:""}</span>
+      <span class="cel-cor">${a.l.cor?`<span class="cor sw" style="${corGPS(a.l.cor)}">${a.l.cor}</span>`:""}</span>
       <span class="pend">${a.pend.toLocaleString("pt-BR")}</span>
       <span class="rot">vol. pendentes</span>
       <span class="pct">de ${(a.l.qtd||0).toLocaleString("pt-BR")} · ${pct}% feito${selo}</span>
@@ -2816,7 +3103,7 @@ function render(){
   nbLane.hidden=!sbaixa.length;
   document.getElementById("nbCnt").textContent=sbaixa.length;
   document.getElementById("nbList").innerHTML=sbaixa.map(w=>
-    `<div class="row" data-busca="${chaveBusca(w.l)}"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}
+    `<div class="row" data-busca="${chaveBusca(w.l)}"><b>${w.l.lote}</b>${w.l.interno?`<span class="int">${w.l.interno}</span>`:""} ${w.l.cor?`<span class="cor sw" style="${corGPS(w.l.cor)}">${w.l.cor}</span>`:""}
       <span class="tag">emb. ${fmt(pd(w.l.emb))} · ${(w.l.qtd||0).toLocaleString("pt-BR")} vol. sem reporte</span></div>`).join("");
 
   /* Programados numa tabela: numa aba própria cabe o que a faixa antiga não
@@ -2861,7 +3148,7 @@ function render(){
     return `<tr class="${its.length?"tem":""}${aberto?" aberto":""}" data-lote="${esc(w.l.lote)}" data-busca="${bq}">
       <td class="lt"><span class="abre">${its.length?"▸":""}</span>${esc(w.l.lote)}</td>
       <td class="int">${esc(w.l.interno||"–")}</td>
-      <td>${w.l.cor?`<span class="cor" style="${corGPS(w.l.cor)}">${esc(w.l.cor)}</span>`:""}</td>
+      <td>${w.l.cor?`<span class="cor sw" style="${corGPS(w.l.cor)}">${esc(w.l.cor)}</span>`:""}</td>
       <td class="n">${its.length||"–"}</td>
       <td class="n">${nBR(w.l.qtd)}</td>
       <td class="n">${w.l.pontosTot?nBR(w.l.pontosTot):"–"}</td>
@@ -2884,12 +3171,12 @@ function render(){
   /* Contadores das abas. Em elaboração conta LOTE (é o que se acompanha no
      quadro); em pendentes conta VOLUME, que é a unidade da cobrança — "29
      lotes" e "2.293 volumes" são coisas bem diferentes na hora de priorizar. */
-  document.getElementById("abaElabCnt").textContent  = ativos;
-  document.getElementById("abaPendCnt").textContent  = nBR(volAtraso);
-  document.getElementById("abaProgCnt").textContent  = wait.length;
+  setAbaCnt("abaElabCnt", ativos);
+  setAbaCnt("abaPendCnt", volAtraso);
+  setAbaCnt("abaProgCnt", wait.length);
   document.getElementById("pendVazio").hidden = !!(atras.length || sbaixa.length);
-  renderFaltasAba(ref, atras);
-  renderKPI(DADOS, ref);
+  // renderFaltasAba já rodou lá em cima: o cabeçalho precisa do total de peças
+  renderKPI(DADOS, ref, K);
 
   // a busca é reaplicada a cada render: as linhas e cards são recriados
   aplicaBusca();
@@ -2935,7 +3222,7 @@ function renderTV(buckets, ref, atras, volAtraso){
     const itens=(l.itens&&l.itens.length)?`<div class="tv-items">${l.itens.map(it=>
       `<div class="tv-it"><span class="cd">${it.cod||""}</span><span class="d">${it.desc||""}</span><span class="q">${(it.qtd||0).toLocaleString("pt-BR")}</span></div>`).join("")}</div>`:"";
     return `<div class="tv-card${hoje?" today":""}">
-      <div class="l"><b>${l.lote}</b>${l.interno?`<span class="int">${l.interno}</span>`:""}${l.cor?`<span class="cor" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
+      <div class="l"><b>${l.lote}</b>${l.interno?`<span class="int">${l.interno}</span>`:""}${l.cor?`<span class="cor sw" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
       <div class="m">Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b>${l.itens?` · <b>${l.itens.length}</b> itens`:""}${l.prod>0?` · ${pct}%`:""}${pend>0?` · <b class="pend">falta ${nBR(pend)} vol.</b>`:""}</div>
       <div class="s"><span class="dot"></span>${st}</div>
       ${itens}
@@ -3024,7 +3311,7 @@ function tabCabecalhoLote(x, ref){
   return {hoje, fal, html:`<div class="tb-lh">
       ${seq}<span class="lt">${esc(l.lote)}</span>
       ${l.interno?`<span class="int">${esc(l.interno)}</span>`:""}
-      ${l.cor?`<span class="cor" style="${corGPS(l.cor)}">${esc(l.cor)}</span>`:""}
+      ${l.cor?`<span class="cor sw" style="${corGPS(l.cor)}">${esc(l.cor)}</span>`:""}
       <span class="qt">${nBR(l.qtd)}<small>vol</small></span></div>
     <div class="tb-ls"><span class="dot"></span>${esc(st)}<span class="mt">${esc(mt)}</span></div>
     ${linhaFal}`};
@@ -3333,7 +3620,28 @@ const txtAtualizado = () => ULTIMA_OK
   ? "atualizado "+new Date(ULTIMA_OK).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})
   : "sem leitura da planilha";
 
-function cardEl(l,idx,ref,cont){
+/* mudo = este card repete EXATAMENTE a situação do de cima (mesma OP e mesma
+   data de embalagem, logo mesmas datas de etapa). Nesse caso a frase de
+   status sai: três cards seguidos dizendo "Hoje → Furadeira laterais · 1d"
+   são três linhas de texto para uma informação que é da COLUNA, não do lote.
+   É a mesma regra que a OP e a cor já seguiam no .cont. A régua de etapas
+   fica — ela é gráfica, repetida reforça que os três estão no mesmo ponto,
+   e não custa leitura como uma frase custa. */
+/* Botão "recolher/abrir tudo" do quadro. O rótulo segue o que o clique vai
+   FAZER, não o estado atual — "recolher produtos" quando há algo aberto,
+   "abrir produtos" quando está tudo recolhido. Some quando nenhum lote da
+   data tem produto: botão que não faz nada é botão que confunde. */
+function pintaItensTodos(){
+  const bt=document.getElementById("itensTodos"); if(!bt) return;
+  const cards=[...document.querySelectorAll("#board .card.temitens")];
+  bt.hidden = !cards.length;
+  if(!cards.length) return;
+  const algumAberto = cards.some(c=>!c.classList.contains("fechado"));
+  bt.dataset.acao = algumAberto ? "fechar" : "abrir";
+  bt.textContent  = algumAberto ? "▸ recolher produtos" : "▾ abrir produtos";
+}
+
+function cardEl(l,idx,ref,cont,mudo){
   const et=ETAPAS[idx], hoje=(()=>{const d=pd(l[et.key]);return d&&+d===+ref;})();
   const prox=idx<4?ETAPAS[idx+1]:null;
   const c=document.createElement("div"); c.className="card"+(hoje?" today":"")+(cont?" cont":"");
@@ -3345,6 +3653,7 @@ function cardEl(l,idx,ref,cont){
   else if(prox){ const d=wdBetween(ref,pd(l[prox.key]));
     stat=`<div class="c-status s-next"><span class="dot"></span>Próx. ${prox.curto} · ${d}d (${fmt(pd(l[prox.key]))})</div>`; }
   else { stat=`<div class="c-status s-next"><span class="dot"></span>Em embalagem</div>`; }
+  if(mudo) stat="";
   const tl=ETAPAS.map((e,i)=>{ const cls=i<idx?"past":(i===idx?"cur":"");
     return `<div class="step ${cls}"><span class="bead"></span><span class="lbl">${e.abrev}</span><span class="dt">${fmt(pd(l[e.key]))}</span></div>`; }).join("");
   const temAp=temApontamento(l);
@@ -3359,10 +3668,25 @@ function cardEl(l,idx,ref,cont){
   /* "Pend" no card era lido como atraso, que é outra coisa: aqui é o que
      falta produzir no dia. "Falta" é a mesma palavra usada no modo TV. */
   const pendTxt=pend>0?`<span class="c-falta">falta <b>${pend.toLocaleString("pt-BR")}</b> vol.</span>`:"";
-  c.innerHTML=`<div class="c-top"><span class="c-lote">${l.lote}</span>${(!cont&&l.interno)?`<span class="c-int">${l.interno}</span>`:""}${(!cont&&l.cor)?`<span class="cor" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
-    <div class="c-sub"><span>Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b></span>${prog}${pendTxt}${l.itens?`<span><b>${l.itens.length}</b> itens</span>`:""}${l.pontosTot?`<span>Pts <b>${nBR(l.pontosTot)}</b></span>`:""}${l.pesoTot?`<span><b>${pesoTxt(l.pesoTot)}</b></span>`:""}</div>
+  /* Peça em falta é a CAUSA de o lote parar, e até agora só aparecia na aba
+     de peças e na faixa de atraso — no quadro, o lote travado parecia um
+     lote normal. A pastilha usa o mesmo âmbar-amarelo (#ff9f0a) que a aba
+     de peças já usa, para ser o mesmo assunto nas duas telas. */
+  const fal=faltasDe(l);
+  const falTxt=fal.length?`<span class="c-peca" title="${fal.length} ${fal.length===1?"peça lançada":"peças lançadas"} pela Embalagem">aguardando peça</span>`:"";
+  c.innerHTML=`<div class="c-top"><span class="c-lote">${l.lote}</span>${(!cont&&l.interno)?`<span class="c-int">${l.interno}</span>`:""}${(!cont&&l.cor)?`<span class="cor sw" style="${corGPS(l.cor)}">${l.cor}</span>`:""}</div>
+    <div class="c-sub"><span>Qtd <b>${(l.qtd||0).toLocaleString("pt-BR")}</b></span>${prog}${pendTxt}${falTxt}${l.itens?`<span><b>${l.itens.length}</b> itens</span>`:""}${l.pontosTot?`<span>Pts <b>${nBR(l.pontosTot)}</b></span>`:""}${l.pesoTot?`<span>Peso <b>${pesoTxt(l.pesoTot)}</b></span>`:""}</div>
     ${stat}<div class="tl">${tl}</div>${itensHtml}`;
-  if(itensHtml) c.addEventListener("click",()=>c.classList.toggle("open"));
+  if(itensHtml){
+    c.classList.add("temitens");
+    // nasce aberto; só fica fechado o que o usuário recolheu antes
+    if(CARD_FECHADO.has(l.lote)) c.classList.add("fechado");
+    c.addEventListener("click",()=>{
+      const fechou=c.classList.toggle("fechado");
+      if(fechou) CARD_FECHADO.add(l.lote); else CARD_FECHADO.delete(l.lote);
+      salvarFechados(); pintaItensTodos();
+    });
+  }
   return c;
 }
 
@@ -3376,6 +3700,11 @@ const chipCor = c => { if(!c) return "";
   const hex=CORES_GPS[norm(c)];
   return (hex?`<span class="pchip" style="background:${hex}"></span>`:"")+esc(c); };
 const nBR = n => (n||0).toLocaleString("pt-BR");
+/* Contador de aba. Zero vira pastilha ausente, não pastilha com "0": um badge
+   cinza escrito 0 é ruído — não há nada naquela aba, e a ausência já diz isso.
+   O da aba ativa continua mudando de cor, então nada se perde. */
+const setAbaCnt = (id,n) => { const el=document.getElementById(id); if(!el) return;
+  el.textContent=nBR(n); el.hidden=!n; };
 /* O cadastro traz kg por volume. Um lote de 850 volumes a 34 kg dá 29 t, e
    "28.900 kg" não se lê de relance — acima de 1.000 kg a unidade vira t. */
 const pesoTxt = kg => !kg ? "–"
@@ -3847,6 +4176,27 @@ const irParaHoje=()=>{refInput.value=isoOf(new Date());render();};
 document.getElementById("hoje").onclick=irParaHoje;
 document.getElementById("refVoltar").onclick=irParaHoje;
 document.getElementById("reload").onclick=carregar;
+/* Recolhe/abre os produtos de todos os cards do quadro de uma vez. Mexe só
+   nos lotes que estão na tela: o que está em outra data de referência não é
+   tocado — e a lista de recolhidos é do navegador, não da planilha. */
+document.getElementById("itensTodos").onclick=function(){
+  const fechar = this.dataset.acao === "fechar";
+  document.querySelectorAll("#board .card.temitens").forEach(c=>{
+    c.classList.toggle("fechado", fechar);
+    const lote=c.querySelector(".c-lote")?.textContent.trim();
+    if(!lote) return;
+    if(fechar) CARD_FECHADO.add(lote); else CARD_FECHADO.delete(lote);
+  });
+  salvarFechados(); pintaItensTodos();
+};
+
+document.getElementById("statusMais").onclick=function(){
+  const cx=document.getElementById("statusDet");
+  const abre = this.getAttribute("aria-expanded")!=="true";
+  this.setAttribute("aria-expanded", abre?"true":"false");
+  this.textContent = abre?"ocultar":"detalhes";
+  cx.hidden=!abre;
+};
 document.getElementById("staleReload").onclick=carregar;
 document.getElementById("lateMais").onclick=()=>{ LATE_ABERTO=!LATE_ABERTO; render(); };
 // um listener na faixa toda: as linhas são recriadas a cada render
