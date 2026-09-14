@@ -239,6 +239,19 @@ Painel ao vivo dos lotes em elaboração, no padrão dos demais apps de PPCP: p�
   código (até 3 na linha; acima disso, os 3 primeiros e `e mais N`), e `detalhes` traz a lista
   inteira com **descrição, volumes afetados e em que lotes** o código aparece — que é o que se
   leva para a aba de cadastro.
+
+  **E separa as duas causas, porque o conserto é diferente:**
+
+  | causa | o que a tela diz | o que fazer |
+  |---|---|---|
+  | o código não aparece na aba | `fora da aba de cadastro — 501.150.001` | criar a linha com PONTOS e P B |
+  | o código está lá, linha em branco | `com a linha em branco no cadastro — 501.150.001` | preencher PONTOS e P B |
+
+  As duas derrubam o total do mesmo jeito, e enquanto as duas davam a frase única "sem cadastro"
+  quem já tinha mexido na planilha ficava sem saber se errou de **aba** ou de **coluna** — e a aba
+  de cadastro (pontos e peso por produto) é fácil de confundir com a de **estrutura** (de que peças
+  o produto é feito), que tem outra finalidade e não alimenta pontos nem peso. `parseCadastro`
+  passou a devolver, além do mapa, os códigos que encontrou com pontos, peso e m³ todos vazios.
   Ficam na linha: leu, quando, e o que está furado (em âmbar, agora dizendo *por que* importa).
   Contagem de códigos, gid e estrutura vão para **`detalhes`**, que abre no clique. Cada fonte de
   dado tem uma função só, com duas saídas (`txtCadastro(det)`), em vez de dois textos escritos em
